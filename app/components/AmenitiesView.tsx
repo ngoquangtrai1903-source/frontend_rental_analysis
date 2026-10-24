@@ -15,7 +15,7 @@ interface AmenityLiftItem {
   ppm2Without: number
 }
 
-export default function AmenitiesView() {
+export default function AmenitiesView({ filterQueryString = '' }: { filterQueryString?: string }) {
   const [amenitiesData, setAmenitiesData] = useState<AmenityLiftItem[]>([])
   const [baselines, setBaselines] = useState<{ apartmentBaseMillion: number; roomBaseMillion: number; totalApts: number; totalRooms: number } | null>(null)
   const [loading, setLoading] = useState(true)
@@ -35,13 +35,13 @@ export default function AmenitiesView() {
     async function loadData() {
       setLoading(true)
       try {
-        const params = new URLSearchParams()
+        const params = new URLSearchParams(filterQueryString)
         params.set('mode', 'amenities')
         if (filterCategory !== 'all') params.set('category', filterCategory)
 
         const [amenitiesRes, baselinesRes] = await Promise.all([
           fetch(`/api/gold-query?${params.toString()}`),
-          fetch('/api/gold-query?mode=baselines')
+          fetch(`/api/gold-query?mode=baselines${filterQueryString ? `&${filterQueryString}` : ''}`)
         ])
 
         if (amenitiesRes.ok) {
@@ -59,7 +59,7 @@ export default function AmenitiesView() {
       }
     }
     loadData()
-  }, [filterCategory])
+  }, [filterCategory, filterQueryString])
 
   // Calculated simulated price strictly from Supabase baselines and marginal lifts
   const simulatedPrice = useMemo(() => {

@@ -57,6 +57,15 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('end_date')
     if (endDate) filters.end_date = endDate
 
+    const maxDistBeach = searchParams.get('max_dist_beach')
+    if (maxDistBeach) filters.max_dist_beach = Number(maxDistBeach)
+
+    const maxDistCbd = searchParams.get('max_dist_cbd')
+    if (maxDistCbd) filters.max_dist_cbd = Number(maxDistCbd)
+
+    const maxDistUni = searchParams.get('max_dist_uni')
+    if (maxDistUni) filters.max_dist_uni = Number(maxDistUni)
+
     // Amenity filters
     const amenities = [
       'has_balcony',
@@ -112,7 +121,11 @@ export async function GET(request: NextRequest) {
 
     // Mode: Map coordinates for Location & Area tab
     if (mode === 'map' || mode === 'coordinates') {
-      const limit = Number(searchParams.get('limit')) || 800
+      const requestedLimit = searchParams.get('limit')
+      const limit = requestedLimit ? Number(requestedLimit) : undefined
+      if (limit !== undefined && (!Number.isSafeInteger(limit) || limit < 1)) {
+        return NextResponse.json({ error: 'Invalid map result limit' }, { status: 400 })
+      }
       const coordinates = await fetchGoldMapCoordinates(filters, limit)
       return NextResponse.json({
         total: coordinates.length,
