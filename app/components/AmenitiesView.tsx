@@ -85,7 +85,6 @@ export default function AmenitiesView() {
 
     return Number(current.toFixed(2))
   }, [baselines, amenitiesData, simElevator, simBalcony, simPrivateBath, simParking, simFreeHours, simWifi, simMezzanine, simRoomType])
-  }, [simElevator, simBalcony, simPrivateBath, simParking, simFreeHours, simWifi, simMezzanine, simRoomType])
 
   return (
     <div className="workspace-view">
