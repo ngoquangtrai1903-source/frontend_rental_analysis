@@ -1001,8 +1001,20 @@ function Legend({ color, label, value }: { color: string; label: string; value: 
   )
 }
 
-function AnalysisTab({ tab, kpiData }: { tab: string; kpiData: KpiData | null }) {
+function AnalysisTab({
+  tab,
+  kpiData,
+  wards,
+  priceDistribution
+}: {
+  tab: string
+  kpiData: KpiData | null
+  wards: WardData[]
+  priceDistribution: PriceDistribution[]
+}) {
   const market = tab === 'Thị trường'
+  const maxWardCount = wards.length > 0 ? Math.max(...wards.map((w) => w.count), 1) : 1
+
   return (
     <section className="analysis-tab" role="tabpanel">
       <div className="analysis-intro">
@@ -1011,17 +1023,18 @@ function AnalysisTab({ tab, kpiData }: { tab: string; kpiData: KpiData | null })
           <h2>{market ? 'Nhịp chuyển động của thị trường' : 'Bức tranh nguồn cung chi tiết'}</h2>
           <p>
             {market
-              ? 'Theo dõi nhu cầu, mặt bằng giá và các tín hiệu đang thay đổi theo khu vực từ kho dữ liệu.'
-              : 'Đánh giá độ phủ tin đăng, loại hình và khoảng trống nguồn cung tại Đà Nẵng.'}
+              ? 'Theo dõi nhu cầu, mặt bằng giá và các tín hiệu đang thay đổi theo khu vực từ kho dữ liệu gold.rental_room.'
+              : 'Đánh giá độ phủ tin đăng, loại hình và khoảng trống nguồn cung tại Đà Nẵng theo thời gian thực.'}
           </p>
         </div>
         <span className="analysis-status">
           <span className="live-dot" /> Dữ liệu đã đồng bộ từ Schema Gold
         </span>
       </div>
+
       <div className="analysis-cards">
         <MetricCard
-          label={market ? 'Tổng quy mô mẫu' : 'Tin đăng đang theo dõi'}
+          label={market ? 'Tổng quy mô mẫu lọc' : 'Tin đăng đang theo dõi'}
           value={kpiData?.total_listings.toLocaleString() || '0'}
           note="Từ kho dữ liệu gold.rental_room"
           tone="blue"
@@ -1038,6 +1051,56 @@ function AnalysisTab({ tab, kpiData }: { tab: string; kpiData: KpiData | null })
           note="Phân khúc an toàn ngập úng"
           tone="purple"
         />
+      </div>
+
+      {/* Dynamic Supply / Market Breakdown */}
+      <div className="analysis-lower" style={{ marginTop: '16px' }}>
+        <div className="card recommendation-card">
+          <CardHeader
+            title={market ? 'Tín hiệu trọng điểm theo dữ liệu thực' : 'Phân bổ nguồn cung theo khu vực'}
+            subtitle={market ? 'Insight tự động phân tích từ tập dữ liệu đang lọc' : 'Top khu vực có mật độ tin đăng cao nhất'}
+            action=""
+          />
+          <div className="recommendation-list">
+            {wards.slice(0, 3).map((w) => (
+              <div className="insight-row" key={w.name}>
+                <div className="insight-icon">
+                  <MapPin size={16} />
+                </div>
+                <div>
+                  <strong>{w.name}: {w.count} bài đăng</strong>
+                  <p>
+                    Giá thuê trung bình: {(w.avgPrice / 1000000).toFixed(1)} tr/tháng · Tỷ trọng: {kpiData && kpiData.total_listings > 0 ? Math.round((w.count / kpiData.total_listings) * 100) : 0}% tổng nguồn cung.
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="card mini-summary">
+          <CardHeader
+            title="Tỷ trọng nguồn cung"
+            subtitle="Phân theo khu vực dẫn đầu"
+            action=""
+          />
+          <div className="summary-bars">
+            {wards.slice(0, 4).map((w) => {
+              const pct = Math.round((w.count / maxWardCount) * 100)
+              return (
+                <div className="summary-bar" key={w.name}>
+                  <div>
+                    <span>{w.name}</span>
+                    <strong>{w.count} tin</strong>
+                  </div>
+                  <div className="summary-track">
+                    <span style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
     </section>
   )
