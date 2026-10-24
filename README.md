@@ -41,7 +41,7 @@ flowchart TD
     subgraph Frontend_App ["TẦNG TRỰC QUAN HÓA (REACT 19 + NEXT.JS)"]
         D --> E["Dynamic Filter State Manager"]
         E --> F["1. Tổng quan (KPIs & Time-Series Trend)"]
-        E --> G["2. Vị trí & Khu vực (Interactive Canvas GIS Map)"]
+        E --> G["2. Vị trí & Khu vực (Interactive Mapbox GL GIS Map)"]
         E --> H["3. Tiện ích (Amenity Lift & Pricing Estimator)"]
         E --> I["4. Rủi ro ngập lụt (Flood Risk Monitoring)"]
         E --> J["5. Phân tích nâng cao (Decision Engine & Matrix)"]
@@ -52,7 +52,7 @@ flowchart TD
 - **Core Framework:** [Next.js 16](https://nextjs.org/) (App Router, Turbopack, React 19).
 - **Ngôn ngữ:** TypeScript 100% Type-Safe.
 - **Database & Data Warehouse:** [Supabase](https://supabase.com/) (PostgreSQL 15+, PostgREST, RLS Policies).
-- **Spatial / GIS Visualization:** Custom HTML5 Canvas Engine (xử lý mượt mà hơn 3,200 tọa độ mà không gây nghẽn DOM).
+- **Spatial / GIS Visualization:** Mapbox GL JS qua `react-map-gl`, GeoJSON native clustering và các lớp phủ GeoJSON.
 - **Icons & Theme:** Lucide React, Design System tối giản, trực quan hóa dữ liệu theo chuẩn Dashboard hiện đại.
 
 ---
@@ -104,7 +104,7 @@ File service `lib/goldQueryService.ts` được thiết kế module hóa, chỉ 
 - **Bảng dữ liệu thực tế:** Danh sách bài đăng hỗ trợ phân trang, đổi thứ tự sắp xếp và xuất dữ liệu CSV.
 
 ### 2. 🗺️ Vị Trí & Khu Vực (Interactive GIS Map)
-- Trực quan hóa hơn **3,200 tọa độ thực tế** trên bản đồ số Đà Nẵng bằng HTML5 Canvas Engine mượt mà.
+- Trực quan hóa hơn **3,200 tọa độ thực tế** trên Mapbox GL JS với native GeoJSON clustering, popup tin đăng và lớp phủ GIS.
 - Phân tầng màu sắc trực quan: Xanh dương (Căn hộ), Xanh lá (Phòng trọ), Cam (Phân khúc cao cấp $>10$ triệu).
 - Tích hợp các mốc định vị POI: Cầu Rồng (CBD), Bãi biển Mỹ Khê & Phạm Văn Đồng, Sân bay Quốc tế, ĐH Bách Khoa, ĐH Kinh Tế.
 - Tương tác thu phóng (Zoom), kéo thả (Pan), rê chuột xem nhanh Tooltip và click chọn mở thẻ kiểm tra chi tiết (Inspector Card).
@@ -146,10 +146,11 @@ npm install
 ```
 
 ### 3. Cấu Hình Biến Môi Trường
-Tạo file `.env.local` tại thư mục gốc của dự án với các thông số Supabase:
+Tạo file `.env.local` tại thư mục gốc của dự án với các thông số Supabase và Mapbox. Lấy public access token trong Mapbox account, giới hạn token theo domain khi triển khai:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://vfvulyiabgfwujmjunva.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_b5FYMZo4Z0bKHQT4ZCkDKA_E65rMNfN
+NEXT_PUBLIC_MAPBOX_TOKEN=pk.your_mapbox_public_token
 ```
 
 ### 4. Khởi Động Máy Chủ Phát Triển (Development Server)
@@ -172,6 +173,7 @@ npm run build
 3. Trong mục **Environment Variables**, thêm 2 biến:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_MAPBOX_TOKEN`
 4. Nhấn **Deploy**. Vercel sẽ tự động build với Turbopack và phân phối ứng dụng lên Edge Network toàn cầu.
 
 ---
@@ -208,6 +210,6 @@ npm run build
 
 ## 👨‍💻 Tác Giả & Bản Quyền (Author & License)
 
-- **Lead Engineer & Architect:** Nguyễn Trí (Full-stack Data Engineer & Frontend Architect)
+- **Lead Engineer & Architect:** TEAM 2 (Full-stack Data Engineer & Frontend Architect)
 - **Dự án:** Phân tích Dữ liệu Bất động sản Thị trường Cho thuê Đà Nẵng
 - **Giấy phép:** [MIT License](LICENSE)

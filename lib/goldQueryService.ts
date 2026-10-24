@@ -31,6 +31,9 @@ export interface GoldFilterParams {
   wifi?: number | boolean | null
   has_parking?: number | boolean | null
   has_window?: number | boolean | null
+  max_dist_beach?: number | null
+  max_dist_cbd?: number | null
+  max_dist_uni?: number | null
 }
 
 /**
@@ -192,15 +195,26 @@ export function buildGoldQuery(
     }
   }
 
-  // 7. Dynamic Sorting
+  // 7. Proximity / Hotspot distance filters (.lte())
+  if (isValidFilterValue(filters.max_dist_beach)) {
+    query = query.lte('dist_to_beach', Number(filters.max_dist_beach))
+  }
+  if (isValidFilterValue(filters.max_dist_cbd)) {
+    query = query.lte('dist_to_cbd', Number(filters.max_dist_cbd))
+  }
+  if (isValidFilterValue(filters.max_dist_uni)) {
+    query = query.lte('dist_to_nearest_uni', Number(filters.max_dist_uni))
+  }
+
+  // 8. Dynamic Sorting
   const sortBy = pagination?.sortBy || 'posted_date'
   const ascending = pagination?.ascending ?? false
   query = query.order(sortBy, { ascending, nullsFirst: false })
 
-  // 8. Dynamic Pagination (.range())
+  // 9. Dynamic Pagination (.range())
   if (pagination?.page && pagination?.pageSize) {
     const page = Math.max(1, pagination.page)
-    const pageSize = Math.min(100, Math.max(1, pagination.pageSize))
+    const pageSize = Math.min(10000, Math.max(1, pagination.pageSize))
     const from = (page - 1) * pageSize
     const to = from + pageSize - 1
     query = query.range(from, to)
@@ -444,31 +458,82 @@ export interface MapRentalPoint {
   flood_risk_label: number | null
   dist_to_beach: number | null
   dist_to_cbd: number | null
+  dist_to_nearest_uni: number | null
+  dist_to_airport: number | null
   furnishing_status: string | null
+  rooms: string | null
+  has_balcony: number | null
+  has_elevator: number | null
+  private_bathroom: number | null
+  has_parking: number | null
+  wifi: number | null
+  free_hours: number | null
+  has_mezzanine: number | null
 }
 
 /**
- * Fetches geographic coordinate data for interactive Map in Location & Area tab
+ * Fetches all geographic coordinates in stable pages, overcoming PostgREST's
+ * per-request row limit without silently truncating large result sets.
  */
 export async function fetchGoldMapCoordinates(
   filters: GoldFilterParams = {},
-  limit: number = 800,
+  limit: number = Number.POSITIVE_INFINITY,
   client: any = supabaseGold
 ): Promise<MapRentalPoint[]> {
-  const query = buildGoldQuery(
+  const selectColumns =
+    'list_id, ward_name, category_name, price_vnd, size_m2, price_per_m2_vnd, latitude, longitude, flood_risk_label, dist_to_beach, dist_to_cbd, dist_to_nearest_uni, dist_to_airport, furnishing_status, rooms, has_balcony, has_elevator, private_bathroom, has_parking, wifi, free_hours, has_mezzanine'
+
+  const CHUNK_SIZE = 1000
+  const firstPage = await buildGoldQuery(
     client,
     filters,
-    { page: 1, pageSize: limit, sortBy: 'price_vnd', ascending: false },
-    'list_id, ward_name, category_name, price_vnd, size_m2, price_per_m2_vnd, latitude, longitude, flood_risk_label, dist_to_beach, dist_to_cbd, furnishing_status'
+    { page: 1, pageSize: CHUNK_SIZE, sortBy: 'list_id', ascending: true },
+    selectColumns
   )
+  const { data: firstRows, count, error: firstError } = await firstPage
 
-  const { data, error } = await query
-  if (error) {
-    throw new Error(`Failed to fetch map coordinates from gold: ${error.message}`)
+  if (firstError) {
+    throw new Error(`Failed to fetch map coordinates: ${firstError.message}`)
   }
 
-  const rows = (data as unknown as any[]) || []
-  return rows
+  const matchingCount = count ?? firstRows?.length ?? 0
+  const requestedCount = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : matchingCount
+  const targetCount = Math.min(matchingCount, requestedCount)
+  const allRows: RentalRoomRecord[] = [...((firstRows ?? []) as unknown as RentalRoomRecord[])].slice(0, targetCount)
+  const pageCount = Math.ceil(targetCount / CHUNK_SIZE)
+
+  for (let firstPageNumber = 2; firstPageNumber <= pageCount; firstPageNumber += 4) {
+    const pageNumbers = Array.from(
+      { length: Math.min(4, pageCount - firstPageNumber + 1) },
+      (_, index) => firstPageNumber + index
+    )
+    const pages = await Promise.all(
+      pageNumbers.map(async (page) => {
+        const result = await buildGoldQuery(
+          client,
+          filters,
+          { page, pageSize: CHUNK_SIZE, sortBy: 'list_id', ascending: true },
+          selectColumns
+        )
+        if (result.error) {
+          throw new Error(`Failed to fetch map coordinate page ${page}: ${result.error.message}`)
+        }
+        return (result.data ?? []) as unknown as RentalRoomRecord[]
+      })
+    )
+    allRows.push(...pages.flat())
+  }
+
+  const seenIds = new Set<string>()
+  const uniqueRows: RentalRoomRecord[] = []
+  for (const row of allRows) {
+    if (!seenIds.has(row.list_id)) {
+      seenIds.add(row.list_id)
+      uniqueRows.push(row)
+    }
+  }
+
+  return uniqueRows
     .filter((r) => r.latitude !== null && r.longitude !== null && r.latitude > 15.5 && r.latitude < 16.5 && r.longitude > 107.5 && r.longitude < 108.7)
     .map((r) => ({
       list_id: r.list_id,
@@ -482,7 +547,17 @@ export async function fetchGoldMapCoordinates(
       flood_risk_label: r.flood_risk_label,
       dist_to_beach: r.dist_to_beach,
       dist_to_cbd: r.dist_to_cbd,
-      furnishing_status: r.furnishing_status
+      dist_to_nearest_uni: r.dist_to_nearest_uni,
+      dist_to_airport: r.dist_to_airport,
+      furnishing_status: r.furnishing_status,
+      rooms: r.rooms,
+      has_balcony: r.has_balcony,
+      has_elevator: r.has_elevator,
+      private_bathroom: r.private_bathroom,
+      has_parking: r.has_parking,
+      wifi: r.wifi,
+      free_hours: r.free_hours,
+      has_mezzanine: r.has_mezzanine
     }))
 }
 

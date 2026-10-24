@@ -54,7 +54,7 @@ interface FurnishingTier {
   avgPpm2: number
 }
 
-export default function AdvancedAnalyticsView() {
+export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filterQueryString?: string }) {
   const [selectedHotspot, setSelectedHotspot] = useState<'beach' | 'cbd' | 'airport' | 'university'>('beach')
   const [hotspotData, setHotspotData] = useState<HotspotTier[]>([])
   const [amenityData, setAmenityData] = useState<AmenityLift[]>([])
@@ -72,7 +72,8 @@ export default function AdvancedAnalyticsView() {
     async function loadAnalytics() {
       setLoading(true)
       try {
-        const res = await fetch(`/api/gold-query?mode=analytics_all&hotspot=${selectedHotspot}`)
+        const url = `/api/gold-query?mode=analytics_all&hotspot=${selectedHotspot}${filterQueryString ? `&${filterQueryString}` : ''}`
+        const res = await fetch(url)
         if (res.ok) {
           const json = await res.json()
           setHotspotData(json.hotspotDecay || [])
@@ -87,7 +88,7 @@ export default function AdvancedAnalyticsView() {
       }
     }
     loadAnalytics()
-  }, [selectedHotspot])
+  }, [selectedHotspot, filterQueryString])
 
   // Hotspot Chart Max Values for SVG scaling
   const maxPrice = useMemo(() => {

@@ -1,10 +1,32 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import LocationMapView from './components/LocationMapView'
+import dynamic from 'next/dynamic'
 import AmenitiesView from './components/AmenitiesView'
 import FloodRiskView from './components/FloodRiskView'
 import AdvancedAnalyticsView from './components/AdvancedAnalyticsView'
+
+const LocationMapView = dynamic(() => import('./components/LocationMapView'), {
+  ssr: false,
+  loading: () => (
+    <div style={{
+      minHeight: '650px',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: '#fff',
+      borderRadius: '16px',
+      border: '1px solid var(--line)',
+      gap: '12px'
+    }}>
+      <div className="pulse-spinner" style={{ width: '28px', height: '28px' }} />
+      <span style={{ fontSize: '13px', color: 'var(--muted)', fontWeight: 600 }}>
+        Đang khởi tạo bản đồ GIS Đà Nẵng...
+      </span>
+    </div>
+  )
+})
 import {
   Activity,
   BarChart3,
@@ -109,12 +131,18 @@ export default function DashboardPage() {
   const [filterOpen, setFilterOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('Tổng quan')
 
-  // Filter States
+  // Filter States (BĐS Domain Standards)
   const [wardFilter, setWardFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [furnishingFilter, setFurnishingFilter] = useState('')
   const [priceRangeFilter, setPriceRangeFilter] = useState('')
+  const [sizeRangeFilter, setSizeRangeFilter] = useState('')
+  const [proximityFilter, setProximityFilter] = useState('')
   const [floodRiskFilter, setFloodRiskFilter] = useState('')
+  const [reqElevator, setReqElevator] = useState(false)
+  const [reqBalcony, setReqBalcony] = useState(false)
+  const [reqPrivateBath, setReqPrivateBath] = useState(false)
+  const [reqParking, setReqParking] = useState(false)
   const [searchInput, setSearchInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -153,10 +181,29 @@ export default function DashboardPage() {
     if (categoryFilter) count++
     if (furnishingFilter) count++
     if (priceRangeFilter) count++
+    if (sizeRangeFilter) count++
+    if (proximityFilter) count++
     if (floodRiskFilter) count++
+    if (reqElevator) count++
+    if (reqBalcony) count++
+    if (reqPrivateBath) count++
+    if (reqParking) count++
     if (searchQuery) count++
     return count
-  }, [wardFilter, categoryFilter, furnishingFilter, priceRangeFilter, floodRiskFilter, searchQuery])
+  }, [
+    wardFilter,
+    categoryFilter,
+    furnishingFilter,
+    priceRangeFilter,
+    sizeRangeFilter,
+    proximityFilter,
+    floodRiskFilter,
+    reqElevator,
+    reqBalcony,
+    reqPrivateBath,
+    reqParking,
+    searchQuery
+  ])
 
   // Clear all filters
   const handleClearFilters = () => {
@@ -164,40 +211,95 @@ export default function DashboardPage() {
     setCategoryFilter('')
     setFurnishingFilter('')
     setPriceRangeFilter('')
+    setSizeRangeFilter('')
+    setProximityFilter('')
     setFloodRiskFilter('')
+    setReqElevator(false)
+    setReqBalcony(false)
+    setReqPrivateBath(false)
+    setReqParking(false)
     setSearchInput('')
     setSearchQuery('')
     setPage(1)
   }
 
+  // Global Filter Query String builder - Shared Across All Workspace Tabs
+  const filterQueryString = useMemo(() => {
+    const params = new URLSearchParams()
+
+    if (wardFilter) params.set('ward_name', wardFilter)
+    if (categoryFilter) params.set('category_name', categoryFilter)
+    if (furnishingFilter) params.set('furnishing_status', furnishingFilter)
+    if (floodRiskFilter !== '') params.set('flood_risk_label', floodRiskFilter)
+    if (searchQuery) params.set('search', searchQuery)
+
+    // Price segments
+    if (priceRangeFilter === 'under_3m') {
+      params.set('max_price', '3000000')
+    } else if (priceRangeFilter === '3m_5m' || priceRangeFilter === '3m_6m') {
+      params.set('min_price', '3000000')
+      params.set('max_price', '5000000')
+    } else if (priceRangeFilter === '5m_8m' || priceRangeFilter === '6m_10m') {
+      params.set('min_price', '5000000')
+      params.set('max_price', '8000000')
+    } else if (priceRangeFilter === '8m_15m') {
+      params.set('min_price', '8000000')
+      params.set('max_price', '15000000')
+    } else if (priceRangeFilter === 'above_15m' || priceRangeFilter === 'above_10m') {
+      params.set('min_price', '15000000')
+    }
+
+    // Usable area range
+    if (sizeRangeFilter === 'under_20') {
+      params.set('max_size', '20')
+    } else if (sizeRangeFilter === '20_35') {
+      params.set('min_size', '20')
+      params.set('max_size', '35')
+    } else if (sizeRangeFilter === '35_50') {
+      params.set('min_size', '35')
+      params.set('max_size', '50')
+    } else if (sizeRangeFilter === 'above_50') {
+      params.set('min_size', '50')
+    }
+
+    // Hotspot proximity
+    if (proximityFilter === 'beach_1_5km') params.set('max_dist_beach', '1.5')
+    else if (proximityFilter === 'beach_3km') params.set('max_dist_beach', '3.0')
+    else if (proximityFilter === 'cbd_2km') params.set('max_dist_cbd', '2.0')
+    else if (proximityFilter === 'uni_1_5km') params.set('max_dist_uni', '1.5')
+
+    // Amenities
+    if (reqElevator) params.set('has_elevator', '1')
+    if (reqBalcony) params.set('has_balcony', '1')
+    if (reqPrivateBath) params.set('private_bathroom', '1')
+    if (reqParking) params.set('has_parking', '1')
+
+    return params.toString()
+  }, [
+    wardFilter,
+    categoryFilter,
+    furnishingFilter,
+    priceRangeFilter,
+    sizeRangeFilter,
+    proximityFilter,
+    floodRiskFilter,
+    reqElevator,
+    reqBalcony,
+    reqPrivateBath,
+    reqParking,
+    searchQuery
+  ])
+
   // Reactive Data Fetcher
   const fetchDashboardData = useCallback(async () => {
     setFiltering(true)
     try {
-      const params = new URLSearchParams()
+      const params = new URLSearchParams(filterQueryString)
       params.set('mode', 'dashboard')
       params.set('page', String(page))
       params.set('pageSize', String(pageSize))
       params.set('sortBy', sortBy)
       params.set('ascending', String(ascending))
-
-      if (wardFilter) params.set('ward_name', wardFilter)
-      if (categoryFilter) params.set('category_name', categoryFilter)
-      if (furnishingFilter) params.set('furnishing_status', furnishingFilter)
-      if (floodRiskFilter !== '') params.set('flood_risk_label', floodRiskFilter)
-      if (searchQuery) params.set('search', searchQuery)
-
-      if (priceRangeFilter === 'under_3m') {
-        params.set('max_price', '3000000')
-      } else if (priceRangeFilter === '3m_6m') {
-        params.set('min_price', '3000000')
-        params.set('max_price', '6000000')
-      } else if (priceRangeFilter === '6m_10m') {
-        params.set('min_price', '6000000')
-        params.set('max_price', '10000000')
-      } else if (priceRangeFilter === 'above_10m') {
-        params.set('min_price', '10000000')
-      }
 
       const res = await fetch(`/api/gold-query?${params.toString()}`)
       if (!res.ok) {
@@ -228,12 +330,7 @@ export default function DashboardPage() {
     pageSize,
     sortBy,
     ascending,
-    wardFilter,
-    categoryFilter,
-    furnishingFilter,
-    priceRangeFilter,
-    floodRiskFilter,
-    searchQuery
+    filterQueryString
   ])
 
   useEffect(() => {
@@ -536,10 +633,47 @@ export default function DashboardPage() {
                   }}
                 >
                   <option value="">Tất cả mức giá</option>
-                  <option value="under_3m">Dưới 3 triệu</option>
-                  <option value="3m_6m">3 — 6 triệu</option>
-                  <option value="6m_10m">6 — 10 triệu</option>
-                  <option value="above_10m">Trên 10 triệu</option>
+                  <option value="under_3m">Dưới 3 triệu (Bình dân)</option>
+                  <option value="3m_5m">3 — 5 triệu (Tiêu chuẩn)</option>
+                  <option value="5m_8m">5 — 8 triệu (Căn hộ dịch vụ)</option>
+                  <option value="8m_15m">8 — 15 triệu (Cao cấp)</option>
+                  <option value="above_15m">Trên 15 triệu (Hạng sang)</option>
+                </select>
+              </div>
+
+              <div className="filter-item">
+                <label>Diện tích</label>
+                <select
+                  className="filter-control"
+                  value={sizeRangeFilter}
+                  onChange={(e) => {
+                    setSizeRangeFilter(e.target.value)
+                    setPage(1)
+                  }}
+                >
+                  <option value="">Tất cả diện tích</option>
+                  <option value="under_20">Dưới 20 m² (Phòng nhỏ / KTX)</option>
+                  <option value="20_35">20 — 35 m² (Studio / 1PN)</option>
+                  <option value="35_50">35 — 50 m² (Rộng / 1-2PN)</option>
+                  <option value="above_50">Trên 50 m² (Căn lớn / Nhà riêng)</option>
+                </select>
+              </div>
+
+              <div className="filter-item">
+                <label>Cự ly điểm nóng</label>
+                <select
+                  className="filter-control"
+                  value={proximityFilter}
+                  onChange={(e) => {
+                    setProximityFilter(e.target.value)
+                    setPage(1)
+                  }}
+                >
+                  <option value="">Tất cả cự ly</option>
+                  <option value="beach_1_5km">🏖️ Cận biển Mỹ Khê (≤ 1.5 km)</option>
+                  <option value="beach_3km">🏖️ Cận biển (≤ 3.0 km)</option>
+                  <option value="cbd_2km">🏙️ Cận CBD Cầu Rồng (≤ 2.0 km)</option>
+                  <option value="uni_1_5km">🎓 Cận cụm ĐH lớn (≤ 1.5 km)</option>
                 </select>
               </div>
 
@@ -558,6 +692,44 @@ export default function DashboardPage() {
                   <option value="1">Trung bình (1)</option>
                   <option value="2">Nguy cơ cao (2)</option>
                 </select>
+              </div>
+
+              <div className="filter-item" style={{ minWidth: '220px', flex: '1 1 100%' }}>
+                <label>Tiện ích thiết yếu</label>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', paddingTop: '4px' }}>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', cursor: 'pointer', fontWeight: 500, color: 'var(--ink)' }}>
+                    <input
+                      type="checkbox"
+                      checked={reqElevator}
+                      onChange={(e) => { setReqElevator(e.target.checked); setPage(1) }}
+                    />
+                    🛗 Thang máy
+                  </label>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', cursor: 'pointer', fontWeight: 500, color: 'var(--ink)' }}>
+                    <input
+                      type="checkbox"
+                      checked={reqBalcony}
+                      onChange={(e) => { setReqBalcony(e.target.checked); setPage(1) }}
+                    />
+                    🌅 Ban công
+                  </label>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', cursor: 'pointer', fontWeight: 500, color: 'var(--ink)' }}>
+                    <input
+                      type="checkbox"
+                      checked={reqPrivateBath}
+                      onChange={(e) => { setReqPrivateBath(e.target.checked); setPage(1) }}
+                    />
+                    🚿 Vệ sinh riêng
+                  </label>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', cursor: 'pointer', fontWeight: 500, color: 'var(--ink)' }}>
+                    <input
+                      type="checkbox"
+                      checked={reqParking}
+                      onChange={(e) => { setReqParking(e.target.checked); setPage(1) }}
+                    />
+                    🛵 Bãi đỗ xe
+                  </label>
+                </div>
               </div>
 
               <div className="filter-actions">
@@ -599,8 +771,44 @@ export default function DashboardPage() {
               )}
               {priceRangeFilter && (
                 <span className="filter-chip">
-                  Giá: {priceRangeFilter === 'under_3m' ? '< 3 triệu' : priceRangeFilter === '3m_6m' ? '3-6 triệu' : priceRangeFilter === '6m_10m' ? '6-10 triệu' : '> 10 triệu'}
+                  Giá: {priceRangeFilter === 'under_3m' ? '< 3 triệu' : priceRangeFilter === '3m_5m' || priceRangeFilter === '3m_6m' ? '3-5 triệu' : priceRangeFilter === '5m_8m' || priceRangeFilter === '6m_10m' ? '5-8 triệu' : priceRangeFilter === '8m_15m' ? '8-15 triệu' : '> 15 triệu'}
                   <button onClick={() => { setPriceRangeFilter(''); setPage(1) }}><X size={12} /></button>
+                </span>
+              )}
+              {sizeRangeFilter && (
+                <span className="filter-chip">
+                  DT: {sizeRangeFilter === 'under_20' ? '< 20m²' : sizeRangeFilter === '20_35' ? '20-35m²' : sizeRangeFilter === '35_50' ? '35-50m²' : '> 50m²'}
+                  <button onClick={() => { setSizeRangeFilter(''); setPage(1) }}><X size={12} /></button>
+                </span>
+              )}
+              {proximityFilter && (
+                <span className="filter-chip">
+                  Cự ly: {proximityFilter === 'beach_1_5km' ? 'Biển ≤ 1.5km' : proximityFilter === 'beach_3km' ? 'Biển ≤ 3km' : proximityFilter === 'cbd_2km' ? 'CBD ≤ 2km' : 'ĐH ≤ 1.5km'}
+                  <button onClick={() => { setProximityFilter(''); setPage(1) }}><X size={12} /></button>
+                </span>
+              )}
+              {reqElevator && (
+                <span className="filter-chip">
+                  🛗 Thang máy
+                  <button onClick={() => { setReqElevator(false); setPage(1) }}><X size={12} /></button>
+                </span>
+              )}
+              {reqBalcony && (
+                <span className="filter-chip">
+                  🌅 Ban công
+                  <button onClick={() => { setReqBalcony(false); setPage(1) }}><X size={12} /></button>
+                </span>
+              )}
+              {reqPrivateBath && (
+                <span className="filter-chip">
+                  🚿 WC riêng
+                  <button onClick={() => { setReqPrivateBath(false); setPage(1) }}><X size={12} /></button>
+                </span>
+              )}
+              {reqParking && (
+                <span className="filter-chip">
+                  🛵 Chỗ để xe
+                  <button onClick={() => { setReqParking(false); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {floodRiskFilter !== '' && (
@@ -618,11 +826,28 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Navigation views or main dashboard */}
-          {activeNav === 'Vị trí & khu vực' && <LocationMapView />}
-          {activeNav === 'Tiện ích' && <AmenitiesView />}
-          {activeNav === 'Rủi ro ngập lụt' && <FloodRiskView />}
-          {activeNav === 'Phân tích nâng cao' && <AdvancedAnalyticsView />}
+          {/* Navigation views or main dashboard - Synchronized with Global Filters */}
+          {activeNav === 'Vị trí & khu vực' && (
+            <LocationMapView
+              filterQueryString={filterQueryString}
+              activeFiltersCount={activeFiltersCount}
+            />
+          )}
+          {activeNav === 'Tiện ích' && (
+            <AmenitiesView
+              filterQueryString={filterQueryString}
+            />
+          )}
+          {activeNav === 'Rủi ro ngập lụt' && (
+            <FloodRiskView
+              filterQueryString={filterQueryString}
+            />
+          )}
+          {activeNav === 'Phân tích nâng cao' && (
+            <AdvancedAnalyticsView
+              filterQueryString={filterQueryString}
+            />
+          )}
 
           {activeNav === 'Tổng quan' && (
             <>
