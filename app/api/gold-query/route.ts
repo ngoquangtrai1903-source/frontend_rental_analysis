@@ -1,0 +1,197 @@
+import { NextRequest, NextResponse } from 'next/server'
+import {
+  fetchFilteredRentalRooms,
+  fetchGoldKpiMetrics,
+  fetchGoldPriceDistribution,
+  fetchGoldWardStats,
+  fetchGoldTrendData,
+  fetchGoldMapCoordinates,
+  fetchGoldHotspotDecay,
+  fetchGoldAmenityPricing,
+  fetchGoldInvestmentMatrixData,
+  fetchGoldFurnishingComparison,
+  fetchGoldFloodRiskAudit,
+  fetchGoldBaselines,
+  GoldFilterParams,
+  QueryPaginationOptions
+} from '@/lib/goldQueryService'
+
+export async function GET(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams
+    const mode = searchParams.get('mode') || 'dashboard'
+
+    // Parse filters from URL search params
+    const filters: GoldFilterParams = {}
+
+    const ward = searchParams.get('ward') || searchParams.get('ward_name')
+    if (ward) filters.ward_name = ward.includes(',') ? ward.split(',') : ward
+
+    const category = searchParams.get('category') || searchParams.get('category_name')
+    if (category) filters.category_name = category.includes(',') ? category.split(',') : category
+
+    const furnishing = searchParams.get('furnishing') || searchParams.get('furnishing_status')
+    if (furnishing) filters.furnishing_status = furnishing.includes(',') ? furnishing.split(',') : furnishing
+
+    const minPrice = searchParams.get('min_price')
+    if (minPrice) filters.min_price = Number(minPrice)
+
+    const maxPrice = searchParams.get('max_price')
+    if (maxPrice) filters.max_price = Number(maxPrice)
+
+    const minSize = searchParams.get('min_size')
+    if (minSize) filters.min_size = Number(minSize)
+
+    const maxSize = searchParams.get('max_size')
+    if (maxSize) filters.max_size = Number(maxSize)
+
+    const floodRisk = searchParams.get('flood_risk_label')
+    if (floodRisk !== null && floodRisk !== '') filters.flood_risk_label = Number(floodRisk)
+
+    const search = searchParams.get('search')
+    if (search) filters.search = search
+
+    const startDate = searchParams.get('start_date')
+    if (startDate) filters.start_date = startDate
+
+    const endDate = searchParams.get('end_date')
+    if (endDate) filters.end_date = endDate
+
+    // Amenity filters
+    const amenities = [
+      'has_balcony',
+      'free_hours',
+      'has_camera_security',
+      'has_elevator',
+      'has_mezzanine',
+      'private_bathroom',
+      'wifi',
+      'has_parking',
+      'has_window'
+    ] as const
+
+    for (const a of amenities) {
+      const val = searchParams.get(a)
+      if (val !== null && val !== '') {
+        filters[a] = Number(val)
+      }
+    }
+
+    // Pagination & sorting
+    const pagination: QueryPaginationOptions = {
+      page: Number(searchParams.get('page')) || 1,
+      pageSize: Number(searchParams.get('pageSize')) || 20,
+      sortBy: searchParams.get('sortBy') || 'posted_date',
+      ascending: searchParams.get('ascending') === 'true'
+    }
+
+    if (mode === 'records') {
+      const result = await fetchFilteredRentalRooms(filters, pagination)
+      return NextResponse.json(result)
+    }
+
+    if (mode === 'kpi') {
+      const kpi = await fetchGoldKpiMetrics(filters)
+      return NextResponse.json(kpi)
+    }
+
+    if (mode === 'distribution') {
+      const dist = await fetchGoldPriceDistribution(filters)
+      return NextResponse.json(dist)
+    }
+
+    if (mode === 'wards') {
+      const wards = await fetchGoldWardStats(filters)
+      return NextResponse.json(wards)
+    }
+
+    if (mode === 'trend') {
+      const trend = await fetchGoldTrendData(filters)
+      return NextResponse.json(trend)
+    }
+
+    // Mode: Map coordinates for Location & Area tab
+    if (mode === 'map' || mode === 'coordinates') {
+      const limit = Number(searchParams.get('limit')) || 800
+      const coordinates = await fetchGoldMapCoordinates(filters, limit)
+      return NextResponse.json({
+        total: coordinates.length,
+        points: coordinates
+      })
+    }
+
+    // Mode: Hotspots distance decay
+    if (mode === 'hotspots') {
+      const hotspotType = (searchParams.get('hotspot') as any) || 'beach'
+      const decay = await fetchGoldHotspotDecay(hotspotType, filters)
+      return NextResponse.json(decay)
+    }
+
+    // Mode: Amenity lift pricing
+    if (mode === 'amenities') {
+      const amenityPricing = await fetchGoldAmenityPricing(filters)
+      return NextResponse.json(amenityPricing)
+    }
+
+    // Mode: Investment opportunity matrix
+    if (mode === 'investment') {
+      const matrix = await fetchGoldInvestmentMatrixData(filters)
+      return NextResponse.json(matrix)
+    }
+
+    // Mode: Flood risk audit and analysis
+    if (mode === 'flood_risk') {
+      const floodAudit = await fetchGoldFloodRiskAudit(filters)
+      return NextResponse.json(floodAudit)
+    }
+
+    // Mode: Dynamic baselines
+    if (mode === 'baselines') {
+      const baselines = await fetchGoldBaselines()
+      return NextResponse.json(baselines)
+    }
+
+    // Mode: All-in-one advanced analytics
+    if (mode === 'analytics_all') {
+      const hotspotType = (searchParams.get('hotspot') as any) || 'beach'
+      const [hotspotDecay, amenityPricing, investmentMatrix, furnishingStats, kpi] = await Promise.all([
+        fetchGoldHotspotDecay(hotspotType, filters),
+        fetchGoldAmenityPricing(filters),
+        fetchGoldInvestmentMatrixData(filters),
+        fetchGoldFurnishingComparison(filters),
+        fetchGoldKpiMetrics(filters)
+      ])
+
+      return NextResponse.json({
+        kpi,
+        hotspotDecay,
+        amenityPricing,
+        investmentMatrix,
+        furnishingStats
+      })
+    }
+
+    // Default: 'dashboard' mode fetches full analytical dashboard packet
+    const [kpi, wards, priceDistribution, trend, paginatedRecords] = await Promise.all([
+      fetchGoldKpiMetrics(filters),
+      fetchGoldWardStats(filters, 5),
+      fetchGoldPriceDistribution(filters),
+      fetchGoldTrendData(filters),
+      fetchFilteredRentalRooms(filters, pagination)
+    ])
+
+    return NextResponse.json({
+      kpi,
+      wards,
+      priceDistribution,
+      trend,
+      records: paginatedRecords
+    })
+  } catch (error: any) {
+    console.error('Error in /api/gold-query:', error)
+    return NextResponse.json(
+      { error: 'Failed to process dynamic query', message: error?.message || String(error) },
+      { status: 500 }
+    )
+  }
+}
