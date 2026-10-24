@@ -4,14 +4,15 @@ import { useEffect, useState } from 'react'
 import { ShieldAlert, CheckCircle, AlertTriangle, Droplets, TrendingUp, AlertOctagon, RotateCcw } from 'lucide-react'
 import { FloodAuditSummary } from '@/lib/goldQueryService'
 
-export default function FloodRiskView() {
+export default function FloodRiskView({ filterQueryString = '' }: { filterQueryString?: string }) {
   const [auditData, setAuditData] = useState<FloodAuditSummary | null>(null)
   const [loading, setLoading] = useState(true)
 
   const loadFloodData = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/gold-query?mode=flood_risk')
+      const url = `/api/gold-query?mode=flood_risk${filterQueryString ? `&${filterQueryString}` : ''}`
+      const res = await fetch(url)
       if (res.ok) {
         const json = await res.json()
         setAuditData(json)
@@ -25,7 +26,7 @@ export default function FloodRiskView() {
 
   useEffect(() => {
     loadFloodData()
-  }, [])
+  }, [filterQueryString])
 
   return (
     <div className="workspace-view">
