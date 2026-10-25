@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import { MapRentalPoint } from '@/lib/goldQueryService'
 import useRentalMapData from '@/app/hooks/useRentalMapData'
-import RentalMapbox from './RentalMapbox'
+import RentalLeaflet from './RentalLeaflet'
 import { getPriceTierTheme, getFloodRiskBadge, formatVndPrice } from './MapMarkerPopup'
 
 interface LocationMapViewProps {
@@ -85,11 +85,9 @@ export default function LocationMapView({
       </div>
 
       {/* 3. Interactive GIS Map with Clustering & Layer Controllers */}
-      <RentalMapbox
+      <RentalLeaflet
         points={points}
-        loading={loading}
-        selectedPoint={selectedPoint}
-        onSelectPoint={handleSelectPoint}
+        onSelectPoint={(point) => handleSelectPoint(point)}
       />
 
       {/* 4. Selected Property Detailed Inspector Card */}

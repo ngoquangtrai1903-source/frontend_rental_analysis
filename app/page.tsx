@@ -5,6 +5,8 @@ import dynamic from 'next/dynamic'
 import AmenitiesView from './components/AmenitiesView'
 import FloodRiskView from './components/FloodRiskView'
 import AdvancedAnalyticsView from './components/AdvancedAnalyticsView'
+import DashboardCharts from './components/DashboardCharts'
+import { useFilterStore } from './store/filterStore'
 
 const LocationMapView = dynamic(() => import('./components/LocationMapView'), {
   ssr: false,
@@ -48,8 +50,11 @@ import {
   ShieldAlert,
   Sparkles,
   TrendingUp,
-  X
+  X,
+  LogIn,
+  LogOut
 } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 const navItems = [
   { label: 'Tổng quan', icon: LayoutDashboard },
@@ -130,21 +135,49 @@ export default function DashboardPage() {
   const [activeNav, setActiveNav] = useState('Tổng quan')
   const [filterOpen, setFilterOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('Tổng quan')
+  const [darkMode, setDarkMode] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+  const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [authLoading, setAuthLoading] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+    void supabase.auth.getUser().then(({ data }) => { if (mounted) setUserEmail(data.user?.email ?? null) })
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted) setUserEmail(session?.user?.email ?? null)
+    })
+    return () => { mounted = false; listener.subscription.unsubscribe() }
+  }, [])
+
+  const signInWithGoogle = async () => {
+    setAuthLoading(true)
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback` } })
+    if (error) { setErrorMessage(`Không thể đăng nhập Google: ${error.message}`); setAuthLoading(false) }
+  }
+
+  const signOut = async () => { await supabase.auth.signOut(); setAccountMenuOpen(false) }
 
   // Filter States (BĐS Domain Standards)
-  const [wardFilter, setWardFilter] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('')
-  const [furnishingFilter, setFurnishingFilter] = useState('')
-  const [priceRangeFilter, setPriceRangeFilter] = useState('')
-  const [sizeRangeFilter, setSizeRangeFilter] = useState('')
-  const [proximityFilter, setProximityFilter] = useState('')
-  const [floodRiskFilter, setFloodRiskFilter] = useState('')
-  const [reqElevator, setReqElevator] = useState(false)
-  const [reqBalcony, setReqBalcony] = useState(false)
-  const [reqPrivateBath, setReqPrivateBath] = useState(false)
-  const [reqParking, setReqParking] = useState(false)
-  const [searchInput, setSearchInput] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
+  const filterStore = useFilterStore()
+  const { wardFilter, categoryFilter, furnishingFilter, priceRangeFilter, sizeRangeFilter, proximityFilter, floodRiskFilter, reqElevator, reqBalcony, reqPrivateBath, reqParking, searchInput, searchQuery, setFilter } = filterStore
+  const setWardFilter = (value: string) => setFilter('wardFilter', value)
+  const setCategoryFilter = (value: string) => setFilter('categoryFilter', value)
+  const setFurnishingFilter = (value: string) => setFilter('furnishingFilter', value)
+  const setPriceRangeFilter = (value: string) => setFilter('priceRangeFilter', value)
+  const setSizeRangeFilter = (value: string) => setFilter('sizeRangeFilter', value)
+  const setProximityFilter = (value: string) => setFilter('proximityFilter', value)
+  const setFloodRiskFilter = (value: string) => setFilter('floodRiskFilter', value)
+  const setReqElevator = (value: boolean) => setFilter('reqElevator', value)
+  const setReqBalcony = (value: boolean) => setFilter('reqBalcony', value)
+  const setReqPrivateBath = (value: boolean) => setFilter('reqPrivateBath', value)
+  const setReqParking = (value: boolean) => setFilter('reqParking', value)
+  const setSearchInput = (value: string) => setFilter('searchInput', value)
+  const setSearchQuery = (value: string) => setFilter('searchQuery', value)
 
   // Pagination & Sorting States
   const [page, setPage] = useState(1)
@@ -207,6 +240,7 @@ export default function DashboardPage() {
 
   // Clear all filters
   const handleClearFilters = () => {
+    filterStore.reset()
     setWardFilter('')
     setCategoryFilter('')
     setFurnishingFilter('')
@@ -435,14 +469,15 @@ export default function DashboardPage() {
           <span>Rent<span className="brand-accent">IQ</span></span>
         </div>
         <div className="workspace-label">WORKSPACE</div>
-        <div className="workspace-select">
+        <button className={`workspace-select workspace-button ${workspaceMenuOpen ? 'selected' : ''}`} onClick={() => setWorkspaceMenuOpen(!workspaceMenuOpen)}>
           <div className="workspace-avatar">DN</div>
           <div>
             <strong>Da Nang Market</strong>
             <small>Data Warehouse · gold</small>
           </div>
           <ChevronDown size={15} />
-        </div>
+        </button>
+        {workspaceMenuOpen && <div className="sidebar-popover workspace-popover"><strong>Da Nang Market</strong><span>Gold Data Warehouse</span><button onClick={() => setWorkspaceMenuOpen(false)}>Đang sử dụng</button></div>}
         <nav className="main-nav">
           {navItems.map((item) => {
             const Icon = item.icon
@@ -460,16 +495,17 @@ export default function DashboardPage() {
           })}
         </nav>
         <div className="sidebar-bottom">
-          <button className="nav-item"><Settings2 size={18} /><span>Cài đặt</span></button>
-          <button className="nav-item"><CircleHelp size={18} /><span>Trợ giúp</span></button>
-          <div className="user-card">
-            <div className="user-avatar">NT</div>
+          <button className="nav-item" onClick={() => setSettingsOpen(true)}><Settings2 size={18} /><span>Cài đặt</span></button>
+          <button className="nav-item" onClick={() => setHelpOpen(true)}><CircleHelp size={18} /><span>Trợ giúp</span></button>
+          <div className={`user-card ${accountMenuOpen ? 'selected' : ''}`}>
+            <div className="user-avatar">{userEmail ? userEmail.slice(0, 2).toUpperCase() : '??'}</div>
             <div>
-              <strong>Nguyễn Trí</strong>
-              <small>Data Architect</small>
+              <strong>{userEmail ? userEmail.split('@')[0] : 'Chưa đăng nhập'}</strong>
+              <small>{userEmail || 'Tài khoản Google'}</small>
             </div>
-            <MoreHorizontal size={17} />
+            <button className="account-trigger" aria-label="Mở menu tài khoản" onClick={() => setAccountMenuOpen(!accountMenuOpen)}><MoreHorizontal size={17} /></button>
           </div>
+          {accountMenuOpen && <div className="sidebar-popover account-popover">{userEmail ? <><strong>{userEmail}</strong><button onClick={() => setSettingsOpen(true)}>Hồ sơ & cài đặt</button><button onClick={() => void signOut()}><LogOut size={12} /> Đăng xuất</button></> : <button onClick={() => void signInWithGoogle()}><LogIn size={12} /> {authLoading ? 'Đang chuyển tới Google...' : 'Đăng nhập bằng Google'}</button>}<button onClick={() => setAccountMenuOpen(false)}>Đóng menu</button></div>}
         </div>
       </aside>
 
@@ -495,11 +531,15 @@ export default function DashboardPage() {
               />
               <kbd>⌘ K</kbd>
             </div>
-            <button className="icon-button" aria-label="Notifications"><Bell size={18} /><i /></button>
-            <button className="top-avatar">NT</button>
-            <button className="mobile-menu" aria-label="Menu"><Menu size={20} /></button>
+            <button className="icon-button" aria-label="Notifications" onClick={() => setNotificationsOpen(!notificationsOpen)}><Bell size={18} /><i /></button>
+            <button className="top-avatar" aria-label="Mở menu tài khoản" onClick={() => setAccountMenuOpen(!accountMenuOpen)}>{userEmail ? userEmail.slice(0, 2).toUpperCase() : '??'}</button>
+            <button className="mobile-menu" aria-label="Menu" onClick={() => setMobileNavOpen(!mobileNavOpen)}><Menu size={20} /></button>
           </div>
         </header>
+
+        {notificationsOpen && <div className="quick-popover notification-popover"><strong>Thông báo</strong><p>Dữ liệu Gold đã được đồng bộ gần đây.</p><p>Không có cảnh báo mới.</p><button onClick={() => setNotificationsOpen(false)}>Đóng</button></div>}
+        {mobileNavOpen && <div className="mobile-nav-popover">{navItems.map((item) => <button key={item.label} onClick={() => { setActiveNav(item.label); setMobileNavOpen(false) }}>{item.label}</button>)}</div>}
+        {(settingsOpen || helpOpen) && <div className="modal-backdrop" onClick={() => { setSettingsOpen(false); setHelpOpen(false) }}><div className="quick-modal" onClick={(e) => e.stopPropagation()}>{settingsOpen ? <><h3>Cài đặt dashboard</h3><label className="setting-row"><span>Chế độ tối</span><input type="checkbox" checked={darkMode} onChange={(e) => { setDarkMode(e.target.checked); document.body.classList.toggle('dark-mode', e.target.checked) }} /></label><label className="setting-row"><span>Tự động làm mới dữ liệu</span><input type="checkbox" defaultChecked /></label></> : <><h3>Trợ giúp</h3><p>Chọn mục trong sidebar để xem từng nhóm phân tích. Dùng Bộ lọc để áp dụng điều kiện cho dashboard và bản đồ.</p></>}<button className="button secondary" onClick={() => { setSettingsOpen(false); setHelpOpen(false) }}>Đóng</button></div></div>}
 
         <div className="page-wrap">
           <div className="page-heading">
@@ -951,7 +991,9 @@ export default function DashboardPage() {
                   </section>
 
                   {/* CHARTS GRID */}
-                  <section className="main-grid">
+                  <DashboardCharts trend={trendData} distribution={priceDistribution} total={kpiData?.total_listings || 0} />
+                  {/* Legacy chart markup retained below for layout compatibility */}
+                  <section style={{ display: 'none' }} className="main-grid">
                     {/* SVG Trend Chart */}
                     <div className="card trend-card">
                       <CardHeader

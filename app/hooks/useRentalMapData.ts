@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { MapRentalPoint } from '@/lib/goldQueryService'
 
 export interface MapDataStats {
@@ -17,15 +18,9 @@ export interface MapDataStats {
 }
 
 export function useRentalMapData(filterQueryString: string = '') {
-  const [points, setPoints] = useState<MapRentalPoint[]>([])
-  const [loading, setLoading] = useState(true)
-  const [totalCount, setTotalCount] = useState(0)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchMapData = useCallback(async (signal?: AbortSignal) => {
-    setLoading(true)
-    setError(null)
-    try {
+  const query = useQuery({
+    queryKey: ['rental-map', filterQueryString],
+    queryFn: async ({ signal }) => {
       const url = `/api/gold-query?mode=map${filterQueryString ? `&${filterQueryString}` : ''}`
       const res = await fetch(url, { signal })
       if (!res.ok) {
@@ -36,23 +31,11 @@ export function useRentalMapData(filterQueryString: string = '') {
         throw new Error(json.message || json.error || 'Dữ liệu toạ độ trả về không hợp lệ')
       }
       const pts = json.points
-      setPoints(pts)
-      setTotalCount(json.total ?? pts.length)
-    } catch (err: unknown) {
-      if (!(err instanceof Error && err.name === 'AbortError')) {
-        console.error('useRentalMapData error:', err)
-        setError(err instanceof Error ? err.message : 'Không thể tải dữ liệu toạ độ')
-      }
-    } finally {
-      if (!signal?.aborted) setLoading(false)
+      return { points: pts, total: json.total ?? pts.length }
     }
-  }, [filterQueryString])
-
-  useEffect(() => {
-    const controller = new AbortController()
-    void fetchMapData(controller.signal)
-    return () => controller.abort()
-  }, [fetchMapData])
+  })
+  const points = query.data?.points ?? []
+  const totalCount = query.data?.total ?? 0
 
   // Calculated statistics from all matching points
   const stats = useMemo<MapDataStats>(() => {
@@ -109,11 +92,11 @@ export function useRentalMapData(filterQueryString: string = '') {
 
   return {
     points,
-    loading,
+    loading: query.isLoading,
     totalCount,
-    error,
+    error: query.error instanceof Error ? query.error.message : null,
     stats,
-    refetch: fetchMapData
+    refetch: query.refetch
   }
 }
 export default useRentalMapData
