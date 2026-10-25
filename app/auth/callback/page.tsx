@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter()
   const params = useSearchParams()
   useEffect(() => {
@@ -13,4 +13,18 @@ export default function AuthCallbackPage() {
     void supabase.auth.exchangeCodeForSession(code).finally(() => router.replace('/'))
   }, [params, router])
   return <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>Đang hoàn tất đăng nhập Google...</main>
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+          Đang hoàn tất đăng nhập Google...
+        </main>
+      }
+    >
+      <AuthCallbackContent />
+    </Suspense>
+  )
 }
