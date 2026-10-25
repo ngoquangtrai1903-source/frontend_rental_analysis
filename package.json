@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "lint": "node scripts/lint.cjs",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck && npm test",
     "dev": "next dev",
     "dev:lan": "next dev -H 0.0.0.0",
     "dev:lan:https": "next dev -H 0.0.0.0 --experimental-https",
