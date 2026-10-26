@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Home, Sparkles, CheckCircle2, TrendingUp, DollarSign, Sliders, Layers } from 'lucide-react'
 
 interface AmenityLiftItem {
@@ -16,10 +17,41 @@ interface AmenityLiftItem {
 }
 
 export default function AmenitiesView({ filterQueryString = '' }: { filterQueryString?: string }) {
-  const [amenitiesData, setAmenitiesData] = useState<AmenityLiftItem[]>([])
-  const [baselines, setBaselines] = useState<{ apartmentBaseMillion: number; roomBaseMillion: number; totalApts: number; totalRooms: number } | null>(null)
-  const [loading, setLoading] = useState(true)
   const [filterCategory, setFilterCategory] = useState<string>('all')
+  const query = useQuery({
+    queryKey: ['amenities', filterCategory, filterQueryString],
+    queryFn: async ({ signal }) => {
+      const params = new URLSearchParams(filterQueryString)
+      params.set('mode', 'amenities')
+      if (filterCategory !== 'all') params.set('category', filterCategory)
+
+      const baselineParams = new URLSearchParams(filterQueryString)
+      baselineParams.set('mode', 'baselines')
+      const [amenitiesRes, baselinesRes] = await Promise.all([
+        fetch(`/api/gold-query?${params.toString()}`, { signal }),
+        fetch(`/api/gold-query?${baselineParams.toString()}`, { signal })
+      ])
+      const readResponse = async (res: Response) => {
+        if (res.ok) return res.json()
+        const response = await res.json().catch(() => ({}))
+        throw new Error(response.message || response.error || `Lỗi máy chủ (${res.status})`)
+      }
+      const [amenitiesJson, baselinesJson] = await Promise.all([
+        readResponse(amenitiesRes),
+        readResponse(baselinesRes)
+      ])
+      if (!Array.isArray(amenitiesJson) || !baselinesJson || typeof baselinesJson !== 'object') {
+        throw new Error('Dữ liệu phân tích tiện ích trả về không hợp lệ.')
+      }
+      return {
+        amenities: amenitiesJson as AmenityLiftItem[],
+        baselines: baselinesJson as { apartmentBaseMillion: number; roomBaseMillion: number; totalApts: number; totalRooms: number }
+      }
+    }
+  })
+  const amenitiesData = query.data?.amenities ?? []
+  const baselines = query.data?.baselines ?? null
+  const loading = query.isLoading
 
   // Amenity Simulator State
   const [simElevator, setSimElevator] = useState(false)
@@ -30,36 +62,6 @@ export default function AmenitiesView({ filterQueryString = '' }: { filterQueryS
   const [simWifi, setSimWifi] = useState(true)
   const [simMezzanine, setSimMezzanine] = useState(false)
   const [simRoomType, setSimRoomType] = useState<'room' | 'apartment'>('room')
-
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true)
-      try {
-        const params = new URLSearchParams(filterQueryString)
-        params.set('mode', 'amenities')
-        if (filterCategory !== 'all') params.set('category', filterCategory)
-
-        const [amenitiesRes, baselinesRes] = await Promise.all([
-          fetch(`/api/gold-query?${params.toString()}`),
-          fetch(`/api/gold-query?mode=baselines${filterQueryString ? `&${filterQueryString}` : ''}`)
-        ])
-
-        if (amenitiesRes.ok) {
-          const json = await amenitiesRes.json()
-          setAmenitiesData(json || [])
-        }
-        if (baselinesRes.ok) {
-          const json = await baselinesRes.json()
-          setBaselines(json)
-        }
-      } catch (e) {
-        console.error('Failed to load amenity data:', e)
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadData()
-  }, [filterCategory, filterQueryString])
 
   // Calculated simulated price strictly from Supabase baselines and marginal lifts
   const simulatedPrice = useMemo(() => {
@@ -98,9 +100,18 @@ export default function AmenitiesView({ filterQueryString = '' }: { filterQueryS
           <p>Đo lường mức tăng giá thuê và giá/m² dựa trên 9 tiện ích thực tế trong Data Warehouse.</p>
         </div>
         <span className="analysis-status">
-          <span className="live-dot" /> Dữ liệu đã hiệu chỉnh
+          <span className="live-dot" /> {loading ? 'Đang tải dữ liệu…' : query.isError ? 'Tải dữ liệu thất bại' : 'Dữ liệu đã hiệu chỉnh'}
         </span>
       </div>
+
+      {query.isError && (
+        <div role="alert" className="card data-error-state">
+          <span>Không tải được dữ liệu tiện ích: {query.error.message}</span>
+          <button type="button" className="button secondary" onClick={() => void query.refetch()}>
+            Thử tải lại
+          </button>
+        </div>
+      )}
 
       {/* Category selector */}
       <div className="toolbar" style={{ margin: '10px 0 0' }}>
@@ -175,6 +186,11 @@ export default function AmenitiesView({ filterQueryString = '' }: { filterQueryS
             </div>
           </div>
         ))}
+        {!loading && amenitiesData.length === 0 && (
+          <div role="status" className="chart-empty-state">
+            {query.isError ? 'Không thể hiển thị dữ liệu khi yêu cầu tải thất bại.' : 'Chưa đủ dữ liệu để so sánh các tiện ích với bộ lọc hiện tại.'}
+          </div>
+        )}
       </div>
 
       {/* Interactive Price Simulator for Landlords / Investors */}
@@ -189,7 +205,7 @@ export default function AmenitiesView({ filterQueryString = '' }: { filterQueryS
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '24px', marginTop: '16px' }}>
+        <div className="amenity-simulator-grid" style={{ gap: '24px', marginTop: '16px' }}>
           <div>
             <div style={{ marginBottom: '14px' }}>
               <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--muted)', display: 'block', marginBottom: '6px' }}>
@@ -216,7 +232,7 @@ export default function AmenitiesView({ filterQueryString = '' }: { filterQueryS
             <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--muted)', display: 'block', marginBottom: '8px' }}>
               TIỆN ÍCH DỰ KIẾN LẮP ĐẶT
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div className="amenity-simulator-options" style={{ gap: '10px' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
                 <input type="checkbox" checked={simBalcony} onChange={(e) => setSimBalcony(e.target.checked)} />
                 Ban công riêng thoáng

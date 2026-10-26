@@ -34,6 +34,10 @@ export interface GoldFilterParams {
   max_dist_beach?: number | null
   max_dist_cbd?: number | null
   max_dist_uni?: number | null
+  min_latitude?: number | null
+  max_latitude?: number | null
+  min_longitude?: number | null
+  max_longitude?: number | null
 }
 
 /**
@@ -42,6 +46,7 @@ export interface GoldFilterParams {
 export interface QueryPaginationOptions {
   page?: number
   pageSize?: number
+  offset?: number
   sortBy?: string
   ascending?: boolean
 }
@@ -205,6 +210,18 @@ export function buildGoldQuery(
   if (isValidFilterValue(filters.max_dist_uni)) {
     query = query.lte('dist_to_nearest_uni', Number(filters.max_dist_uni))
   }
+  if (isValidFilterValue(filters.min_latitude)) {
+    query = query.gte('latitude', Number(filters.min_latitude))
+  }
+  if (isValidFilterValue(filters.max_latitude)) {
+    query = query.lte('latitude', Number(filters.max_latitude))
+  }
+  if (isValidFilterValue(filters.min_longitude)) {
+    query = query.gte('longitude', Number(filters.min_longitude))
+  }
+  if (isValidFilterValue(filters.max_longitude)) {
+    query = query.lte('longitude', Number(filters.max_longitude))
+  }
 
   // 8. Dynamic Sorting
   const sortBy = pagination?.sortBy || 'posted_date'
@@ -218,7 +235,10 @@ export function buildGoldQuery(
   if (pagination?.page && pagination?.pageSize) {
     const page = Math.max(1, pagination.page)
     const pageSize = Math.min(10000, Math.max(1, pagination.pageSize))
-    const from = (page - 1) * pageSize
+    const requestedOffset = pagination.offset
+    const from = Number.isSafeInteger(requestedOffset) && requestedOffset !== undefined
+      ? Math.max(0, requestedOffset)
+      : (page - 1) * pageSize
     const to = from + pageSize - 1
     query = query.range(from, to)
   }
@@ -508,15 +528,20 @@ export interface MapRentalPoint {
   has_mezzanine: number | null
 }
 
+export interface MapCoordinatesResult {
+  points: MapRentalPoint[]
+  total: number
+}
+
 /**
- * Fetches all geographic coordinates in stable pages, overcoming PostgREST's
- * per-request row limit without silently truncating large result sets.
+ * Fetches geographic coordinates in stable pages, overcoming PostgREST's
+ * per-request row limit while keeping the total matching count.
  */
 export async function fetchGoldMapCoordinates(
   filters: GoldFilterParams = {},
   limit: number = Number.POSITIVE_INFINITY,
   client: any = supabaseGold
-): Promise<MapRentalPoint[]> {
+): Promise<MapCoordinatesResult> {
   const selectColumns =
     'list_id, ward_name, category_name, price_vnd, size_m2, price_per_m2_vnd, latitude, longitude, flood_risk_label, dist_to_beach, dist_to_cbd, dist_to_nearest_uni, dist_to_airport, furnishing_status, rooms, has_balcony, has_elevator, private_bathroom, has_parking, wifi, free_hours, has_mezzanine'
 
@@ -549,7 +574,13 @@ export async function fetchGoldMapCoordinates(
         const result = await buildGoldQuery(
           client,
           filters,
-          { page, pageSize: CHUNK_SIZE, sortBy: 'list_id', ascending: true },
+          {
+            page,
+            pageSize: Math.min(CHUNK_SIZE, targetCount - (page - 1) * CHUNK_SIZE),
+            offset: (page - 1) * CHUNK_SIZE,
+            sortBy: 'list_id',
+            ascending: true
+          },
           selectColumns
         )
         if (result.error) {
@@ -570,7 +601,7 @@ export async function fetchGoldMapCoordinates(
     }
   }
 
-  return uniqueRows
+  const points = uniqueRows
     .filter((r) => r.latitude !== null && r.longitude !== null && r.latitude > 15.5 && r.latitude < 16.5 && r.longitude > 107.5 && r.longitude < 108.7)
     .map((r) => ({
       list_id: r.list_id,
@@ -596,6 +627,8 @@ export async function fetchGoldMapCoordinates(
       free_hours: r.free_hours,
       has_mezzanine: r.has_mezzanine
     }))
+
+  return { points, total: matchingCount }
 }
 
 /**

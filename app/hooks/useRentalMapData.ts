@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { MapRentalPoint } from '@/lib/goldQueryService'
+import type { MapRentalPoint } from '@/lib/goldQueryService'
 
 export interface MapDataStats {
   total: number
@@ -17,21 +17,59 @@ export interface MapDataStats {
   luxuryPriceCount: number // > 12m
 }
 
-export function useRentalMapData(filterQueryString: string = '') {
+export interface MapViewportBounds {
+  north: number
+  south: number
+  east: number
+  west: number
+}
+
+export const INITIAL_MAP_VIEWPORT: MapViewportBounds = {
+  north: 16.14,
+  south: 15.98,
+  east: 108.34,
+  west: 108.10
+}
+
+const MAP_POINT_LIMIT = 1500
+
+function toViewportQuery(bounds: MapViewportBounds) {
+  const roundDown = (value: number) => Math.floor(value * 100) / 100
+  const roundUp = (value: number) => Math.ceil(value * 100) / 100
+  return new URLSearchParams({
+    min_latitude: String(roundDown(bounds.south)),
+    max_latitude: String(roundUp(bounds.north)),
+    min_longitude: String(roundDown(bounds.west)),
+    max_longitude: String(roundUp(bounds.east))
+  }).toString()
+}
+
+export function useRentalMapData(
+  filterQueryString: string = '',
+  viewport: MapViewportBounds = INITIAL_MAP_VIEWPORT
+) {
+  const viewportQuery = toViewportQuery(viewport)
   const query = useQuery({
-    queryKey: ['rental-map', filterQueryString],
+    queryKey: ['rental-map', filterQueryString, viewportQuery],
     queryFn: async ({ signal }) => {
-      const url = `/api/gold-query?mode=map${filterQueryString ? `&${filterQueryString}` : ''}`
-      const res = await fetch(url, { signal })
+      const params = new URLSearchParams(filterQueryString)
+      new URLSearchParams(viewportQuery).forEach((value, key) => params.set(key, value))
+      params.set('mode', 'map')
+      params.set('limit', String(MAP_POINT_LIMIT))
+      const res = await fetch(`/api/gold-query?${params.toString()}`, { signal })
       if (!res.ok) {
         throw new Error(`Lỗi tải dữ liệu toạ độ (${res.status})`)
       }
       const json: { points?: MapRentalPoint[]; total?: number; error?: string; message?: string } = await res.json()
-      if (!Array.isArray(json.points)) {
+      if (
+        !Array.isArray(json.points) ||
+        typeof json.total !== 'number' ||
+        !Number.isSafeInteger(json.total) ||
+        json.total < json.points.length
+      ) {
         throw new Error(json.message || json.error || 'Dữ liệu toạ độ trả về không hợp lệ')
       }
-      const pts = json.points
-      return { points: pts, total: json.total ?? pts.length }
+      return { points: json.points, total: json.total }
     }
   })
   const points = query.data?.points ?? []

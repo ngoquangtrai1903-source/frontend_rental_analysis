@@ -10,7 +10,8 @@ const guides = [
   {
     title: 'Vị trí & khu vực',
     steps: [
-      'Kéo bản đồ và phóng to để xem phân bố tin đăng. Bấm điểm trên bản đồ để xem thông tin của tin.',
+      'Bản đồ tải dữ liệu theo khung nhìn hiện tại, hiển thị tối đa 1.500 tọa độ mỗi lượt và gom điểm gần nhau thành cụm. Bấm cụm để phóng to, hoặc kéo bản đồ để tải khu vực khác.',
+      'Bấm điểm đã phóng to để xem thông tin của tin đăng.',
       'Kết hợp bộ lọc khu vực, giá và cự ly để thu hẹp phạm vi tìm kiếm.',
       'Số điểm trên bản đồ có thể ít hơn số tin trong bảng nếu tin thiếu tọa độ hợp lệ.'
     ]

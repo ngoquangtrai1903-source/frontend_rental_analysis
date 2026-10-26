@@ -9,7 +9,8 @@ import {
   X
 } from 'lucide-react'
 import { MapRentalPoint } from '@/lib/goldQueryService'
-import useRentalMapData from '@/app/hooks/useRentalMapData'
+import useRentalMapData, { INITIAL_MAP_VIEWPORT } from '@/app/hooks/useRentalMapData'
+import type { MapViewportBounds } from '@/app/hooks/useRentalMapData'
 import RentalLeaflet from './RentalLeaflet'
 import { getPriceTierTheme, getFloodRiskBadge, formatVndPrice } from './MapMarkerPopup'
 
@@ -22,10 +23,18 @@ export default function LocationMapView({
   filterQueryString = '',
   activeFiltersCount = 0
 }: LocationMapViewProps) {
-  const { points, loading, totalCount, stats, error, refetch } = useRentalMapData(filterQueryString)
+  const [viewport, setViewport] = useState(INITIAL_MAP_VIEWPORT)
+  const { points, loading, totalCount, stats, error, refetch } = useRentalMapData(filterQueryString, viewport)
   const [selectedPoint, setSelectedPoint] = useState<MapRentalPoint | null>(null)
   const handleSelectPoint = useCallback((point: MapRentalPoint | null) => {
     setSelectedPoint(point)
+  }, [])
+  const handleViewportChange = useCallback((nextViewport: MapViewportBounds) => {
+    setViewport((current) => {
+      const changed = (Object.keys(nextViewport) as Array<keyof MapViewportBounds>)
+        .some((key) => Math.abs(nextViewport[key] - current[key]) >= 0.005)
+      return changed ? nextViewport : current
+    })
   }, [])
 
   return (
@@ -61,9 +70,11 @@ export default function LocationMapView({
           <span>TỔNG TOẠ ĐỘ HIỂN THỊ</span>
           <strong>{points.length.toLocaleString()} tin</strong>
           <small>
-            {activeFiltersCount > 0
-              ? `Lọc theo ${activeFiltersCount} tiêu chí từ thanh bộ lọc trên cùng`
-              : 'Tải toàn bộ 100% dữ liệu toạ độ sẵn có từ kho gold'}
+            {totalCount > points.length
+              ? `Đang hiển thị tối đa ${points.length.toLocaleString()} / ${totalCount.toLocaleString()} tọa độ trong khung bản đồ${activeFiltersCount > 0 ? ` · ${activeFiltersCount} điều kiện lọc` : ''}. Phóng to để xem cụ thể hơn.`
+              : activeFiltersCount > 0
+                ? `Lọc theo ${activeFiltersCount} tiêu chí và khung bản đồ hiện tại`
+                : 'Tọa độ phù hợp trong khung bản đồ hiện tại'}
           </small>
         </div>
 
@@ -88,7 +99,14 @@ export default function LocationMapView({
       <RentalLeaflet
         points={points}
         onSelectPoint={(point) => handleSelectPoint(point)}
+        onViewportChange={handleViewportChange}
       />
+
+      {!loading && !error && points.length === 0 && (
+        <div role="status" className="card chart-empty-state">
+          Không có tin đăng có tọa độ trong khu vực bản đồ hiện tại.
+        </div>
+      )}
 
       {/* 4. Selected Property Detailed Inspector Card */}
       {selectedPoint && (
@@ -122,7 +140,7 @@ export default function LocationMapView({
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginTop: '16px' }}>
+          <div className="selected-point-grid" style={{ gap: '16px', marginTop: '16px' }}>
             <div>
               <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>GIÁ THUÊ NIÊM YẾT</span>
               <div style={{ font: '800 22px Manrope', color: getPriceTierTheme(selectedPoint.price_vnd).color, marginTop: '3px' }}>

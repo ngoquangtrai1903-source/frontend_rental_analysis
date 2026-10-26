@@ -181,6 +181,26 @@ export default function DashboardPage() {
   const signingOut = useRef(false)
   const dashboardRequestId = useRef(0)
   const accountMenuRef = useRef<HTMLDivElement>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
+  const modalTriggerRef = useRef<HTMLElement | null>(null)
+  const modalOpen = settingsOpen || helpOpen
+
+  const openSettings = () => {
+    modalTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    setHelpOpen(false)
+    setSettingsOpen(true)
+  }
+
+  const openHelp = () => {
+    modalTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    setSettingsOpen(false)
+    setHelpOpen(true)
+  }
+
+  const closeModal = () => {
+    setSettingsOpen(false)
+    setHelpOpen(false)
+  }
 
   useEffect(() => {
     try {
@@ -263,6 +283,52 @@ export default function DashboardPage() {
       document.removeEventListener('keydown', closeOnEscape)
     }
   }, [accountMenuOpen])
+
+  useEffect(() => {
+    if (!modalOpen) return
+
+    const modal = modalRef.current
+    const getFocusableElements = () => Array.from(
+      modal?.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      ) ?? []
+    )
+    getFocusableElements()[0]?.focus()
+
+    const keepFocusInside = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        closeModal()
+        return
+      }
+      if (event.key !== 'Tab') return
+
+      const focusable = getFocusableElements()
+      if (focusable.length === 0) {
+        event.preventDefault()
+        modal?.focus()
+        return
+      }
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && (document.activeElement === first || !modal?.contains(document.activeElement))) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && (document.activeElement === last || !modal?.contains(document.activeElement))) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', keepFocusInside)
+    return () => {
+      document.removeEventListener('keydown', keepFocusInside)
+      const trigger = modalTriggerRef.current
+      if (trigger?.isConnected) trigger.focus()
+      else document.querySelector<HTMLElement>('.top-avatar')?.focus()
+    }
+  }, [modalOpen])
 
   const signInWithGoogle = async () => {
     setAuthLoading(true)
@@ -657,8 +723,8 @@ export default function DashboardPage() {
           })}
         </nav>
         <div className="sidebar-bottom">
-          <button className="nav-item" onClick={() => setSettingsOpen(true)}><Settings2 size={18} /><span>Cài đặt</span></button>
-          <button className="nav-item" onClick={() => setHelpOpen(true)}><CircleHelp size={18} /><span>Trợ giúp</span></button>
+          <button className="nav-item" onClick={openSettings}><Settings2 size={18} /><span>Cài đặt</span></button>
+          <button className="nav-item" onClick={openHelp}><CircleHelp size={18} /><span>Trợ giúp</span></button>
         </div>
       </aside>
 
@@ -684,11 +750,12 @@ export default function DashboardPage() {
               />
               <kbd>⌘ K</kbd>
             </div>
-            <button className="icon-button" aria-label="Notifications" onClick={() => setNotificationsOpen(!notificationsOpen)}><Bell size={18} /><i /></button>
+            <button className="icon-button" aria-label="Thông báo" title="Thông báo và trạng thái dữ liệu" onClick={() => setNotificationsOpen(!notificationsOpen)}><Bell size={18} /><i /></button>
             <div className="account-menu-anchor" ref={accountMenuRef}>
               <button
                 className="top-avatar"
                 aria-label="Mở menu tài khoản"
+                title={userEmail ? `Tài khoản: ${userEmail}` : 'Mở menu tài khoản'}
                 aria-expanded={accountMenuOpen}
                 aria-haspopup="menu"
                 onClick={() => setAccountMenuOpen((open) => !open)}
@@ -712,7 +779,7 @@ export default function DashboardPage() {
                           <small>{userEmail}</small>
                         </div>
                       </div>
-                      <button role="menuitem" onClick={() => { setSettingsOpen(true); setAccountMenuOpen(false) }}>
+                      <button role="menuitem" onClick={() => { openSettings(); setAccountMenuOpen(false) }}>
                         <Settings2 size={14} /> Hồ sơ & cài đặt
                       </button>
                       <button role="menuitem" className="account-signout" onClick={() => void signOut()}>
@@ -728,7 +795,7 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
-            <button className="mobile-menu" aria-label="Menu" onClick={() => setMobileNavOpen(!mobileNavOpen)}><Menu size={20} /></button>
+            <button className="mobile-menu" aria-label="Menu điều hướng" title="Mở menu điều hướng" onClick={() => setMobileNavOpen(!mobileNavOpen)}><Menu size={20} /></button>
           </div>
         </header>
 
@@ -738,10 +805,14 @@ export default function DashboardPage() {
           {!filtering && !errorMessage && <p>{totalCount.toLocaleString('vi-VN')} tin đăng phù hợp với bộ lọc hiện tại.</p>}
           <button onClick={() => { setNotificationsOpen(false); void fetchDashboardData() }}>Làm mới ngay</button><button onClick={() => setNotificationsOpen(false)}>Đóng</button>
         </div>}
-        {mobileNavOpen && <div className="mobile-nav-popover">{navItems.map((item) => <button key={item.label} onClick={() => { setActiveNav(item.label); setMobileNavOpen(false) }}>{item.label}</button>)}</div>}
-        {(settingsOpen || helpOpen) && <div className="modal-backdrop" onClick={() => { setSettingsOpen(false); setHelpOpen(false) }}><div className="quick-modal" onClick={(e) => e.stopPropagation()}>
+        {mobileNavOpen && <div className="mobile-nav-popover">
+          {navItems.map((item) => <button key={item.label} onClick={() => { setActiveNav(item.label); setMobileNavOpen(false) }}>{item.label}</button>)}
+          <button onClick={() => { setMobileNavOpen(false); openSettings() }}>Cài đặt</button>
+          <button onClick={() => { setMobileNavOpen(false); openHelp() }}>Trợ giúp</button>
+        </div>}
+        {modalOpen && <div className="modal-backdrop" onClick={closeModal}><div ref={modalRef} className="quick-modal" role="dialog" aria-modal="true" aria-labelledby="dashboard-modal-title" tabIndex={-1} onClick={(e) => e.stopPropagation()}>
           {settingsOpen ? <>
-            <div className="modal-heading"><div><span className="modal-eyebrow">WORKSPACE</span><h3>Cài đặt dashboard</h3><p>Tùy chỉnh trải nghiệm hiển thị và dữ liệu.</p></div><button className="modal-close-button" aria-label="Đóng" onClick={() => setSettingsOpen(false)}><X size={17} /></button></div>
+            <div className="modal-heading"><div><span className="modal-eyebrow">WORKSPACE</span><h3 id="dashboard-modal-title">Cài đặt dashboard</h3><p>Tùy chỉnh trải nghiệm hiển thị và dữ liệu.</p></div><button className="modal-close-button" aria-label="Đóng" title="Đóng cài đặt" onClick={closeModal}><X size={17} /></button></div>
             <div className="settings-group"><span className="settings-group-title">Giao diện</span>
               <label className="setting-row"><span><strong>Chế độ tối</strong><small>Giảm độ sáng khi làm việc ban đêm</small></span><input type="checkbox" checked={darkMode} onChange={(e) => setDarkMode(e.target.checked)} /></label>
             </div>
@@ -750,10 +821,10 @@ export default function DashboardPage() {
             </div>
             <div className="settings-status"><span className="live-dot" /> {settingsSaved ? 'Cài đặt đã lưu trên trình duyệt này' : 'Cài đặt chỉ áp dụng trong phiên này; chưa lưu được trên trình duyệt'}</div>
           </> : <>
-            <div className="modal-heading"><div><span className="modal-eyebrow">HƯỚNG DẪN</span><h3>Trợ giúp</h3></div><button className="modal-close-button" aria-label="Đóng" onClick={() => setHelpOpen(false)}><X size={17} /></button></div>
+            <div className="modal-heading"><div><span className="modal-eyebrow">HƯỚNG DẪN</span><h3 id="dashboard-modal-title">Trợ giúp</h3></div><button className="modal-close-button" aria-label="Đóng" title="Đóng hướng dẫn" onClick={closeModal}><X size={17} /></button></div>
             <DashboardHelp activeNav={activeNav} />
           </>}
-          <button className="button primary modal-action" onClick={() => { setSettingsOpen(false); setHelpOpen(false) }}>Đã hiểu</button>
+          <button className="button primary modal-action" onClick={closeModal}>Đã hiểu</button>
         </div></div>}
 
         <div className="page-wrap">
@@ -1039,12 +1110,18 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Active Filter Chips */}
+          {/* Active Filter Summary */}
           {activeFiltersCount > 0 && (
-            <div className="active-filters-wrap">
+            <div className="active-filters-wrap" aria-label="Điều kiện lọc đang áp dụng">
               <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>
-                Đang lọc ({activeFiltersCount}):
+                Điều kiện đang áp dụng ({activeFiltersCount})
               </span>
+              {(startDate || endDate) && (
+                <span className="filter-chip">
+                  Ngày đăng: {startDate || 'bất kỳ'} — {endDate || 'bất kỳ'}
+                  <button aria-label="Xóa điều kiện ngày đăng" title="Xóa điều kiện ngày đăng" onClick={() => { setStartDate(''); setEndDate(''); setPage(1) }}><X size={12} /></button>
+                </span>
+              )}
               {wardFilter && (
                 <span className="filter-chip">
                   Khu vực: {wardFilter}
@@ -1384,7 +1461,7 @@ export default function DashboardPage() {
                         subtitle={`Hiển thị ${records.length} / ${totalCount.toLocaleString()} kết quả`}
                         action=""
                       />
-                      <div className="activity-table">
+                      <div className="activity-table" aria-busy={filtering}>
                         <div className="table-head">
                           <span>KHU VỰC</span>
                           <span>GIÁ THUÊ</span>
@@ -1392,7 +1469,15 @@ export default function DashboardPage() {
                           <span>RỦI RO NGẬP</span>
                           <span>NGÀY ĐĂNG</span>
                         </div>
-                        {records.length === 0 ? (
+                        {filtering ? (
+                          <div className="listings-skeleton" role="status" aria-label="Đang tải tin đăng">
+                            {Array.from({ length: 5 }, (_, index) => (
+                              <div className="listings-skeleton-row" aria-hidden="true" key={index}>
+                                <span /><span /><span /><span /><span />
+                              </div>
+                            ))}
+                          </div>
+                        ) : records.length === 0 ? (
                           <div style={{ padding: '30px', textAlign: 'center', color: 'var(--muted)' }}>
                             Không tìm thấy tin đăng nào phù hợp với bộ lọc hiện tại.
                           </div>

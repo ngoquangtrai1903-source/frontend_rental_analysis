@@ -39,6 +39,7 @@ export default function DashboardCharts({ trend, distribution, total }: Dashboar
     value: item.percentage,
     color: COLORS[index % COLORS.length]
   }))
+  const hasDistribution = total > 0 && pie.some((item) => item.percentage > 0)
 
   return (
     <section className="main-grid" aria-label="Biểu đồ tổng quan">
@@ -54,7 +55,7 @@ export default function DashboardCharts({ trend, distribution, total }: Dashboar
           <span><i className="legend-orange" /> Giá TB (triệu VNĐ)</span>
         </div>
         <div className="chart-frame">
-          {trend.length > 0 ? (
+          {trend.length > 0 && total > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trend} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e8edf5" />
@@ -108,38 +109,46 @@ export default function DashboardCharts({ trend, distribution, total }: Dashboar
         </div>
         <div className="distribution-content">
           <div className="chart-frame distribution-chart">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Tooltip />
-                <Pie
-                  data={pie}
-                  dataKey="value"
-                  nameKey="label"
-                  innerRadius="58%"
-                  outerRadius="82%"
-                  paddingAngle={2}
-                >
-                  {pie.map((item) => (
-                    <Cell key={item.label} fill={item.color} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="chart-center" aria-label={`${total.toLocaleString()} tin đăng`}>
-              <strong>{total.toLocaleString()}</strong>
-              <small>tin đăng</small>
-            </div>
+            {hasDistribution ? (
+              <>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Tooltip />
+                    <Pie
+                      data={pie}
+                      dataKey="value"
+                      nameKey="label"
+                      innerRadius="58%"
+                      outerRadius="82%"
+                      paddingAngle={2}
+                    >
+                      {pie.map((item) => (
+                        <Cell key={item.label} fill={item.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="chart-center" aria-label={`${total.toLocaleString()} tin đăng`}>
+                  <strong>{total.toLocaleString()}</strong>
+                  <small>tin đăng</small>
+                </div>
+              </>
+            ) : (
+              <div className="chart-empty" role="status">
+                Chưa đủ dữ liệu để phân loại khoảng giá.
+              </div>
+            )}
           </div>
-          <div className="donut-legend">
+          {hasDistribution && <div className="donut-legend">
             {pie.map((item) => (
               <span key={item.label}>
                 <i style={{ background: item.color }} />
                 {item.label}: {item.percentage}%
               </span>
             ))}
-          </div>
+          </div>}
         </div>
-        {pie[0] && (
+        {hasDistribution && pie[0] && (
           <p className="chart-insight">
             Phân khúc {pie[0].label} chiếm {pie[0].percentage}% lượng tin đăng sau khi lọc.
           </p>

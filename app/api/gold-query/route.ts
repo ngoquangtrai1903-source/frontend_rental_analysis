@@ -66,6 +66,29 @@ export async function GET(request: NextRequest) {
     const maxDistUni = searchParams.get('max_dist_uni')
     if (maxDistUni) filters.max_dist_uni = Number(maxDistUni)
 
+    const mapBounds = ['min_latitude', 'max_latitude', 'min_longitude', 'max_longitude'] as const
+    const suppliedMapBounds = mapBounds.map((key) => searchParams.has(key))
+    if (suppliedMapBounds.some(Boolean) && !suppliedMapBounds.every(Boolean)) {
+      return NextResponse.json({ error: 'Incomplete map viewport bounds' }, { status: 400 })
+    }
+    if (suppliedMapBounds.every(Boolean)) {
+      const bounds = Object.fromEntries(
+        mapBounds.map((key) => [key, Number(searchParams.get(key))])
+      ) as Record<(typeof mapBounds)[number], number>
+      if (
+        !Object.values(bounds).every(Number.isFinite) ||
+        bounds.min_latitude < 15.5 ||
+        bounds.max_latitude > 16.5 ||
+        bounds.min_longitude < 107.5 ||
+        bounds.max_longitude > 108.7 ||
+        bounds.min_latitude >= bounds.max_latitude ||
+        bounds.min_longitude >= bounds.max_longitude
+      ) {
+        return NextResponse.json({ error: 'Invalid map viewport bounds' }, { status: 400 })
+      }
+      Object.assign(filters, bounds)
+    }
+
     // Amenity filters
     const amenities = [
       'has_balcony',
@@ -128,8 +151,8 @@ export async function GET(request: NextRequest) {
       }
       const coordinates = await fetchGoldMapCoordinates(filters, limit)
       return NextResponse.json({
-        total: coordinates.length,
-        points: coordinates
+        total: coordinates.total,
+        points: coordinates.points
       })
     }
 

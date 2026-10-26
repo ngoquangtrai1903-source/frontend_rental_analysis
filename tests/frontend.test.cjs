@@ -5,6 +5,8 @@ const { renderToStaticMarkup } = require('react-dom/server')
 const loadTs = require('./load-ts.cjs')
 const { toCsv, fetchAllRecords } = loadTs('lib/csv.ts')
 const { default: DashboardHelp } = loadTs('app/components/DashboardHelp.tsx')
+const { default: DashboardCharts } = loadTs('app/components/DashboardCharts.tsx')
+const { clusterMapPoints } = loadTs('lib/mapClustering.ts')
 const { useFilterStore } = loadTs('app/store/filterStore.ts')
 
 test('CSV preserves commas, quotes, newlines, nulls and Vietnamese', () => {
@@ -61,4 +63,27 @@ test('Help renders all five tabs and opens only the current guide', () => {
     assert.ok(html.includes('Bộ lọc và tìm kiếm'))
     assert.ok(html.includes('Xuất CSV'))
   }
+})
+
+test('charts explain when filtered data is insufficient', () => {
+  const html = renderToStaticMarkup(React.createElement(DashboardCharts, {
+    trend: [],
+    distribution: [],
+    total: 0
+  }))
+  assert.ok(html.includes('Không có dữ liệu trong khoảng thời gian đã chọn.'))
+  assert.ok(html.includes('Chưa đủ dữ liệu để phân loại khoảng giá.'))
+})
+
+test('map points cluster at low zoom and separate when zoomed in', () => {
+  const points = [
+    { list_id: 'one', latitude: 16.061, longitude: 108.22 },
+    { list_id: 'two', latitude: 16.062, longitude: 108.221 },
+    { list_id: 'three', latitude: 16.2, longitude: 108.4 }
+  ]
+
+  const zoomedOut = clusterMapPoints(points, 12)
+  assert.equal(zoomedOut.length, 2)
+  assert.equal(zoomedOut.find((cluster) => cluster.points.length === 2)?.points.length, 2)
+  assert.equal(clusterMapPoints(points, 16).length, 3)
 })

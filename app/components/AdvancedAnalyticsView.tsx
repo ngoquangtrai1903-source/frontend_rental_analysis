@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   BarChart3,
   TrendingUp,
@@ -56,39 +57,42 @@ interface FurnishingTier {
 
 export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filterQueryString?: string }) {
   const [selectedHotspot, setSelectedHotspot] = useState<'beach' | 'cbd' | 'airport' | 'university'>('beach')
-  const [hotspotData, setHotspotData] = useState<HotspotTier[]>([])
-  const [amenityData, setAmenityData] = useState<AmenityLift[]>([])
-  const [matrixData, setMatrixData] = useState<MatrixItem[]>([])
-  const [furnishingData, setFurnishingData] = useState<FurnishingTier[]>([])
-  const [loading, setLoading] = useState(true)
+  const query = useQuery({
+    queryKey: ['advanced-analytics', selectedHotspot, filterQueryString],
+    queryFn: async ({ signal }) => {
+      const url = `/api/gold-query?mode=analytics_all&hotspot=${selectedHotspot}${filterQueryString ? `&${filterQueryString}` : ''}`
+      const res = await fetch(url, { signal })
+      if (!res.ok) {
+        const response = await res.json().catch(() => ({}))
+        throw new Error(response.message || response.error || `Lỗi máy chủ (${res.status})`)
+      }
+      const json: {
+        hotspotDecay?: HotspotTier[]
+        amenityPricing?: AmenityLift[]
+        investmentMatrix?: MatrixItem[]
+        furnishingStats?: FurnishingTier[]
+      } = await res.json()
+      if (
+        !Array.isArray(json.hotspotDecay) ||
+        !Array.isArray(json.amenityPricing) ||
+        !Array.isArray(json.investmentMatrix) ||
+        !Array.isArray(json.furnishingStats)
+      ) {
+        throw new Error('Dữ liệu phân tích nâng cao trả về không hợp lệ.')
+      }
+      return json as Required<typeof json>
+    }
+  })
+  const hotspotData = query.data?.hotspotDecay ?? []
+  const amenityData = query.data?.amenityPricing ?? []
+  const matrixData = query.data?.investmentMatrix ?? []
+  const furnishingData = query.data?.furnishingStats ?? []
+  const loading = query.isLoading
 
   // Decision Advisor Form State
   const [targetBudget, setTargetBudget] = useState<number>(5000000)
   const [targetGoal, setTargetGoal] = useState<'student' | 'expat' | 'family'>('expat')
   const [targetWard, setTargetWard] = useState<string>('all')
-
-  // Fetch advanced analytics data
-  useEffect(() => {
-    async function loadAnalytics() {
-      setLoading(true)
-      try {
-        const url = `/api/gold-query?mode=analytics_all&hotspot=${selectedHotspot}${filterQueryString ? `&${filterQueryString}` : ''}`
-        const res = await fetch(url)
-        if (res.ok) {
-          const json = await res.json()
-          setHotspotData(json.hotspotDecay || [])
-          setAmenityData(json.amenityPricing || [])
-          setMatrixData(json.investmentMatrix || [])
-          setFurnishingData(json.furnishingStats || [])
-        }
-      } catch (e) {
-        console.error('Failed to load advanced analytics:', e)
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadAnalytics()
-  }, [selectedHotspot, filterQueryString])
 
   // Hotspot Chart Max Values for SVG scaling
   const maxPrice = useMemo(() => {
@@ -100,12 +104,12 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
   const adviceResult = useMemo(() => {
     if (matrixData.length === 0) {
       return {
-        title: 'Đang phân tích dữ liệu Supabase...',
-        expectedRent: '...',
-        targetPpm2: '...',
-        mustHaveAmenities: ['Đang tải...'],
-        strategy: 'Đang tổng hợp dữ liệu từ Data Warehouse...',
-        score: 90,
+        title: loading ? 'Đang phân tích dữ liệu Supabase...' : 'Chưa có dữ liệu phù hợp',
+        expectedRent: loading ? '...' : '—',
+        targetPpm2: loading ? '...' : '—',
+        mustHaveAmenities: [],
+        strategy: loading ? 'Đang tổng hợp dữ liệu từ Data Warehouse...' : 'Thử bỏ bớt điều kiện lọc hoặc chọn lại bộ lọc.',
+        score: 0,
         sampleCount: 0
       }
     }
@@ -128,7 +132,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
         title: `Phân khúc Căn hộ Biển Cao Cấp (${wardNames})`,
         expectedRent: `${(avgPrice * 0.85).toFixed(1)} — ${(avgPrice * 1.25).toFixed(1)} triệu / tháng`,
         targetPpm2: `${(avgPpm2 * 0.9).toFixed(0)} — ${(avgPpm2 * 1.15).toFixed(0)} đ/m²`,
-        mustHaveAmenities: topAmenities.length > 0 ? topAmenities : ['Ban công view biển', 'Thang máy', 'Full nội thất'],
+        mustHaveAmenities: topAmenities,
         strategy: `Khảo sát từ ${totalSupply} bài đăng thực tế tại ${wardNames}. Khách thuê chủ yếu là chuyên gia IT, expat và khách du lịch lưu trú dài hạn. Lợi suất cho thuê ước tính 8.5% — 10.5%/năm.`,
         score: Math.round(targetList[0]?.investmentScore || 95),
         sampleCount: totalSupply
@@ -147,7 +151,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
         title: `Phòng trọ Sinh viên & Người đi làm (${wardNames})`,
         expectedRent: `${(avgPrice * 0.85).toFixed(1)} — ${(avgPrice * 1.2).toFixed(1)} triệu / tháng`,
         targetPpm2: `${(avgPpm2 * 0.9).toFixed(0)} — ${(avgPpm2 * 1.15).toFixed(0)} đ/m²`,
-        mustHaveAmenities: topAmenities.length > 0 ? topAmenities : ['Gác lửng', 'Giờ tự do', 'WC riêng'],
+        mustHaveAmenities: topAmenities,
         strategy: `Khảo sát từ ${totalSupply} bài đăng thực tế tại ${wardNames}. Cụm sinh viên Đại học Bách Khoa, Sư Phạm và khu công nghiệp. Tỷ lệ lấp đầy thực tế > 95%, ít rủi ro biến động mùa vụ.`,
         score: Math.round(targetList[0]?.investmentScore || 88),
         sampleCount: totalSupply
@@ -171,7 +175,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
       score: 89,
       sampleCount: totalSupply
     }
-  }, [matrixData, amenityData, targetGoal])
+  }, [matrixData, amenityData, targetGoal, loading])
 
   return (
     <div className="workspace-view">
@@ -190,6 +194,15 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
         </span>
       </div>
 
+      {query.isError && (
+        <div role="alert" className="card data-error-state">
+          <span>Không tải được dữ liệu phân tích: {query.error.message}</span>
+          <button type="button" className="button secondary" onClick={() => void query.refetch()}>
+            Thử tải lại
+          </button>
+        </div>
+      )}
+
       {/* SECTION 1: DISTANCE DECAY ANALYSIS */}
       <div className="card" style={{ padding: '24px', background: '#ffffff' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '14px' }}>
@@ -203,7 +216,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div className="hotspot-controls">
             <button
               className={`button ${selectedHotspot === 'beach' ? 'primary' : 'secondary'}`}
               onClick={() => setSelectedHotspot('beach')}
@@ -239,16 +252,17 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
           </div>
 
           {/* SVG Visual Bars */}
-          <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid var(--line)' }}>
-            <svg viewBox="0 0 800 160" style={{ width: '100%', height: '160px' }}>
-              {hotspotData.map((d, idx) => {
-                const colWidth = 140
-                const x = 50 + idx * 190
-                const barHeight = (d.avgPriceMillion / maxPrice) * 110
-                const y = 130 - barHeight
+          {hotspotData.length > 0 ? (
+            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid var(--line)' }}>
+              <svg viewBox="0 0 800 160" style={{ width: '100%', height: '160px' }}>
+                {hotspotData.map((d, idx) => {
+                  const colWidth = 140
+                  const x = 50 + idx * 190
+                  const barHeight = (d.avgPriceMillion / maxPrice) * 110
+                  const y = 130 - barHeight
 
-                return (
-                  <g key={d.tier}>
+                  return (
+                    <g key={d.tier}>
                     {/* Background bar slot */}
                     <rect x={x} y={20} width={colWidth} height={110} fill="#edf2f7" rx={6} />
                     {/* Active price bar */}
@@ -296,15 +310,20 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
                     >
                       {d.tier}
                     </text>
-                  </g>
-                )
-              })}
-            </svg>
-          </div>
+                    </g>
+                  )
+                })}
+              </svg>
+            </div>
+          ) : (
+            <div role="status" className="chart-empty-state">
+              {loading ? 'Đang tải dữ liệu theo khoảng cách…' : 'Chưa đủ dữ liệu để lập biểu đồ khoảng cách.'}
+            </div>
+          )}
 
           {/* Metric Cards Row */}
-          <div className="decay-grid">
-            {hotspotData.map((tier, idx) => (
+          {hotspotData.length > 0 && <div className="decay-grid">
+            {hotspotData.map((tier) => (
               <div className="decay-card" key={tier.tier}>
                 <span className="decay-tier">{tier.tier}</span>
                 <div className="decay-price">{tier.avgPriceMillion} tr/tháng</div>
@@ -316,7 +335,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
                 </div>
               </div>
             ))}
-          </div>
+          </div>}
         </div>
       </div>
 
@@ -330,7 +349,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
           Đánh giá hiệu quả đầu tư trang bị nội thất trọn gói đối với biên độ tăng giá thuê hàng tháng.
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
+        {furnishingData.length > 0 ? <div className="furnishing-grid">
           {furnishingData.map((f, i) => (
             <div
               key={f.status}
@@ -359,7 +378,9 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
               )}
             </div>
           ))}
-        </div>
+        </div> : <div role="status" className="chart-empty-state">
+          {loading ? 'Đang tải dữ liệu nội thất…' : 'Chưa đủ dữ liệu để so sánh các mức nội thất.'}
+        </div>}
       </div>
 
       {/* SECTION 3: INVESTMENT MATRIX BY WARD */}
@@ -415,6 +436,9 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
                   </td>
                 </tr>
               ))}
+              {!loading && matrixData.length === 0 && (
+                <tr><td colSpan={9}><div role="status" className="chart-empty-state">Chưa có dữ liệu khu vực phù hợp với bộ lọc hiện tại.</div></td></tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -445,7 +469,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '24px', marginTop: '20px' }}>
+        <div className="advisor-grid" style={{ gap: '24px', marginTop: '20px' }}>
           {/* Controls */}
           <div>
             <label style={{ fontSize: '11px', color: '#93a4c2', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
@@ -491,7 +515,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
               {adviceResult.title}
             </h4>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', margin: '12px 0' }}>
+            <div className="advisor-result-grid" style={{ gap: '12px', margin: '12px 0' }}>
               <div>
                 <span style={{ fontSize: '10px', color: '#93a4c2' }}>Khung giá cho thuê tối ưu</span>
                 <div style={{ font: '800 16px Manrope', color: '#38bdf8' }}>{adviceResult.expectedRent}</div>
