@@ -210,6 +210,9 @@ export function buildGoldQuery(
   const sortBy = pagination?.sortBy || 'posted_date'
   const ascending = pagination?.ascending ?? false
   query = query.order(sortBy, { ascending, nullsFirst: false })
+  // Stable pagination when several listings share the same date or price.
+  if (sortBy !== 'source') query = query.order('source', { ascending: true })
+  if (sortBy !== 'list_id') query = query.order('list_id', { ascending: true })
 
   // 9. Dynamic Pagination (.range())
   if (pagination?.page && pagination?.pageSize) {
@@ -405,14 +408,48 @@ export async function fetchGoldTrendData(
   filters: GoldFilterParams = {},
   client: any = supabaseGold
 ) {
-  const query = buildGoldQuery(client, filters, undefined, 'posted_date, price_vnd')
-  const { data, error } = await query
+  const chunkSize = 1000
+  const firstPage = await buildGoldQuery(
+    client,
+    filters,
+    { page: 1, pageSize: chunkSize, sortBy: 'posted_date', ascending: true },
+    'posted_date, price_vnd'
+  )
+  const { data: firstRows, count, error: firstError } = await firstPage
 
-  if (error) {
-    throw new Error(`Failed to fetch trend data from gold: ${error.message}`)
+  if (firstError) {
+    throw new Error(`Failed to fetch trend data from gold: ${firstError.message}`)
   }
 
-  const rows = (data as unknown as Array<{ posted_date: string | null; price_vnd: number | null }>) || []
+  const rows = (firstRows ?? []) as Array<{ posted_date: string | null; price_vnd: number | null }>
+  const expectedCount = count ?? rows.length
+  const pageCount = Math.ceil(expectedCount / chunkSize)
+
+  for (let firstPageNumber = 2; firstPageNumber <= pageCount; firstPageNumber += 4) {
+    const pageNumbers = Array.from(
+      { length: Math.min(4, pageCount - firstPageNumber + 1) },
+      (_, index) => firstPageNumber + index
+    )
+    const pages = await Promise.all(
+      pageNumbers.map(async (page) => {
+        const result = await buildGoldQuery(
+          client,
+          filters,
+          { page, pageSize: chunkSize, sortBy: 'posted_date', ascending: true },
+          'posted_date, price_vnd'
+        )
+        if (result.error) {
+          throw new Error(`Failed to fetch trend data page ${page} from gold: ${result.error.message}`)
+        }
+        return (result.data ?? []) as Array<{ posted_date: string | null; price_vnd: number | null }>
+      })
+    )
+    rows.push(...pages.flat())
+  }
+
+  if (rows.length !== expectedCount) {
+    throw new Error(`Trend query returned ${rows.length} of ${expectedCount} matching rows`)
+  }
 
   // Group by month YYYY-MM
   const monthMap: Record<string, { count: number; sumPrice: number; priceCount: number }> = {}
@@ -431,7 +468,7 @@ export async function fetchGoldTrendData(
   }
 
   const sortedMonths = Object.keys(monthMap).sort()
-  return sortedMonths.slice(-7).map((month) => {
+  return sortedMonths.map((month) => {
     const item = monthMap[month]
     return {
       period: month,

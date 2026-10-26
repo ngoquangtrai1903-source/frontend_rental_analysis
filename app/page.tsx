@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import AmenitiesView from './components/AmenitiesView'
 import FloodRiskView from './components/FloodRiskView'
 import AdvancedAnalyticsView from './components/AdvancedAnalyticsView'
 import DashboardCharts from './components/DashboardCharts'
+import DashboardHelp from './components/DashboardHelp'
 import { useFilterStore } from './store/filterStore'
 
 const LocationMapView = dynamic(() => import('./components/LocationMapView'), {
@@ -55,6 +56,34 @@ import {
   LogOut
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { fetchAllRecords, toCsv } from '@/lib/csv'
+
+const SETTINGS_STORAGE_KEY = 'rentiq.dashboard.settings.v1'
+
+function getProfileAvatarUrl(user: {
+  user_metadata?: Record<string, unknown>
+  identities?: Array<{ provider?: string; identity_data?: Record<string, unknown> | null }> | null
+} | null | undefined): string | null {
+  const googleIdentity = user?.identities?.find((identity) => identity.provider === 'google')
+  const candidates = [
+    googleIdentity?.identity_data?.picture,
+    googleIdentity?.identity_data?.avatar_url,
+    user?.user_metadata?.picture,
+    user?.user_metadata?.avatar_url
+  ]
+
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string') continue
+    try {
+      const url = new URL(candidate)
+      if (url.protocol === 'https:') return url.href
+    } catch {
+      continue
+    }
+  }
+
+  return null
+}
 
 const navItems = [
   { label: 'Tổng quan', icon: LayoutDashboard },
@@ -136,6 +165,9 @@ export default function DashboardPage() {
   const [filterOpen, setFilterOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('Tổng quan')
   const [darkMode, setDarkMode] = useState(false)
+  const [autoRefresh, setAutoRefresh] = useState(true)
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
+  const [settingsSaved, setSettingsSaved] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
@@ -143,24 +175,119 @@ export default function DashboardPage() {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null)
   const [authLoading, setAuthLoading] = useState(false)
+  const [authMessage, setAuthMessage] = useState('')
+  const signingOut = useRef(false)
+  const dashboardRequestId = useRef(0)
+  const accountMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || 'null')
+      if (saved && typeof saved === 'object') {
+        if (typeof saved.darkMode === 'boolean') setDarkMode(saved.darkMode)
+        if (typeof saved.autoRefresh === 'boolean') setAutoRefresh(saved.autoRefresh)
+      }
+    } catch {
+      // Unavailable storage or invalid saved data must not prevent using the app.
+    } finally {
+      setSettingsLoaded(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!settingsLoaded) return
+    document.body.classList.toggle('dark-mode', darkMode)
+    try {
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({ darkMode, autoRefresh }))
+      setSettingsSaved(true)
+    } catch {
+      setSettingsSaved(false)
+    }
+  }, [settingsLoaded, darkMode, autoRefresh])
 
   useEffect(() => {
     let mounted = true
-    void supabase.auth.getUser().then(({ data }) => { if (mounted) setUserEmail(data.user?.email ?? null) })
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (mounted) setUserEmail(session?.user?.email ?? null)
+    let hadSession = false
+    const url = new URL(window.location.href)
+    if (url.searchParams.has('auth_error')) {
+      setAuthMessage('Không thể hoàn tất đăng nhập Google. Vui lòng thử lại.')
+      url.searchParams.delete('auth_error')
+      window.history.replaceState(null, '', url)
+    }
+    const checkSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession()
+        if (!mounted) return
+        if (error) throw error
+        if (hadSession && !data.session && !signingOut.current) setAuthMessage('Phiên đăng nhập đã kết thúc. Vui lòng đăng nhập lại.')
+        hadSession = Boolean(data.session)
+        setUserEmail(data.session?.user.email ?? null)
+        setUserAvatarUrl(getProfileAvatarUrl(data.session?.user))
+      } catch (error) {
+        console.error('Failed to read Supabase auth session:', error)
+        if (mounted) setAuthMessage('Không thể kiểm tra phiên đăng nhập. Kiểm tra kết nối hoặc đăng nhập lại.')
+      }
+    }
+    void checkSession()
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return
+      if (event === 'SIGNED_OUT' && hadSession && !signingOut.current) setAuthMessage('Phiên đăng nhập đã kết thúc. Vui lòng đăng nhập lại.')
+      hadSession = Boolean(session)
+      setUserEmail(session?.user?.email ?? null)
+      setUserAvatarUrl(getProfileAvatarUrl(session?.user))
+      if (session) setAuthMessage('')
     })
-    return () => { mounted = false; listener.subscription.unsubscribe() }
+    window.addEventListener('focus', checkSession)
+    const timer = window.setInterval(checkSession, 60_000)
+    return () => { mounted = false; listener.subscription.unsubscribe(); window.removeEventListener('focus', checkSession); window.clearInterval(timer) }
   }, [])
+
+  useEffect(() => {
+    if (!accountMenuOpen) return
+
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (event.target instanceof Node && !accountMenuRef.current?.contains(event.target)) {
+        setAccountMenuOpen(false)
+      }
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setAccountMenuOpen(false)
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsideClick)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [accountMenuOpen])
 
   const signInWithGoogle = async () => {
     setAuthLoading(true)
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback` } })
-    if (error) { setErrorMessage(`Không thể đăng nhập Google: ${error.message}`); setAuthLoading(false) }
+    setAuthMessage('')
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback` } })
+      if (error) throw error
+    } catch (error) {
+      console.error('Google OAuth sign-in failed:', error)
+      setAuthMessage('Không thể mở đăng nhập Google. Kiểm tra kết nối và thử lại.')
+    } finally { setAuthLoading(false) }
   }
 
-  const signOut = async () => { await supabase.auth.signOut(); setAccountMenuOpen(false) }
+  const signOut = async () => {
+    signingOut.current = true
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      setAuthMessage(''); setAccountMenuOpen(false)
+    } catch (error) {
+      console.error('Supabase sign-out failed:', error)
+      setAuthMessage('Đăng xuất chưa thành công. Vui lòng thử lại trong menu tài khoản.')
+    }
+    finally { signingOut.current = false }
+  }
 
   // Filter States (BĐS Domain Standards)
   const filterStore = useFilterStore()
@@ -184,6 +311,8 @@ export default function DashboardPage() {
   const [pageSize] = useState(10)
   const [sortBy, setSortBy] = useState('posted_date')
   const [ascending, setAscending] = useState(false)
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
 
   // Dashboard Data States
   const [kpiData, setKpiData] = useState<KpiData | null>(null)
@@ -197,6 +326,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [filtering, setFiltering] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [lastRefreshAt, setLastRefreshAt] = useState<Date | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const [exportMessage, setExportMessage] = useState('')
 
   // Debounce search input
   useEffect(() => {
@@ -210,6 +342,7 @@ export default function DashboardPage() {
   // Count active filters
   const activeFiltersCount = useMemo(() => {
     let count = 0
+    if (startDate || endDate) count++
     if (wardFilter) count++
     if (categoryFilter) count++
     if (furnishingFilter) count++
@@ -224,6 +357,8 @@ export default function DashboardPage() {
     if (searchQuery) count++
     return count
   }, [
+    startDate,
+    endDate,
     wardFilter,
     categoryFilter,
     furnishingFilter,
@@ -240,6 +375,8 @@ export default function DashboardPage() {
 
   // Clear all filters
   const handleClearFilters = () => {
+    setStartDate('')
+    setEndDate('')
     filterStore.reset()
     setWardFilter('')
     setCategoryFilter('')
@@ -260,6 +397,8 @@ export default function DashboardPage() {
   // Global Filter Query String builder - Shared Across All Workspace Tabs
   const filterQueryString = useMemo(() => {
     const params = new URLSearchParams()
+    if (startDate) params.set('start_date', startDate)
+    if (endDate) params.set('end_date', endDate)
 
     if (wardFilter) params.set('ward_name', wardFilter)
     if (categoryFilter) params.set('category_name', categoryFilter)
@@ -310,6 +449,8 @@ export default function DashboardPage() {
 
     return params.toString()
   }, [
+    startDate,
+    endDate,
     wardFilter,
     categoryFilter,
     furnishingFilter,
@@ -326,6 +467,7 @@ export default function DashboardPage() {
 
   // Reactive Data Fetcher
   const fetchDashboardData = useCallback(async () => {
+    const requestId = ++dashboardRequestId.current
     setFiltering(true)
     try {
       const params = new URLSearchParams(filterQueryString)
@@ -339,12 +481,16 @@ export default function DashboardPage() {
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}))
         console.error('API Error details:', errJson)
-        setErrorMessage(errJson.message || errJson.error || `Lỗi máy chủ (${res.status})`)
+        if (requestId === dashboardRequestId.current) {
+          setErrorMessage(errJson.message || errJson.error || `Lỗi máy chủ (${res.status})`)
+        }
         return
       }
 
-      setErrorMessage(null)
       const json = await res.json()
+      if (requestId !== dashboardRequestId.current) return
+
+      setErrorMessage(null)
       setKpiData(json.kpi || null)
       setWards(json.wards || [])
       setPriceDistribution(json.priceDistribution || [])
@@ -352,12 +498,17 @@ export default function DashboardPage() {
       setRecords(json.records?.data || [])
       setTotalCount(json.records?.count || 0)
       setTotalPages(json.records?.totalPages || 1)
+      setLastRefreshAt(new Date())
     } catch (err: any) {
       console.error('Failed to query Supabase gold schema:', err)
-      setErrorMessage(err?.message || 'Không thể kết nối đến máy chủ')
+      if (requestId === dashboardRequestId.current) {
+        setErrorMessage(err?.message || 'Không thể kết nối đến máy chủ')
+      }
     } finally {
-      setFiltering(false)
-      setLoading(false)
+      if (requestId === dashboardRequestId.current) {
+        setFiltering(false)
+        setLoading(false)
+      }
     }
   }, [
     page,
@@ -370,6 +521,17 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchDashboardData()
   }, [fetchDashboardData])
+
+  useEffect(() => {
+    // Wait until the current request finishes before scheduling another refresh.
+    if (!settingsLoaded || !autoRefresh || filtering || loading) return
+
+    const timer = window.setTimeout(() => {
+      void fetchDashboardData()
+    }, 60_000)
+
+    return () => window.clearTimeout(timer)
+  }, [settingsLoaded, autoRefresh, filtering, loading, fetchDashboardData])
 
   // Dynamic conic gradient for price distribution donut chart
   const donutGradient = useMemo(() => {
@@ -497,15 +659,6 @@ export default function DashboardPage() {
         <div className="sidebar-bottom">
           <button className="nav-item" onClick={() => setSettingsOpen(true)}><Settings2 size={18} /><span>Cài đặt</span></button>
           <button className="nav-item" onClick={() => setHelpOpen(true)}><CircleHelp size={18} /><span>Trợ giúp</span></button>
-          <div className={`user-card ${accountMenuOpen ? 'selected' : ''}`}>
-            <div className="user-avatar">{userEmail ? userEmail.slice(0, 2).toUpperCase() : '??'}</div>
-            <div>
-              <strong>{userEmail ? userEmail.split('@')[0] : 'Chưa đăng nhập'}</strong>
-              <small>{userEmail || 'Tài khoản Google'}</small>
-            </div>
-            <button className="account-trigger" aria-label="Mở menu tài khoản" onClick={() => setAccountMenuOpen(!accountMenuOpen)}><MoreHorizontal size={17} /></button>
-          </div>
-          {accountMenuOpen && <div className="sidebar-popover account-popover">{userEmail ? <><strong>{userEmail}</strong><button onClick={() => setSettingsOpen(true)}>Hồ sơ & cài đặt</button><button onClick={() => void signOut()}><LogOut size={12} /> Đăng xuất</button></> : <button onClick={() => void signInWithGoogle()}><LogIn size={12} /> {authLoading ? 'Đang chuyển tới Google...' : 'Đăng nhập bằng Google'}</button>}<button onClick={() => setAccountMenuOpen(false)}>Đóng menu</button></div>}
         </div>
       </aside>
 
@@ -532,16 +685,83 @@ export default function DashboardPage() {
               <kbd>⌘ K</kbd>
             </div>
             <button className="icon-button" aria-label="Notifications" onClick={() => setNotificationsOpen(!notificationsOpen)}><Bell size={18} /><i /></button>
-            <button className="top-avatar" aria-label="Mở menu tài khoản" onClick={() => setAccountMenuOpen(!accountMenuOpen)}>{userEmail ? userEmail.slice(0, 2).toUpperCase() : '??'}</button>
+            <div className="account-menu-anchor" ref={accountMenuRef}>
+              <button
+                className="top-avatar"
+                aria-label="Mở menu tài khoản"
+                aria-expanded={accountMenuOpen}
+                aria-haspopup="menu"
+                onClick={() => setAccountMenuOpen((open) => !open)}
+              >
+                {userAvatarUrl ? (
+                  <img className="profile-avatar-image" src={userAvatarUrl} alt="" onError={() => setUserAvatarUrl(null)} />
+                ) : userEmail ? userEmail.slice(0, 2).toUpperCase() : '??'}
+              </button>
+              {accountMenuOpen && (
+                <div className="sidebar-popover account-popover" role="menu">
+                  {userEmail ? (
+                    <>
+                      <div className="account-popover-header">
+                        <div className="user-avatar">
+                          {userAvatarUrl ? (
+                            <img className="profile-avatar-image" src={userAvatarUrl} alt="" onError={() => setUserAvatarUrl(null)} />
+                          ) : userEmail.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="account-identity">
+                          <strong>{userEmail.split('@')[0]}</strong>
+                          <small>{userEmail}</small>
+                        </div>
+                      </div>
+                      <button role="menuitem" onClick={() => { setSettingsOpen(true); setAccountMenuOpen(false) }}>
+                        <Settings2 size={14} /> Hồ sơ & cài đặt
+                      </button>
+                      <button role="menuitem" className="account-signout" onClick={() => void signOut()}>
+                        <LogOut size={14} /> Đăng xuất
+                      </button>
+                    </>
+                  ) : (
+                    <button role="menuitem" onClick={() => void signInWithGoogle()}>
+                      <LogIn size={14} /> {authLoading ? 'Đang chuyển tới Google...' : 'Đăng nhập bằng Google'}
+                    </button>
+                  )}
+                  <button role="menuitem" className="account-close" onClick={() => setAccountMenuOpen(false)}>Đóng menu</button>
+                </div>
+              )}
+            </div>
             <button className="mobile-menu" aria-label="Menu" onClick={() => setMobileNavOpen(!mobileNavOpen)}><Menu size={20} /></button>
           </div>
         </header>
 
-        {notificationsOpen && <div className="quick-popover notification-popover"><strong>Thông báo</strong><p>Dữ liệu Gold đã được đồng bộ gần đây.</p><p>Không có cảnh báo mới.</p><button onClick={() => setNotificationsOpen(false)}>Đóng</button></div>}
+        {notificationsOpen && <div className="quick-popover notification-popover"><strong>Trạng thái dữ liệu</strong>
+          {filtering ? <p><span className="live-dot" /> Đang làm mới dữ liệu theo bộ lọc hiện tại…</p> : errorMessage ? <p style={{ color: '#c65361' }}>⚠ Không thể tải dữ liệu: {errorMessage}</p> : <p><span className="live-dot" /> Dữ liệu đang hoạt động bình thường.</p>}
+          <p>{lastRefreshAt ? `Cập nhật lần cuối: ${lastRefreshAt.toLocaleTimeString('vi-VN')}` : 'Chưa có lần cập nhật thành công.'}</p>
+          {!filtering && !errorMessage && <p>{totalCount.toLocaleString('vi-VN')} tin đăng phù hợp với bộ lọc hiện tại.</p>}
+          <button onClick={() => { setNotificationsOpen(false); void fetchDashboardData() }}>Làm mới ngay</button><button onClick={() => setNotificationsOpen(false)}>Đóng</button>
+        </div>}
         {mobileNavOpen && <div className="mobile-nav-popover">{navItems.map((item) => <button key={item.label} onClick={() => { setActiveNav(item.label); setMobileNavOpen(false) }}>{item.label}</button>)}</div>}
-        {(settingsOpen || helpOpen) && <div className="modal-backdrop" onClick={() => { setSettingsOpen(false); setHelpOpen(false) }}><div className="quick-modal" onClick={(e) => e.stopPropagation()}>{settingsOpen ? <><h3>Cài đặt dashboard</h3><label className="setting-row"><span>Chế độ tối</span><input type="checkbox" checked={darkMode} onChange={(e) => { setDarkMode(e.target.checked); document.body.classList.toggle('dark-mode', e.target.checked) }} /></label><label className="setting-row"><span>Tự động làm mới dữ liệu</span><input type="checkbox" defaultChecked /></label></> : <><h3>Trợ giúp</h3><p>Chọn mục trong sidebar để xem từng nhóm phân tích. Dùng Bộ lọc để áp dụng điều kiện cho dashboard và bản đồ.</p></>}<button className="button secondary" onClick={() => { setSettingsOpen(false); setHelpOpen(false) }}>Đóng</button></div></div>}
+        {(settingsOpen || helpOpen) && <div className="modal-backdrop" onClick={() => { setSettingsOpen(false); setHelpOpen(false) }}><div className="quick-modal" onClick={(e) => e.stopPropagation()}>
+          {settingsOpen ? <>
+            <div className="modal-heading"><div><span className="modal-eyebrow">WORKSPACE</span><h3>Cài đặt dashboard</h3><p>Tùy chỉnh trải nghiệm hiển thị và dữ liệu.</p></div><button className="modal-close-button" aria-label="Đóng" onClick={() => setSettingsOpen(false)}><X size={17} /></button></div>
+            <div className="settings-group"><span className="settings-group-title">Giao diện</span>
+              <label className="setting-row"><span><strong>Chế độ tối</strong><small>Giảm độ sáng khi làm việc ban đêm</small></span><input type="checkbox" checked={darkMode} onChange={(e) => setDarkMode(e.target.checked)} /></label>
+            </div>
+            <div className="settings-group"><span className="settings-group-title">Dữ liệu</span>
+              <label className="setting-row"><span><strong>Tự động làm mới dữ liệu</strong><small>Làm mới tổng quan sau mỗi 60 giây khi tải xong dữ liệu</small></span><input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} /></label>
+            </div>
+            <div className="settings-status"><span className="live-dot" /> {settingsSaved ? 'Cài đặt đã lưu trên trình duyệt này' : 'Cài đặt chỉ áp dụng trong phiên này; chưa lưu được trên trình duyệt'}</div>
+          </> : <>
+            <div className="modal-heading"><div><span className="modal-eyebrow">HƯỚNG DẪN</span><h3>Trợ giúp</h3></div><button className="modal-close-button" aria-label="Đóng" onClick={() => setHelpOpen(false)}><X size={17} /></button></div>
+            <DashboardHelp activeNav={activeNav} />
+          </>}
+          <button className="button primary modal-action" onClick={() => { setSettingsOpen(false); setHelpOpen(false) }}>Đã hiểu</button>
+        </div></div>}
 
         <div className="page-wrap">
+          {authMessage && <div role="alert" className="card" style={{ padding: 16, marginBottom: 16 }}>
+            <p>{authMessage}</p>
+            <button className="button secondary" disabled={authLoading} onClick={() => void signInWithGoogle()}>{authLoading ? 'Đang mở Google…' : 'Đăng nhập lại'}</button>
+            <button className="button secondary" onClick={() => setAuthMessage('')}>Đóng</button>
+          </div>}
           <div className="page-heading">
             <div>
               <div className="eyebrow">
@@ -559,17 +779,36 @@ export default function DashboardPage() {
             <div className="heading-actions">
               <button
                 className="button secondary"
-                onClick={() => {
-                  const csv = records.map(r => `${r.ward_name},${r.category_name},${r.price_vnd},${r.size_m2}`).join('\n')
-                  const blob = new Blob([`Khu vực,Loại hình,Giá,Diện tích\n${csv}`], { type: 'text/csv;charset=utf-8;' })
-                  const url = URL.createObjectURL(blob)
-                  const a = document.createElement('a')
-                  a.href = url
-                  a.download = 'rental_gold_export.csv'
-                  a.click()
+                disabled={exporting}
+                onClick={async () => {
+                  setExporting(true)
+                  setExportMessage('')
+                  try {
+                    const params = new URLSearchParams(filterQueryString)
+                    params.set('sortBy', sortBy)
+                    params.set('ascending', String(ascending))
+                    const allRecords = await fetchAllRecords<RentalRecord>(params.toString())
+                    const csv = toCsv([
+                      ['Khu vực', 'Loại hình', 'Giá', 'Diện tích'],
+                      ...allRecords.map(r => [r.ward_name, r.category_name, r.price_vnd, r.size_m2])
+                    ])
+                    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = 'rental_gold_export.csv'
+                    document.body.appendChild(a)
+                    a.click()
+                    a.remove()
+                    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+                    setExportMessage(`Đã xuất ${allRecords.length.toLocaleString('vi-VN')} tin theo bộ lọc lúc bấm xuất.`)
+                  } catch (error) {
+                    setExportMessage(error instanceof Error ? error.message : 'Không thể xuất CSV. Vui lòng thử lại.')
+                  } finally {
+                    setExporting(false)
+                  }
                 }}
               >
-                <Download size={16} /> Xuất CSV
+                <Download size={16} /> {exporting ? 'Đang xuất…' : 'Xuất CSV'}
               </button>
 
               <button
@@ -584,6 +823,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {exportMessage && <p role="status">{exportMessage}</p>}
           {errorMessage && (
             <div style={{
               marginTop: '16px',
@@ -611,6 +851,20 @@ export default function DashboardPage() {
           {/* DYNAMIC QUERY FILTER PANEL */}
           {filterOpen && (
             <div className="filter-panel">
+              <div className="filter-item">
+                <label htmlFor="posted-start">Ngày đăng từ</label>
+                <input id="posted-start" className="filter-control" type="date" value={startDate} max={endDate || '9999-12-31'} onChange={(e) => {
+                  if (e.target.value && endDate && e.target.value > endDate) return
+                  setStartDate(e.target.value); setPage(1)
+                }} />
+              </div>
+              <div className="filter-item">
+                <label htmlFor="posted-end">Ngày đăng đến</label>
+                <input id="posted-end" className="filter-control" type="date" value={endDate} min={startDate || undefined} max="9999-12-31" onChange={(e) => {
+                  if (e.target.value && startDate && e.target.value < startDate) return
+                  setEndDate(e.target.value); setPage(1)
+                }} />
+              </div>
               <div className="filter-item">
                 <label>Khu vực (Ward)</label>
                 <select

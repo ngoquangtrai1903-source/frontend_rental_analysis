@@ -14,11 +14,6 @@ export const supabaseGold = createClient<Database, 'gold'>(supabaseUrl, supabase
   }
 })
 
-// Supabase client instance (allows dynamic schema selection via .schema('gold'))
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true
-  }
-})
+export const supabase = supabaseGold
 
 export default supabaseGold
