@@ -38,6 +38,43 @@ function ViewportReporter({
   return null
 }
 
+/**
+ * Leaflet creates its panes in an effect. React 19 can commit children in the
+ * same pass as MapContainer, so defer layers one frame until the map DOM is
+ * fully mounted. This prevents Leaflet's `appendChild` race during Fast Refresh.
+ */
+function MapReadyLayers({
+  points,
+  onSelectPoint,
+  onViewportChange,
+  onZoomChange
+}: {
+  points: MapRentalPoint[]
+  onSelectPoint: (point: MapRentalPoint | null) => void
+  onViewportChange: (bounds: MapViewportBounds) => void
+  onZoomChange: (zoom: number) => void
+}) {
+  const map = useMap()
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    let frame = 0
+    frame = window.requestAnimationFrame(() => setReady(Boolean(map.getContainer()?.parentElement)))
+    return () => window.cancelAnimationFrame(frame)
+  }, [map])
+
+  if (!ready) return null
+
+  return <>
+    <TileLayer {...({
+      attribution: '&copy; OpenStreetMap contributors',
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+    } as any)} />
+    <ViewportReporter onViewportChange={onViewportChange} onZoomChange={onZoomChange} />
+    <RentalMarkers points={points} zoom={map.getZoom()} onSelectPoint={onSelectPoint} />
+  </>
+}
+
 function RentalMarkers({
   points,
   zoom,
@@ -117,12 +154,12 @@ export default function RentalLeaflet({
       maxBoundsViscosity: 1,
       style: { height: 'min(650px, 70vh)', minHeight: 360, width: '100%', borderRadius: 14 }
     } as any)}>
-      <TileLayer {...({
-        attribution: '&copy; OpenStreetMap contributors',
-        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-      } as any)} />
-      <ViewportReporter onViewportChange={onViewportChange} onZoomChange={setZoom} />
-      <RentalMarkers points={points} zoom={zoom} onSelectPoint={onSelectPoint} />
+      <MapReadyLayers
+        points={points}
+        onSelectPoint={onSelectPoint}
+        onViewportChange={onViewportChange}
+        onZoomChange={setZoom}
+      />
     </MapContainer>
   )
 }

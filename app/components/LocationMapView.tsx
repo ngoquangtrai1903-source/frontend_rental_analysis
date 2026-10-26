@@ -9,9 +9,8 @@ import {
   X
 } from 'lucide-react'
 import { MapRentalPoint } from '@/lib/goldQueryService'
-import useRentalMapData, { INITIAL_MAP_VIEWPORT } from '@/app/hooks/useRentalMapData'
-import type { MapViewportBounds } from '@/app/hooks/useRentalMapData'
-import RentalLeaflet from './RentalLeaflet'
+import useRentalMapData from '@/app/hooks/useRentalMapData'
+import RentalMapbox from './RentalMapbox'
 import { getPriceTierTheme, getFloodRiskBadge, formatVndPrice } from './MapMarkerPopup'
 
 interface LocationMapViewProps {
@@ -23,18 +22,10 @@ export default function LocationMapView({
   filterQueryString = '',
   activeFiltersCount = 0
 }: LocationMapViewProps) {
-  const [viewport, setViewport] = useState(INITIAL_MAP_VIEWPORT)
-  const { points, loading, totalCount, stats, error, refetch } = useRentalMapData(filterQueryString, viewport)
+  const { points, loading, totalCount, stats, error, refetch } = useRentalMapData(filterQueryString)
   const [selectedPoint, setSelectedPoint] = useState<MapRentalPoint | null>(null)
   const handleSelectPoint = useCallback((point: MapRentalPoint | null) => {
     setSelectedPoint(point)
-  }, [])
-  const handleViewportChange = useCallback((nextViewport: MapViewportBounds) => {
-    setViewport((current) => {
-      const changed = (Object.keys(nextViewport) as Array<keyof MapViewportBounds>)
-        .some((key) => Math.abs(nextViewport[key] - current[key]) >= 0.005)
-      return changed ? nextViewport : current
-    })
   }, [])
 
   return (
@@ -96,10 +87,11 @@ export default function LocationMapView({
       </div>
 
       {/* 3. Interactive GIS Map with Clustering & Layer Controllers */}
-      <RentalLeaflet
+      <RentalMapbox
         points={points}
+        loading={loading}
+        selectedPoint={selectedPoint}
         onSelectPoint={(point) => handleSelectPoint(point)}
-        onViewportChange={handleViewportChange}
       />
 
       {!loading && !error && points.length === 0 && (

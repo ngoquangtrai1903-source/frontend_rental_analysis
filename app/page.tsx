@@ -731,6 +731,16 @@ export default function DashboardPage() {
         <div className="sidebar-bottom">
           <button className="nav-item" onClick={openSettings}><Settings2 size={18} /><span>Cài đặt</span></button>
           <button className="nav-item" onClick={openHelp}><CircleHelp size={18} /><span>Trợ giúp</span></button>
+          <button className={`user-card ${accountMenuOpen ? 'selected' : ''}`} aria-label="Mở menu tài khoản" onClick={() => setAccountMenuOpen((open) => !open)}>
+            <span className="user-avatar">
+              {userAvatarUrl ? <img className="profile-avatar-image" src={userAvatarUrl} alt="" onError={() => setUserAvatarUrl(null)} /> : userEmail ? userEmail.slice(0, 2).toUpperCase() : '??'}
+            </span>
+            <span>
+              <strong>{userEmail ? userEmail.split('@')[0] : 'Chưa đăng nhập'}</strong>
+              <small>{userEmail || 'Tài khoản Google'}</small>
+            </span>
+              <MoreHorizontal size={17} />
+          </button>
         </div>
       </aside>
 
@@ -1425,8 +1435,8 @@ export default function DashboardPage() {
                     {/* Top Wards */}
                     <div className="card area-card">
                       <CardHeader
-                        title="Top Khu vực (Nguồn cung)"
-                        subtitle="Khu vực có nhiều tin đăng nhất theo tiêu chí lọc"
+                        title="Tất cả khu vực (Nguồn cung)"
+                        subtitle="Toàn bộ khu vực có tin đăng, sắp xếp theo số lượng giảm dần"
                         action=""
                       />
                       <div className="ward-list">
@@ -1441,7 +1451,7 @@ export default function DashboardPage() {
                             const barWidth = (ward.count / maxCount) * 100
                             return (
                               <div className="ward-row" key={ward.name}>
-                                <span className="rank">0{index + 1}</span>
+                                <span className="rank">{index + 1 < 10 ? `0${index + 1}` : index + 1}</span>
                                 <div className={`ward-icon ${tones[index % tones.length]}`}>
                                   <MapPin size={15} />
                                 </div>

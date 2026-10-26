@@ -10,7 +10,7 @@ Module._load = function (request, parent, isMain) {
   }
   return originalLoad.call(this, request, parent, isMain)
 }
-const { buildGoldQuery, fetchGoldMapCoordinates, fetchGoldTrendData } = loadTs('lib/goldQueryService.ts')
+const { buildGoldQuery, fetchGoldMapCoordinates, fetchGoldTrendData, fetchGoldWardStats } = loadTs('lib/goldQueryService.ts')
 Module._load = originalLoad
 
 test('trend fetches every matching page and returns every month', async () => {
@@ -149,6 +149,24 @@ test('size sort keeps the complete size_m2 column name', () => {
   }
   buildGoldQuery(query, {}, { sortBy: 'size_m2', ascending: false })
   assert.deepEqual(orderedColumns, ['size_m2', 'source', 'list_id'])
+})
+
+test('ward stats returns every ward sorted by listing count by default', async () => {
+  const rows = [
+    { ward_name: 'Sơn Trà', price_vnd: 5_000_000 },
+    { ward_name: 'Hải Châu', price_vnd: 6_000_000 },
+    { ward_name: 'Hải Châu', price_vnd: 7_000_000 },
+    { ward_name: 'Cẩm Lệ', price_vnd: 4_000_000 }
+  ]
+  const client = {
+    schema() { return this },
+    from() {
+      const query = { order() { return this }, then(resolve, reject) { return Promise.resolve({ data: rows, error: null }).then(resolve, reject) } }
+      return { select() { return query } }
+    }
+  }
+  const result = await fetchGoldWardStats({}, undefined, client)
+  assert.deepEqual(result.map((ward) => ward.name), ['Hải Châu', 'Cẩm Lệ', 'Sơn Trà'])
 })
 
 test('map coordinate limit caps fetched rows without losing matching total', async () => {

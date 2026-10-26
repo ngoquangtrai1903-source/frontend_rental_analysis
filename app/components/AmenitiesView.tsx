@@ -194,7 +194,7 @@ export default function AmenitiesView({ filterQueryString = '' }: { filterQueryS
       </div>
 
       {/* Interactive Price Simulator for Landlords / Investors */}
-      <div className="card" style={{ padding: '24px', background: '#ffffff', marginTop: '16px' }}>
+      <div className="card" style={{ padding: '24px', background: 'var(--surface-card)', marginTop: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
           <div className="kpi-icon blue" style={{ margin: 0 }}><Sliders size={18} /></div>
           <div>
@@ -265,12 +265,12 @@ export default function AmenitiesView({ filterQueryString = '' }: { filterQueryS
           </div>
 
           {/* Simulator Result Box */}
-          <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid var(--line)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ background: 'var(--surface-subtle)', padding: '20px', borderRadius: '12px', border: '1px solid var(--line)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>GIÁ THUÊ ƯỚC TÍNH KHUYẾN NGHỊ</span>
             <div style={{ font: '800 32px Manrope', color: 'var(--blue)', margin: '8px 0' }}>
               {simedValueFormatted(simulatedPrice)}
             </div>
-            <p style={{ margin: 0, fontSize: '11px', color: '#62708b', lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: '11px', color: 'var(--muted)', lineHeight: 1.5 }}>
               Dựa trên mô hình hồi quy biên lợi ích từ dữ liệu 3,238 phòng tại Đà Nẵng. Mức giá này đảm bảo tỷ lệ lấp đầy &gt; 85% trong 30 ngày.
             </p>
           </div>

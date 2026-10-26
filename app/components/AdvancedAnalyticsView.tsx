@@ -204,7 +204,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
       )}
 
       {/* SECTION 1: DISTANCE DECAY ANALYSIS */}
-      <div className="card" style={{ padding: '24px', background: '#ffffff' }}>
+      <div className="card" style={{ padding: '24px', background: 'var(--surface-card)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '14px' }}>
           <div>
             <span className="eyebrow">DISTANCE DECAY MODEL</span>
@@ -253,7 +253,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
 
           {/* SVG Visual Bars */}
           {hotspotData.length > 0 ? (
-            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid var(--line)' }}>
+            <div style={{ background: 'var(--surface-subtle)', padding: '16px', borderRadius: '10px', border: '1px solid var(--line)' }}>
               <svg viewBox="0 0 800 160" style={{ width: '100%', height: '160px' }}>
                 {hotspotData.map((d, idx) => {
                   const colWidth = 140
@@ -279,7 +279,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
                       x={x + colWidth / 2}
                       y={y - 8}
                       textAnchor="middle"
-                      fill="#17233d"
+                      fill="var(--chart-text)"
                       fontFamily="Manrope"
                       fontWeight="800"
                       fontSize="14"
@@ -303,7 +303,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
                       x={x + colWidth / 2}
                       y={150}
                       textAnchor="middle"
-                      fill="#475569"
+                      fill="var(--chart-text-secondary)"
                       fontFamily="DM Sans"
                       fontWeight="700"
                       fontSize="10"
@@ -340,7 +340,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
       </div>
 
       {/* SECTION 2: FURNISHING VALUE MULTIPLIER */}
-      <div className="card" style={{ padding: '24px', background: '#ffffff', marginTop: '16px' }}>
+      <div className="card" style={{ padding: '24px', background: 'var(--surface-card)', marginTop: '16px' }}>
         <span className="eyebrow">CAPEX TO RENT OPTIMIZATION</span>
         <h3 style={{ margin: '4px 0', fontSize: '17px' }}>
           Đòn Bẩy Nâng Giá Theo Cấp Độ Đầu Tư Nội Thất
@@ -357,7 +357,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
                 border: '1px solid var(--line)',
                 borderRadius: '10px',
                 padding: '16px',
-                background: i === 3 ? 'linear-gradient(135deg, #f0f7ff, #ffffff)' : '#ffffff',
+                background: i === 3 ? 'var(--highlight-surface)' : 'var(--surface-card)',
                 borderColor: i === 3 ? '#3078f0' : 'var(--line)'
               }}
             >
@@ -365,7 +365,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
               <div style={{ font: '800 24px Manrope', color: 'var(--ink)', margin: '6px 0' }}>
                 {f.avgPriceMillion} tr
               </div>
-              <div style={{ fontSize: '11px', color: '#64748b' }}>
+              <div style={{ fontSize: '11px', color: 'var(--muted)' }}>
                 Đơn giá: <strong>{f.avgPpm2.toLocaleString()} đ/m²</strong>
               </div>
               <div style={{ fontSize: '10px', color: 'var(--muted)', marginTop: '8px' }}>
@@ -384,7 +384,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
       </div>
 
       {/* SECTION 3: INVESTMENT MATRIX BY WARD */}
-      <div className="card" style={{ padding: '24px', background: '#ffffff', marginTop: '16px' }}>
+      <div className="card" style={{ padding: '24px', background: 'var(--surface-card)', marginTop: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <span className="eyebrow">MARKET ATTRACTIVENESS SCORE</span>

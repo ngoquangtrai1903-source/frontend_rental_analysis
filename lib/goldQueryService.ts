@@ -393,7 +393,7 @@ export async function fetchGoldPriceDistribution(
  */
 export async function fetchGoldWardStats(
   filters: GoldFilterParams = {},
-  topN: number = 5,
+  topN?: number,
   client: any = supabaseGold
 ) {
   const query = buildGoldQuery(client, filters, undefined, 'ward_name, price_vnd')
@@ -425,8 +425,8 @@ export async function fetchGoldWardStats(
       count: stats.count,
       avgPrice: stats.count > 0 && stats.sumPrice > 0 ? stats.sumPrice / stats.count : 0
     }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, topN)
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'vi'))
+    .filter((_, index) => topN === undefined || topN <= 0 || index < topN)
 }
 
 /**

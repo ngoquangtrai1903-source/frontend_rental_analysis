@@ -210,7 +210,7 @@ export async function GET(request: NextRequest) {
     // Default: 'dashboard' mode fetches full analytical dashboard packet
     const [kpi, wards, priceDistribution, trend, paginatedRecords] = await Promise.all([
       fetchGoldKpiMetrics(filters),
-      fetchGoldWardStats(filters, 5),
+      fetchGoldWardStats(filters),
       fetchGoldPriceDistribution(filters),
       fetchGoldTrendData(filters),
       fetchFilteredRentalRooms(filters, pagination)
