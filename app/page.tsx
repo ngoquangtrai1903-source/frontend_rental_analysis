@@ -59,6 +59,11 @@ import { supabase } from '@/lib/supabase'
 import { fetchAllRecords, toCsv } from '@/lib/csv'
 
 const SETTINGS_STORAGE_KEY = 'rentiq.dashboard.settings.v1'
+const DEFAULT_START_DATE = '2026-01-01'
+
+function getTodayDate() {
+  return new Date().toISOString().slice(0, 10)
+}
 
 function getProfileAvatarUrl(user: {
   user_metadata?: Record<string, unknown>
@@ -377,8 +382,9 @@ export default function DashboardPage() {
   const [pageSize] = useState(10)
   const [sortBy, setSortBy] = useState('posted_date')
   const [ascending, setAscending] = useState(false)
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  const [todayDate] = useState(getTodayDate)
+  const [startDate, setStartDate] = useState(DEFAULT_START_DATE)
+  const [endDate, setEndDate] = useState(todayDate)
 
   // Dashboard Data States
   const [kpiData, setKpiData] = useState<KpiData | null>(null)
@@ -441,8 +447,8 @@ export default function DashboardPage() {
 
   // Clear all filters
   const handleClearFilters = () => {
-    setStartDate('')
-    setEndDate('')
+    setStartDate(DEFAULT_START_DATE)
+    setEndDate(todayDate)
     filterStore.reset()
     setWardFilter('')
     setCategoryFilter('')
@@ -924,15 +930,15 @@ export default function DashboardPage() {
             <div className="filter-panel">
               <div className="filter-item">
                 <label htmlFor="posted-start">Ngày đăng từ</label>
-                <input id="posted-start" className="filter-control" type="date" value={startDate} max={endDate || '9999-12-31'} onChange={(e) => {
-                  if (e.target.value && endDate && e.target.value > endDate) return
+                <input id="posted-start" className="filter-control" type="date" value={startDate} min={DEFAULT_START_DATE} max={endDate || todayDate} onChange={(e) => {
+                  if (e.target.value && (e.target.value < DEFAULT_START_DATE || e.target.value > (endDate || todayDate))) return
                   setStartDate(e.target.value); setPage(1)
                 }} />
               </div>
               <div className="filter-item">
                 <label htmlFor="posted-end">Ngày đăng đến</label>
-                <input id="posted-end" className="filter-control" type="date" value={endDate} min={startDate || undefined} max="9999-12-31" onChange={(e) => {
-                  if (e.target.value && startDate && e.target.value < startDate) return
+                <input id="posted-end" className="filter-control" type="date" value={endDate} min={startDate || DEFAULT_START_DATE} max={todayDate} onChange={(e) => {
+                  if (e.target.value && (e.target.value < (startDate || DEFAULT_START_DATE) || e.target.value > todayDate)) return
                   setEndDate(e.target.value); setPage(1)
                 }} />
               </div>
@@ -1119,7 +1125,7 @@ export default function DashboardPage() {
               {(startDate || endDate) && (
                 <span className="filter-chip">
                   Ngày đăng: {startDate || 'bất kỳ'} — {endDate || 'bất kỳ'}
-                  <button aria-label="Xóa điều kiện ngày đăng" title="Xóa điều kiện ngày đăng" onClick={() => { setStartDate(''); setEndDate(''); setPage(1) }}><X size={12} /></button>
+                  <button aria-label="Đặt lại điều kiện ngày đăng" title="Đặt lại điều kiện ngày đăng" onClick={() => { setStartDate(DEFAULT_START_DATE); setEndDate(todayDate); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {wardFilter && (
