@@ -140,6 +140,17 @@ test('legacy price sort uses the existing price_vnd column', () => {
   assert.deepEqual(orderedColumns, ['price_vnd', 'source', 'list_id'])
 })
 
+test('size sort keeps the complete size_m2 column name', () => {
+  const orderedColumns = []
+  const query = {
+    order(column) { orderedColumns.push(column); return this },
+    select() { return this },
+    from() { return this }
+  }
+  buildGoldQuery(query, {}, { sortBy: 'size_m2', ascending: false })
+  assert.deepEqual(orderedColumns, ['size_m2', 'source', 'list_id'])
+})
+
 test('map coordinate limit caps fetched rows without losing matching total', async () => {
   const rows = Array.from({ length: 2500 }, (_, index) => ({
     list_id: String(index).padStart(4, '0'),

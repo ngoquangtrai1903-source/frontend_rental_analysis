@@ -1259,7 +1259,9 @@ export default function DashboardPage() {
                     style={{ width: 'auto', height: '32px', fontSize: '11px' }}
                     value={`${sortBy}_${ascending}`}
                     onChange={(e) => {
-                      const [col, asc] = e.target.value.split('_')
+                      const separator = e.target.value.lastIndexOf('_')
+                      const col = e.target.value.slice(0, separator)
+                      const asc = e.target.value.slice(separator + 1)
                       setSortBy(col)
                       setAscending(asc === 'true')
                       setPage(1)
@@ -1270,6 +1272,7 @@ export default function DashboardPage() {
                     <option value="price_vnd_false">Giá giảm dần</option>
                     <option value="price_vnd_true">Giá tăng dần</option>
                     <option value="size_m2_false">Diện tích giảm dần</option>
+                    <option value="size_m2_true">Diện tích tăng dần</option>
                   </select>
                 </div>
               </div>

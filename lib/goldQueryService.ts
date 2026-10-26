@@ -225,7 +225,14 @@ export function buildGoldQuery(
 
   // 8. Dynamic Sorting
   const requestedSortBy = pagination?.sortBy || 'posted_date'
-  const sortBy = requestedSortBy === 'price' ? 'price_vnd' : requestedSortBy
+  const sortAliases: Record<string, string> = {
+    price: 'price_vnd',
+    posted_date: 'posted_date',
+    price_vnd: 'price_vnd',
+    size_m2: 'size_m2'
+  }
+  // Never pass a client-controlled column name directly to PostgREST.
+  const sortBy = sortAliases[requestedSortBy] || 'posted_date'
   const ascending = pagination?.ascending ?? false
   query = query.order(sortBy, { ascending, nullsFirst: false })
   // Stable pagination when several listings share the same date or price.
