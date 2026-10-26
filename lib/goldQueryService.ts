@@ -224,7 +224,8 @@ export function buildGoldQuery(
   }
 
   // 8. Dynamic Sorting
-  const sortBy = pagination?.sortBy || 'posted_date'
+  const requestedSortBy = pagination?.sortBy || 'posted_date'
+  const sortBy = requestedSortBy === 'price' ? 'price_vnd' : requestedSortBy
   const ascending = pagination?.ascending ?? false
   query = query.order(sortBy, { ascending, nullsFirst: false })
   // Stable pagination when several listings share the same date or price.

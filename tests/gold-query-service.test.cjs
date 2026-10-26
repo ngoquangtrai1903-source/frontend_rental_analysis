@@ -115,6 +115,31 @@ test('map query applies viewport bounds in the database query', () => {
   ])
 })
 
+test('legacy price sort uses the existing price_vnd column', () => {
+  const orderedColumns = []
+  const query = {
+    order(column) {
+      orderedColumns.push(column)
+      return this
+    },
+    range() {
+      return this
+    }
+  }
+  const client = {
+    schema() { return this },
+    from() {
+      return {
+        select() { return query }
+      }
+    }
+  }
+
+  buildGoldQuery(client, {}, { sortBy: 'price', ascending: true })
+
+  assert.deepEqual(orderedColumns, ['price_vnd', 'source', 'list_id'])
+})
+
 test('map coordinate limit caps fetched rows without losing matching total', async () => {
   const rows = Array.from({ length: 2500 }, (_, index) => ({
     list_id: String(index).padStart(4, '0'),
