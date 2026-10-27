@@ -10,7 +10,7 @@ Module._load = function (request, parent, isMain) {
   }
   return originalLoad.call(this, request, parent, isMain)
 }
-const { buildGoldQuery, fetchGoldMapCoordinates, fetchGoldTrendData, fetchGoldWardStats } = loadTs('lib/goldQueryService.ts')
+const { buildGoldQuery, fetchGoldMapCoordinates, fetchGoldRentalPriceInsights, fetchGoldTrendData, fetchGoldWardStats } = loadTs('lib/goldQueryService.ts')
 Module._load = originalLoad
 
 test('trend fetches every matching page and returns every month', async () => {
@@ -167,6 +167,69 @@ test('ward stats returns every ward sorted by listing count by default', async (
   }
   const result = await fetchGoldWardStats({}, undefined, client)
   assert.deepEqual(result.map((ward) => ward.name), ['Hải Châu', 'Cẩm Lệ', 'Sơn Trà'])
+})
+
+test('rental price insights summarize filtered prices, categories, and valid scatter points', async () => {
+  const rows = [
+    { ward_name: 'Hải Châu', category_name: 'Căn hộ/Chung cư', price_vnd: 2_000_000, size_m2: 20 },
+    { ward_name: 'Hải Châu', category_name: 'Căn hộ/Chung cư', price_vnd: 3_000_000, size_m2: 30 },
+    { ward_name: 'Hải Châu', category_name: 'Căn hộ/Chung cư', price_vnd: 4_000_000, size_m2: 40 },
+    { ward_name: 'Hải Châu', category_name: 'Căn hộ/Chung cư', price_vnd: 5_000_000, size_m2: 50 },
+    { ward_name: 'Hải Châu', category_name: 'Căn hộ/Chung cư', price_vnd: 6_000_000, size_m2: 60 },
+    { ward_name: 'Sơn Trà', category_name: 'Phòng trọ', price_vnd: 3_000_000, size_m2: 25 },
+    { ward_name: 'Sơn Trà', category_name: 'Phòng trọ', price_vnd: 4_000_000, size_m2: 35 },
+    { ward_name: 'Sơn Trà', category_name: 'Phòng trọ', price_vnd: 5_000_000, size_m2: 45 },
+    { ward_name: 'Sơn Trà', category_name: 'Phòng trọ', price_vnd: 7_000_000, size_m2: 55 },
+    { ward_name: 'Sơn Trà', category_name: 'Phòng trọ', price_vnd: 8_000_000, size_m2: 65 },
+    { ward_name: 'Sơn Trà', category_name: 'Phòng trọ', price_vnd: 100_000_000, size_m2: 20 }
+  ]
+  const appliedFilters = []
+  const client = {
+    schema() { return this },
+    from() {
+      const query = {
+        offset: 0,
+        end: 999,
+        selectedWard: null,
+        eq(column, value) { appliedFilters.push([column, value]); this.selectedWard = value; return this },
+        order() { return this },
+        range(from, to) { this.offset = from; this.end = to; return this },
+        then(resolve, reject) {
+          const matchingRows = this.selectedWard
+            ? rows.filter((row) => row.ward_name === this.selectedWard)
+            : rows
+          return Promise.resolve({
+            data: matchingRows.slice(this.offset, this.end + 1),
+            count: matchingRows.length,
+            error: null
+          }).then(resolve, reject)
+        }
+      }
+      return { select() { return query } }
+    }
+  }
+
+  const result = await fetchGoldRentalPriceInsights({ ward_name: 'Hải Châu' }, client)
+
+  assert.deepEqual(appliedFilters, [['ward_name', 'Hải Châu']])
+  assert.equal(result.boxPlot.length, 1)
+  assert.deepEqual(result.boxPlot[0], {
+    wardName: 'Hải Châu',
+    count: 5,
+    min: 2,
+    q1: 3,
+    median: 4,
+    q3: 5,
+    max: 6
+  })
+  assert.deepEqual(result.heatmap, [{
+    wardName: 'Hải Châu',
+    category: 'Căn hộ/Chung cư',
+    count: 5,
+    medianPriceMillion: 4
+  }])
+  assert.equal(result.scatter.length, 5)
+  assert.equal(result.histogram.reduce((count, bin) => count + bin.count, 0), 5)
 })
 
 test('map coordinate limit caps fetched rows without losing matching total', async () => {

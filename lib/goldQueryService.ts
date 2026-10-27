@@ -767,6 +767,186 @@ export async function fetchGoldAmenityPricing(
   })
 }
 
+export interface PriceInsightRecord {
+  wardName: string
+  category: string
+  priceMillion: number
+  sizeM2: number
+  pricePerM2: number
+}
+
+export interface PriceBoxPlot {
+  wardName: string
+  count: number
+  min: number
+  q1: number
+  median: number
+  q3: number
+  max: number
+}
+
+export interface PriceHeatmapCell {
+  wardName: string
+  category: string
+  count: number
+  medianPriceMillion: number
+}
+
+export interface RentalPriceInsights {
+  boxPlot: PriceBoxPlot[]
+  heatmap: PriceHeatmapCell[]
+  histogram: Array<{ range: string; count: number }>
+  scatter: PriceInsightRecord[]
+}
+
+function percentile(sortedValues: number[], fraction: number): number {
+  const index = (sortedValues.length - 1) * fraction
+  const lowerIndex = Math.floor(index)
+  const upperIndex = Math.ceil(index)
+  const weight = index - lowerIndex
+  return sortedValues[lowerIndex] * (1 - weight) + sortedValues[upperIndex] * weight
+}
+
+export async function fetchGoldRentalPriceInsights(
+  filters: GoldFilterParams = {},
+  client: any = supabaseGold
+): Promise<RentalPriceInsights> {
+  const chunkSize = 1000
+  const selectColumns = 'ward_name, category_name, price_vnd, size_m2'
+  const firstPage = await buildGoldQuery(
+    client,
+    filters,
+    { page: 1, pageSize: chunkSize, sortBy: 'posted_date', ascending: true },
+    selectColumns
+  )
+  const { data: firstRows, count, error: firstError } = await firstPage
+
+  if (firstError) {
+    throw new Error(`Failed to fetch rental price insights: ${firstError.message}`)
+  }
+
+  const rows = (firstRows ?? []) as Array<{
+    ward_name: string | null
+    category_name: string | null
+    price_vnd: number | null
+    size_m2: number | null
+  }>
+  const expectedCount = count ?? rows.length
+  const pageCount = Math.ceil(expectedCount / chunkSize)
+
+  for (let firstPageNumber = 2; firstPageNumber <= pageCount; firstPageNumber += 4) {
+    const pageNumbers = Array.from(
+      { length: Math.min(4, pageCount - firstPageNumber + 1) },
+      (_, index) => firstPageNumber + index
+    )
+    const pages = await Promise.all(
+      pageNumbers.map(async (page) => {
+        const result = await buildGoldQuery(
+          client,
+          filters,
+          { page, pageSize: chunkSize, sortBy: 'posted_date', ascending: true },
+          selectColumns
+        )
+        if (result.error) {
+          throw new Error(`Failed to fetch rental price insights page ${page}: ${result.error.message}`)
+        }
+        return (result.data ?? []) as typeof rows
+      })
+    )
+    rows.push(...pages.flat())
+  }
+
+  if (rows.length !== expectedCount) {
+    throw new Error(`Rental price insights returned ${rows.length} of ${expectedCount} matching rows`)
+  }
+
+  const validPriceRows = rows.filter((row): row is typeof row & {
+    price_vnd: number
+  } => Boolean(
+    row.price_vnd !== null &&
+    row.price_vnd >= 500_000 &&
+    row.price_vnd <= 60_000_000
+  ))
+  const categorizedRows = validPriceRows.filter((row): row is typeof row & {
+    ward_name: string
+    category_name: string
+  } => Boolean(row.ward_name && row.category_name))
+
+  const wardPrices = new Map<string, number[]>()
+  const categoryWardPrices = new Map<string, number[]>()
+  const histogramBuckets = Array.from({ length: 11 }, (_, index) => ({
+    range: index === 10 ? '20+ tr' : `${index * 2}–${(index + 1) * 2} tr`,
+    count: 0
+  }))
+
+  for (const row of validPriceRows) {
+    const priceMillion = row.price_vnd / 1_000_000
+    histogramBuckets[Math.min(10, Math.floor(priceMillion / 2))].count++
+  }
+
+  for (const row of categorizedRows) {
+    const priceMillion = row.price_vnd / 1_000_000
+    const wardValues = wardPrices.get(row.ward_name) ?? []
+    wardValues.push(priceMillion)
+    wardPrices.set(row.ward_name, wardValues)
+
+    const pairKey = `${row.ward_name}\u0000${row.category_name}`
+    const pairValues = categoryWardPrices.get(pairKey) ?? []
+    pairValues.push(priceMillion)
+    categoryWardPrices.set(pairKey, pairValues)
+
+  }
+
+  const boxPlot = [...wardPrices.entries()]
+    .filter(([, values]) => values.length >= 5)
+    .map(([wardName, values]) => {
+      const sorted = [...values].sort((a, b) => a - b)
+      const q1 = percentile(sorted, 0.25)
+      const median = percentile(sorted, 0.5)
+      const q3 = percentile(sorted, 0.75)
+      const iqr = q3 - q1
+      const inliers = sorted.filter((value) => value >= q1 - 1.5 * iqr && value <= q3 + 1.5 * iqr)
+      return {
+        wardName,
+        count: values.length,
+        min: Number(inliers[0].toFixed(2)),
+        q1: Number(q1.toFixed(2)),
+        median: Number(median.toFixed(2)),
+        q3: Number(q3.toFixed(2)),
+        max: Number(inliers[inliers.length - 1].toFixed(2))
+      }
+    })
+    .sort((a, b) => b.count - a.count)
+
+  const heatmap = [...categoryWardPrices.entries()].map(([key, values]) => {
+    const [wardName, category] = key.split('\u0000')
+    return {
+      wardName,
+      category,
+      count: values.length,
+      medianPriceMillion: Number(percentile([...values].sort((a, b) => a - b), 0.5).toFixed(2))
+    }
+  })
+
+  const scatterRows = validPriceRows
+    .filter(
+      (row): row is typeof row & { size_m2: number } =>
+        row.size_m2 !== null && row.size_m2 >= 10 && row.size_m2 <= 300
+    )
+    .sort((a, b) => a.size_m2 - b.size_m2)
+  const scatter = scatterRows
+    .filter((_, index) => index % Math.max(1, Math.ceil(scatterRows.length / 500)) === 0)
+    .map((row) => ({
+      wardName: row.ward_name ?? 'Khác',
+      category: row.category_name ?? 'Không xác định',
+      priceMillion: Number((row.price_vnd / 1_000_000).toFixed(2)),
+      sizeM2: row.size_m2,
+      pricePerM2: Math.round(row.price_vnd / row.size_m2)
+    }))
+
+  return { boxPlot, heatmap, histogram: histogramBuckets, scatter }
+}
+
 /**
  * Real Estate Investment Opportunity Matrix by Ward
  */

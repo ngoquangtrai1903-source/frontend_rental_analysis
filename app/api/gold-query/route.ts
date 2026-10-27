@@ -10,6 +10,7 @@ import {
   fetchGoldAmenityPricing,
   fetchGoldInvestmentMatrixData,
   fetchGoldFurnishingComparison,
+  fetchGoldRentalPriceInsights,
   fetchGoldFloodRiskAudit,
   fetchGoldBaselines,
   GoldFilterParams,
@@ -185,6 +186,11 @@ export async function GET(request: NextRequest) {
     if (mode === 'baselines') {
       const baselines = await fetchGoldBaselines()
       return NextResponse.json(baselines)
+    }
+
+    if (mode === 'price_insights') {
+      const insights = await fetchGoldRentalPriceInsights(filters)
+      return NextResponse.json(insights)
     }
 
     // Mode: All-in-one advanced analytics
