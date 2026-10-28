@@ -85,9 +85,8 @@ const DEFAULT_METADATA = {
   ]
 }
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url)
-  const backendUrl = searchParams.get('backend_url') || process.env.FASTAPI_BACKEND_URL || 'http://localhost:8000'
+export async function GET() {
+  const backendUrl = process.env.FASTAPI_BACKEND_URL || 'http://localhost:8000'
 
   try {
     const controller = new AbortController()
@@ -105,8 +104,7 @@ export async function GET(req: Request) {
       const data = await response.json()
       return NextResponse.json({
         ...data,
-        is_backend_online: true,
-        backend_url: backendUrl
+        is_backend_online: true
       })
     }
   } catch (err: any) {
@@ -116,7 +114,6 @@ export async function GET(req: Request) {
   return NextResponse.json({
     ...DEFAULT_METADATA,
     is_backend_online: false,
-    backend_url: backendUrl,
     message: 'Backend FastAPI chưa khởi động hoặc chưa phản hồi. Đang sử dụng metadata mặc định.'
   })
 }

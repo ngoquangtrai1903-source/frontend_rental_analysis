@@ -484,10 +484,8 @@ export function normalizePredictionResponse(raw: any): PredictionResult {
 
 export default function PricePredictionView() {
   // Backend connection & metadata states
-  const [backendUrl, setBackendUrl] = useState('http://localhost:8000')
   const [isBackendOnline, setIsBackendOnline] = useState<boolean | null>(null)
   const [checkingBackend, setCheckingBackend] = useState(false)
-  const [showApiSettings, setShowApiSettings] = useState(false)
 
   // Options loaded from GET /meta
   const [wardOptions, setWardOptions] = useState<string[]>(STANDARD_WARDS)
@@ -664,11 +662,11 @@ export default function PricePredictionView() {
   }
 
   // 1. Check and Load Metadata on Mount
-  const fetchMetadata = async (targetUrl = backendUrl) => {
+  const fetchMetadata = async () => {
     setCheckingBackend(true)
     try {
-      // First try proxy route to bypass potential browser CORS issues
-      const res = await fetch(`/api/meta?backend_url=${encodeURIComponent(targetUrl)}`)
+      // Proxy route connects to FastAPI Backend directly
+      const res = await fetch('/api/meta')
       if (res.ok) {
         const data = await res.json()
 
@@ -808,7 +806,6 @@ export default function PricePredictionView() {
       ward_name: wardName,
       nearest_beach_code: nearestBeachCode,
       nearest_uni_code: nearestUniCode,
-      backend_url: backendUrl,
       allow_simulation: forceSimulation || isBackendOnline === false
     }
 
@@ -939,24 +936,25 @@ export default function PricePredictionView() {
             Triển Khai Model Dự Đoán Giá Phòng Trọ & Giải Thích SHAP
           </h2>
           <p style={{ fontSize: '12px', color: 'var(--muted)' }}>
-            Ước tính giá thuê thời gian thực dựa trên 11 thông số không gian và tiện ích tại Đà Nẵng, giải thích tác động đóng góp bằng SHAP TreeExplainer.
+            Ước tính giá thuê thời gian thực dựa trên 11 thông số không gian và tiện ích tại Đà Nẵng.
           </p>
         </div>
 
         {/* Backend Online/Offline Pill */}
-        <div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
           <div
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
-              padding: '6px 12px',
+              padding: '6px 14px',
               borderRadius: '20px',
               fontSize: '11px',
               fontWeight: 700,
               background: isBackendOnline ? '#eaf8f1' : '#fff4e5',
               color: isBackendOnline ? '#1e875a' : '#b46b1f',
-              border: `1px solid ${isBackendOnline ? '#bbf7d0' : '#fed7aa'}`
+              border: `1px solid ${isBackendOnline ? '#bbf7d0' : '#fed7aa'}`,
+              whiteSpace: 'nowrap'
             }}
           >
             <span
@@ -985,72 +983,8 @@ export default function PricePredictionView() {
               <RotateCcw size={12} className={checkingBackend ? 'spin-icon' : ''} />
             </button>
           </div>
-
-          <button
-            onClick={() => setShowApiSettings(!showApiSettings)}
-            style={{
-              border: 'none',
-              background: 'none',
-              color: 'var(--muted)',
-              fontSize: '11px',
-              cursor: 'pointer',
-              textDecoration: 'underline'
-            }}
-          >
-            {showApiSettings ? 'Đóng cấu hình API' : 'Cấu hình URL Backend'}
-          </button>
         </div>
       </div>
-
-      {/* Expandable API Settings Card */}
-      {showApiSettings && (
-        <div
-          className="card"
-          style={{
-            padding: '14px 18px',
-            background: '#ffffff',
-            border: '1px dashed #cbd5e1',
-            borderRadius: '12px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            flexWrap: 'wrap'
-          }}
-        >
-          <Server size={18} style={{ color: 'var(--blue)' }} />
-          <div style={{ flex: 1, minWidth: '220px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: '#475569', display: 'block' }}>
-              Địa chỉ Backend FastAPI
-            </span>
-            <input
-              type="text"
-              value={backendUrl}
-              onChange={(e) => setBackendUrl(e.target.value)}
-              placeholder="http://localhost:8000"
-              style={{
-                width: '100%',
-                maxWidth: '320px',
-                height: '32px',
-                padding: '0 10px',
-                border: '1px solid var(--line)',
-                borderRadius: '6px',
-                fontSize: '12px',
-                marginTop: '4px'
-              }}
-            />
-          </div>
-          <button
-            className="button secondary"
-            onClick={() => fetchMetadata(backendUrl)}
-            style={{ height: '32px', fontSize: '11px' }}
-          >
-            Kiểm tra kết nối
-          </button>
-          <div style={{ fontSize: '11px', color: 'var(--muted)', marginLeft: 'auto' }}>
-            Lệnh khởi động: <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>uvicorn main:app --reload --port 8000</code>
-          </div>
-        </div>
-      )}
 
       {/* Main 2-Column Dashboard Layout */}
       <div className="predict-layout">
@@ -1122,7 +1056,8 @@ export default function PricePredictionView() {
             <div className="form-row">
               <div className="form-field">
                 <label>
-                  Diện tích phòng <span className="unit">(m², 5 - 80)</span>
+                  <span>Diện tích phòng</span>
+                  <span className="unit">(5 - 80 m²)</span>
                 </label>
                 <div className="form-input-wrap">
                   <input
@@ -1159,7 +1094,8 @@ export default function PricePredictionView() {
 
               <div className="form-field">
                 <label>
-                  Khoảng cách tới TT (CBD) <span className="unit">(km, 0 - 20)</span>
+                  <span>Khoảng cách tới CBD</span>
+                  <span className="unit">(0 - 20 km)</span>
                 </label>
                 <div className="form-input-wrap">
                   <input
@@ -1192,7 +1128,8 @@ export default function PricePredictionView() {
             <div className="form-row">
               <div className="form-field">
                 <label>
-                  Khoảng cách tới biển <span className="unit">(km, 0 - 12)</span>
+                  <span>Khoảng cách tới biển</span>
+                  <span className="unit">(0 - 12 km)</span>
                 </label>
                 <div className="form-input-wrap">
                   <input
@@ -1223,7 +1160,8 @@ export default function PricePredictionView() {
 
               <div className="form-field">
                 <label>
-                  Khoảng cách ĐH gần nhất <span className="unit">(km, 0 - 10)</span>
+                  <span>Cự ly tới ĐH gần nhất</span>
+                  <span className="unit">(0 - 10 km)</span>
                 </label>
                 <div className="form-input-wrap">
                   <input
@@ -1280,9 +1218,9 @@ export default function PricePredictionView() {
             )}
 
             <div className="form-field" style={{ marginBottom: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <label style={{ margin: 0 }}>Phường / Xã (Đà Nẵng)</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px', gap: '8px', flexWrap: 'wrap' }}>
+                <label style={{ margin: 0, whiteSpace: 'nowrap' }}>Phường / Xã (Đà Nẵng)</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                   <button
                     type="button"
                     className={`smart-toggle-btn ${enableSmartDefaults ? 'active' : ''}`}
@@ -1290,7 +1228,7 @@ export default function PricePredictionView() {
                     title="Bật/Tắt tự động gợi ý khoảng cách & địa điểm khi đổi phường"
                   >
                     <Lightbulb size={11} />
-                    {enableSmartDefaults ? 'Tự động gợi ý: BẬT' : 'Tự động gợi ý: TẮT'}
+                    {enableSmartDefaults ? 'Gợi ý: BẬT' : 'Gợi ý: TẮT'}
                   </button>
                   <button
                     type="button"
@@ -1298,7 +1236,7 @@ export default function PricePredictionView() {
                     onClick={() => handleApplyWardProfile(wardName)}
                     title="Áp dụng lại khoảng cách & địa điểm gợi ý cho phường này"
                   >
-                    <RotateCcw size={10} /> Điền gợi ý
+                    <RotateCcw size={10} /> Điền lại
                   </button>
                 </div>
               </div>
@@ -1315,7 +1253,7 @@ export default function PricePredictionView() {
               </select>
               {currentWardProfile && (
                 <div className="field-smart-badge">
-                  <Navigation size={12} style={{ flexShrink: 0 }} />
+                  <Navigation size={12} style={{ flexShrink: 0, marginTop: '2px' }} />
                   <span>
                     <strong>{currentWardProfile.groupName}:</strong> {currentWardProfile.hint}
                   </span>
@@ -1325,7 +1263,7 @@ export default function PricePredictionView() {
 
             <div className="form-row">
               <div className="form-field">
-                <label>Mã bãi biển gần nhất</label>
+                <label style={{ whiteSpace: 'nowrap' }}>Bãi biển gần nhất</label>
                 <select
                   value={nearestBeachCode}
                   onChange={(e) => setNearestBeachCode(e.target.value)}
@@ -1346,7 +1284,7 @@ export default function PricePredictionView() {
               </div>
 
               <div className="form-field">
-                <label>Mã trường ĐH gần nhất</label>
+                <label style={{ whiteSpace: 'nowrap' }}>Trường ĐH gần nhất</label>
                 <select
                   value={nearestUniCode}
                   onChange={(e) => setNearestUniCode(e.target.value)}
@@ -1374,7 +1312,7 @@ export default function PricePredictionView() {
             </div>
 
             <div className="form-field" style={{ marginBottom: '14px' }}>
-              <label>Mức độ trang bị nội thất</label>
+              <label style={{ whiteSpace: 'nowrap' }}>Tình trạng nội thất</label>
               <select
                 value={furnishingStatus}
                 onChange={(e) => setFurnishingStatus(e.target.value)}
@@ -1389,7 +1327,7 @@ export default function PricePredictionView() {
             </div>
 
             <div className="form-field">
-              <label>Tiện ích phòng (0 hoặc 1)</label>
+              <label style={{ whiteSpace: 'nowrap' }}>Tiện ích kèm theo</label>
               <div className="checkbox-card-group">
                 {/* Balcony */}
                 <div

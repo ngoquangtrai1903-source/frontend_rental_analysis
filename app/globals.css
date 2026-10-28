@@ -343,7 +343,7 @@
 
 .predict-layout {
   display: grid;
-  grid-template-columns: 460px 1fr;
+  grid-template-columns: 495px 1fr;
   gap: 22px;
   align-items: start;
 }
@@ -421,12 +421,17 @@
   color: var(--ink);
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .form-field label span.unit {
   font-size: 10px;
   color: var(--muted);
   font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .form-input-wrap {
@@ -477,6 +482,9 @@
   background: #fff;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .form-select:focus {
@@ -502,14 +510,15 @@
 .checkbox-card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 8px 10px;
   border: 1.5px solid var(--line);
   border-radius: 9px;
   background: #fafbfd;
   cursor: pointer;
   user-select: none;
   transition: all 0.18s ease;
+  min-width: 0;
 }
 
 .checkbox-card:hover {
@@ -524,8 +533,8 @@
 }
 
 .checkbox-card .icon-box {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 7px;
   display: grid;
   place-items: center;
@@ -545,15 +554,23 @@
 .checkbox-card .label-box {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .checkbox-card .label-box strong {
   font-size: 11px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .checkbox-card .label-box small {
-  font-size: 9px;
+  font-size: 10px;
   color: var(--muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 /* Quick Area Chips */
@@ -561,6 +578,7 @@
   display: flex;
   gap: 6px;
   margin-top: 6px;
+  flex-wrap: wrap;
 }
 
 .chip-btn {
@@ -573,6 +591,7 @@
   color: #64748b;
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .chip-btn:hover {
@@ -591,7 +610,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 14px;
+  padding: 8px 12px;
   background: #f8fafc;
   border: 1px dashed #cbd5e1;
   border-radius: 10px;
@@ -604,6 +623,7 @@
   font-weight: 700;
   color: #64748b;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .preset-chip {
@@ -616,6 +636,7 @@
   color: var(--ink);
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .preset-chip:hover {
@@ -951,33 +972,41 @@
   color: #dc2626;
   margin-top: 5px;
   font-weight: 500;
+  line-height: 1.35;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .field-warning-text {
   display: flex;
   align-items: flex-start;
-  gap: 5px;
+  gap: 6px;
   font-size: 11px;
   color: #b45309;
   margin-top: 5px;
-  line-height: 1.35;
+  line-height: 1.45;
   background: #fffbeb;
   padding: 6px 9px;
   border-radius: 7px;
   border: 1px solid #fef3c7;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .field-smart-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   font-size: 11px;
   color: var(--blue);
   background: #edf4ff;
-  padding: 5px 10px;
+  padding: 6px 10px;
   border-radius: 8px;
   margin-top: 6px;
-  font-weight: 600;
+  font-weight: 500;
+  line-height: 1.45;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .smart-default-banner {
@@ -992,6 +1021,8 @@
   color: #166534;
   font-size: 11px;
   margin-bottom: 12px;
+  line-height: 1.4;
+  word-break: normal;
 }
 
 .smart-toggle-btn {
@@ -1007,6 +1038,8 @@
   color: #64748b;
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .smart-toggle-btn.active {
