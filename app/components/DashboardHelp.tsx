@@ -11,6 +11,7 @@ const guides = [
     title: 'Vị trí & khu vực',
     steps: [
       'Bản đồ tải dữ liệu theo khung nhìn hiện tại, hiển thị tối đa 1.500 tọa độ mỗi lượt và gom điểm gần nhau thành cụm. Bấm cụm để phóng to, hoặc kéo bản đồ để tải khu vực khác.',
+      'Bật lớp Giá thuê theo phường trong menu Lớp bản đồ. Rê chuột lên vùng nhiệt để xem giá trung bình, trung vị và số tin có tọa độ trong dữ liệu đang tải.',
       'Bấm điểm đã phóng to để xem thông tin của tin đăng.',
       'Kết hợp bộ lọc khu vực, giá và cự ly để thu hẹp phạm vi tìm kiếm.',
       'Số điểm trên bản đồ có thể ít hơn số tin trong bảng nếu tin thiếu tọa độ hợp lệ.'
@@ -35,6 +36,8 @@ const guides = [
   {
     title: 'Phân tích nâng cao',
     steps: [
+      'Trong box plot giá thuê, rê chuột hoặc dùng phím Tab để xem số tin, giá thấp nhất, Q1, trung vị, Q3 và giá cao nhất theo từng phường.',
+      'Trong bản đồ nhiệt giá thuê (nhóm Khu vực & vị trí), rê chuột hoặc dùng phím Tab vào từng ô để xem chi tiết giá trung vị, số tin và phân khúc theo phường và loại hình.',
       'So sánh giá theo khoảng cách tới các điểm quan tâm và theo mức nội thất.',
       'Dùng ma trận cơ hội và gợi ý chiến lược để tham khảo, đối chiếu với nguồn cung và giá của khu vực.',
       'Điểm xếp hạng và ước tính hoàn vốn phụ thuộc dữ liệu, giả định đang sử dụng; không phải cam kết lợi nhuận.'

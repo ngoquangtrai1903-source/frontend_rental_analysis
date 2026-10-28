@@ -32,6 +32,8 @@ import {
   YAxis,
   ZAxis
 } from 'recharts'
+import WardPriceBoxPlot from './WardPriceBoxPlot'
+import WardPriceHeatmapChart from './WardPriceHeatmapChart'
 
 interface HotspotTier {
   tier: string
@@ -728,27 +730,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
             <p>Trung vị, khoảng tứ phân vị và phạm vi giá phổ biến; ngoại lệ được loại khỏi râu biểu đồ.</p>
           </div>
           {boxPlotData.length > 0 ? (
-            <div className="box-plot" role="img" aria-label="Phân bố giá thuê theo phường, đơn vị triệu đồng mỗi tháng">
-              <div className="box-plot-rows">
-                {boxPlotData.map((item) => (
-                  <div className="box-plot-row" key={item.wardName} title={`${item.wardName}: n=${item.count}, Q1 ${item.q1} tr, trung vị ${item.median} tr, Q3 ${item.q3} tr`}>
-                    <span className="box-plot-ward">{item.wardName}</span>
-                    <span className="box-plot-track">
-                      <span className="box-plot-whisker" style={{ left: `${(item.min / boxPlotMax) * 100}%`, width: `${((item.max - item.min) / boxPlotMax) * 100}%` }} />
-                      <span className="box-plot-cap box-plot-cap-start" style={{ left: `${(item.min / boxPlotMax) * 100}%` }} />
-                      <span className="box-plot-box" style={{ left: `${(item.q1 / boxPlotMax) * 100}%`, width: `${((item.q3 - item.q1) / boxPlotMax) * 100}%` }} />
-                      <span className="box-plot-median" style={{ left: `${(item.median / boxPlotMax) * 100}%` }} />
-                      <span className="box-plot-cap box-plot-cap-end" style={{ left: `${(item.max / boxPlotMax) * 100}%` }} />
-                    </span>
-                    <span className="box-plot-count">{item.count.toLocaleString()} tin</span>
-                  </div>
-                ))}
-              </div>
-              <div className="box-plot-axis">
-                <span>0 tr</span><span>{(boxPlotMax / 2).toFixed(0)} tr</span><span>{boxPlotMax} tr/tháng</span>
-              </div>
-              <div className="box-plot-legend"><i /> Q1–Q3 <span className="box-plot-legend-median" /> Trung vị</div>
-            </div>
+            <WardPriceBoxPlot wards={boxPlotData} maxPrice={boxPlotMax} />
           ) : <div className="chart-empty-state">{priceInsightsLoading ? 'Đang tải phân bố giá theo phường…' : 'Chưa đủ dữ liệu giá để so sánh phân bố theo phường.'}</div>}
         </div>
 
@@ -814,37 +796,13 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
             <h3>Bản đồ nhiệt giá thuê</h3>
             <p>Trung vị giá thuê theo phường và loại hình; số trong ô là lượng tin đăng.</p>
           </div>
-          {heatmapData.length > 0 ? (
-            <div className="price-heatmap-scroll">
-              <table className="price-heatmap">
-                <thead>
-                  <tr><th>Phường</th>{heatmapCategories.map((category) => <th key={category}>{category}</th>)}</tr>
-                </thead>
-                <tbody>
-                  {heatmapWards.map((ward) => (
-                    <tr key={ward}>
-                      <th>{ward}</th>
-                      {heatmapCategories.map((category) => {
-                        const cell = heatmapData.find((item) => item.wardName === ward && item.category === category)
-                        const intensity = cell ? Math.max(0.12, cell.medianPriceMillion / heatmapMaxPrice) : 0
-                        return (
-                          <td key={category} title={cell ? `${ward} · ${category}: trung vị ${cell.medianPriceMillion} triệu/tháng, ${cell.count} tin` : `${ward} · ${category}: không đủ dữ liệu`}>
-                            {cell ? (
-                              <span className="price-heatmap-cell">
-                                <span className="price-heatmap-fill" style={{ opacity: intensity }} />
-                                <strong>{cell.medianPriceMillion.toFixed(1)} tr</strong>
-                                <small>{cell.count.toLocaleString()} tin</small>
-                              </span>
-                            ) : <span className="price-heatmap-empty">—</span>}
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : <div className="chart-empty-state">{priceInsightsLoading ? 'Đang tải bản đồ nhiệt…' : 'Chưa đủ dữ liệu để lập bản đồ nhiệt.'}</div>}
+          <WardPriceHeatmapChart
+            heatmapData={heatmapData}
+            wards={heatmapWards}
+            categories={heatmapCategories}
+            maxPrice={heatmapMaxPrice}
+            loading={priceInsightsLoading}
+          />
         </div>
         </>}
 

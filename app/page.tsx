@@ -185,6 +185,7 @@ export default function DashboardPage() {
   const [authMessage, setAuthMessage] = useState('')
   const signingOut = useRef(false)
   const dashboardRequestId = useRef(0)
+  const dashboardAbortController = useRef<AbortController | null>(null)
   const accountMenuRef = useRef<HTMLDivElement>(null)
   const modalRef = useRef<HTMLDivElement>(null)
   const modalTriggerRef = useRef<HTMLElement | null>(null)
@@ -539,6 +540,10 @@ export default function DashboardPage() {
 
   // Reactive Data Fetcher
   const fetchDashboardData = useCallback(async () => {
+    dashboardAbortController.current?.abort()
+    const controller = new AbortController()
+    dashboardAbortController.current = controller
+
     const requestId = ++dashboardRequestId.current
     setFiltering(true)
     try {
@@ -549,18 +554,20 @@ export default function DashboardPage() {
       params.set('sortBy', sortBy)
       params.set('ascending', String(ascending))
 
-      const res = await fetch(`/api/gold-query?${params.toString()}`)
+      const res = await fetch(`/api/gold-query?${params.toString()}`, {
+        signal: controller.signal
+      })
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}))
-        console.error('API Error details:', errJson)
         if (requestId === dashboardRequestId.current) {
+          console.error('API Error details:', errJson)
           setErrorMessage(errJson.message || errJson.error || `Lỗi máy chủ (${res.status})`)
         }
         return
       }
 
       const json = await res.json()
-      if (requestId !== dashboardRequestId.current) return
+      if (requestId !== dashboardRequestId.current || controller.signal.aborted) return
 
       setErrorMessage(null)
       setKpiData(json.kpi || null)
@@ -572,10 +579,11 @@ export default function DashboardPage() {
       setTotalPages(json.records?.totalPages || 1)
       setLastRefreshAt(new Date())
     } catch (err: any) {
-      console.error('Failed to query Supabase gold schema:', err)
-      if (requestId === dashboardRequestId.current) {
-        setErrorMessage(err?.message || 'Không thể kết nối đến máy chủ')
+      if (err?.name === 'AbortError' || controller.signal.aborted || requestId !== dashboardRequestId.current) {
+        return
       }
+      console.error('Failed to query Supabase gold schema:', err)
+      setErrorMessage(err?.message || 'Không thể kết nối đến máy chủ')
     } finally {
       if (requestId === dashboardRequestId.current) {
         setFiltering(false)
@@ -592,6 +600,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchDashboardData()
+    return () => {
+      dashboardAbortController.current?.abort()
+    }
   }, [fetchDashboardData])
 
   useEffect(() => {
