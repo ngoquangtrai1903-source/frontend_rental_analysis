@@ -390,7 +390,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
                       y={y - 8}
                       textAnchor="middle"
                       fill="var(--chart-text)"
-                      fontFamily="Manrope"
+                      fontFamily="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'San Francisco', sans-serif"
                       fontWeight="800"
                       fontSize="14"
                     >
@@ -402,7 +402,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
                       y={y + 20 > 115 ? y - 22 : y + 20}
                       textAnchor="middle"
                       fill={y + 20 > 115 ? '#64748b' : '#ffffff'}
-                      fontFamily="DM Sans"
+                      fontFamily="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'San Francisco', sans-serif"
                       fontWeight="600"
                       fontSize="10"
                     >
@@ -414,7 +414,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
                       y={150}
                       textAnchor="middle"
                       fill="var(--chart-text-secondary)"
-                      fontFamily="DM Sans"
+                      fontFamily="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'San Francisco', sans-serif"
                       fontWeight="700"
                       fontSize="10"
                     >
@@ -474,7 +474,7 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
               }}
             >
               <div style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 700 }}>{f.status}</div>
-              <div style={{ font: '800 24px Manrope', color: 'var(--ink)', margin: '6px 0' }}>
+              <div style={{ font: "800 24px 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'San Francisco', sans-serif", color: 'var(--ink)', margin: '6px 0' }}>
                 {f.avgPriceMillion} tr
               </div>
               <div style={{ fontSize: '11px', color: 'var(--muted)' }}>
@@ -922,11 +922,11 @@ export default function AdvancedAnalyticsView({ filterQueryString = '' }: { filt
             <div className="advisor-result-grid" style={{ gap: '12px', margin: '12px 0' }}>
               <div>
                 <span style={{ fontSize: '10px', color: 'var(--advisor-muted-text)' }}>Khung giá cho thuê tối ưu</span>
-                <div style={{ font: '800 16px Manrope', color: 'var(--advisor-accent)' }}>{adviceResult.expectedRent}</div>
+                <div style={{ font: "800 16px 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'San Francisco', sans-serif", color: 'var(--advisor-accent)' }}>{adviceResult.expectedRent}</div>
               </div>
               <div>
                 <span style={{ fontSize: '10px', color: 'var(--advisor-muted-text)' }}>Đơn giá thị trường</span>
-                <div style={{ font: '700 14px Manrope', color: 'var(--advisor-panel-foreground)' }}>{adviceResult.targetPpm2}</div>
+                <div style={{ font: "700 14px 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'San Francisco', sans-serif", color: 'var(--advisor-panel-foreground)' }}>{adviceResult.targetPpm2}</div>
               </div>
             </div>
 

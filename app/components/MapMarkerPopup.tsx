@@ -89,7 +89,7 @@ export default function MapMarkerPopup({
         boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
         border: '1px solid #e2e8f0',
         overflow: 'hidden',
-        fontFamily: "'DM Sans', sans-serif"
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'San Francisco', sans-serif"
       }}
     >
       {/* Header Image Thumbnail & Close button */}
@@ -162,7 +162,7 @@ export default function MapMarkerPopup({
 
         {/* Price & Size Highlight */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '6px' }}>
-          <div style={{ color: theme.color, fontWeight: 800, fontSize: '18px', letterSpacing: '-0.4px', fontFamily: "'Manrope', sans-serif" }}>
+          <div style={{ color: theme.color, fontWeight: 800, fontSize: '18px', letterSpacing: '-0.4px', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'San Francisco', sans-serif" }}>
             {formatVndPrice(point.price_vnd)}
           </div>
           <div style={{ fontSize: '12px', fontWeight: 700, color: '#1e293b' }}>

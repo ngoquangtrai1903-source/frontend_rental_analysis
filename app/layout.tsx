@@ -8,5 +8,12 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="vi"><body><Providers>{children}</Providers></body></html>
+  return (
+    <html lang="vi">
+      <head>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@qpokychuk/sf-pro-display@latest/index.css" />
+      </head>
+      <body><Providers>{children}</Providers></body>
+    </html>
+  )
 }

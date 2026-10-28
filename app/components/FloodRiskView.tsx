@@ -145,7 +145,7 @@ export default function FloodRiskView({ filterQueryString = '' }: { filterQueryS
                 </div>
 
                 <div style={{ textAlign: 'right', minWidth: '90px' }}>
-                  <div className={`flood-score ${zone.status}`} style={{ font: '800 16px Manrope' }}>
+                  <div className={`flood-score ${zone.status}`} style={{ font: "800 16px 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'San Francisco', sans-serif" }}>
                     {zone.safeScore}%
                   </div>
                   <small style={{ fontSize: '9px', color: 'var(--muted)' }}>Chỉ số an toàn</small>

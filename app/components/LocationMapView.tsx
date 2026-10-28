@@ -135,14 +135,14 @@ export default function LocationMapView({
           <div className="selected-point-grid" style={{ gap: '16px', marginTop: '16px' }}>
             <div>
               <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>GIÁ THUÊ NIÊM YẾT</span>
-              <div style={{ font: '800 22px Manrope', color: getPriceTierTheme(selectedPoint.price_vnd).color, marginTop: '3px' }}>
+              <div style={{ font: "800 22px 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'San Francisco', sans-serif", color: getPriceTierTheme(selectedPoint.price_vnd).color, marginTop: '3px' }}>
                 {formatVndPrice(selectedPoint.price_vnd)}
               </div>
             </div>
 
             <div>
               <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>DIỆN TÍCH & ĐƠN GIÁ</span>
-              <div style={{ font: '700 16px Manrope', color: '#1e293b', marginTop: '4px' }}>
+              <div style={{ font: "700 16px 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'San Francisco', sans-serif", color: '#1e293b', marginTop: '4px' }}>
                 {selectedPoint.size_m2} m² ({selectedPoint.price_per_m2_vnd?.toLocaleString()} đ/m²)
               </div>
             </div>
