@@ -207,7 +207,7 @@ export async function POST(req: Request) {
   try {
     const rawBody = await req.json()
     const { backend_url, allow_simulation, ...modelInputs } = rawBody
-    const targetBackend = backend_url || process.env.FASTAPI_BACKEND_URL || 'http://localhost:8000'
+    const targetBackend = process.env.FASTAPI_BACKEND_URL || 'http://localhost:8000'
 
     try {
       const controller = new AbortController()
