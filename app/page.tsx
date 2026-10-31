@@ -365,13 +365,12 @@ export default function DashboardPage() {
 
   // Filter States (BĐS Domain Standards)
   const filterStore = useFilterStore()
-  const { wardFilter, categoryFilter, furnishingFilter, priceRangeFilter, sizeRangeFilter, proximityFilter, floodRiskFilter, reqElevator, reqBalcony, reqPrivateBath, reqParking, searchInput, searchQuery, setFilter } = filterStore
+  const { wardFilter, categoryFilter, furnishingFilter, priceRangeFilter, sizeRangeFilter, floodRiskFilter, reqElevator, reqBalcony, reqPrivateBath, reqParking, searchInput, searchQuery, setFilter } = filterStore
   const setWardFilter = (value: string) => setFilter('wardFilter', value)
   const setCategoryFilter = (value: string) => setFilter('categoryFilter', value)
   const setFurnishingFilter = (value: string) => setFilter('furnishingFilter', value)
   const setPriceRangeFilter = (value: string) => setFilter('priceRangeFilter', value)
   const setSizeRangeFilter = (value: string) => setFilter('sizeRangeFilter', value)
-  const setProximityFilter = (value: string) => setFilter('proximityFilter', value)
   const setFloodRiskFilter = (value: string) => setFilter('floodRiskFilter', value)
   const setReqElevator = (value: boolean) => setFilter('reqElevator', value)
   const setReqBalcony = (value: boolean) => setFilter('reqBalcony', value)
@@ -423,7 +422,6 @@ export default function DashboardPage() {
     if (furnishingFilter) count++
     if (priceRangeFilter) count++
     if (sizeRangeFilter) count++
-    if (proximityFilter) count++
     if (floodRiskFilter) count++
     if (reqElevator) count++
     if (reqBalcony) count++
@@ -439,7 +437,6 @@ export default function DashboardPage() {
     furnishingFilter,
     priceRangeFilter,
     sizeRangeFilter,
-    proximityFilter,
     floodRiskFilter,
     reqElevator,
     reqBalcony,
@@ -458,7 +455,6 @@ export default function DashboardPage() {
     setFurnishingFilter('')
     setPriceRangeFilter('')
     setSizeRangeFilter('')
-    setProximityFilter('')
     setFloodRiskFilter('')
     setReqElevator(false)
     setReqBalcony(false)
@@ -510,12 +506,6 @@ export default function DashboardPage() {
       params.set('min_size', '50')
     }
 
-    // Hotspot proximity
-    if (proximityFilter === 'beach_1_5km') params.set('max_dist_beach', '1.5')
-    else if (proximityFilter === 'beach_3km') params.set('max_dist_beach', '3.0')
-    else if (proximityFilter === 'cbd_2km') params.set('max_dist_cbd', '2.0')
-    else if (proximityFilter === 'uni_1_5km') params.set('max_dist_uni', '1.5')
-
     // Amenities
     if (reqElevator) params.set('has_elevator', '1')
     if (reqBalcony) params.set('has_balcony', '1')
@@ -531,7 +521,6 @@ export default function DashboardPage() {
     furnishingFilter,
     priceRangeFilter,
     sizeRangeFilter,
-    proximityFilter,
     floodRiskFilter,
     reqElevator,
     reqBalcony,
@@ -1100,23 +1089,6 @@ export default function DashboardPage() {
                 </select>
               </div>
 
-              <div className="filter-item">
-                <label>Cự ly điểm nóng</label>
-                <select
-                  className="filter-control"
-                  value={proximityFilter}
-                  onChange={(e) => {
-                    setProximityFilter(e.target.value)
-                    setPage(1)
-                  }}
-                >
-                  <option value="">Tất cả cự ly</option>
-                  <option value="beach_1_5km">🏖️ Cận biển Mỹ Khê (≤ 1.5 km)</option>
-                  <option value="beach_3km">🏖️ Cận biển (≤ 3.0 km)</option>
-                  <option value="cbd_2km">🏙️ Cận CBD Cầu Rồng (≤ 2.0 km)</option>
-                  <option value="uni_1_5km">🎓 Cận cụm ĐH lớn (≤ 1.5 km)</option>
-                </select>
-              </div>
 
               <div className="filter-item">
                 <label>Rủi ro ngập</label>
@@ -1241,12 +1213,6 @@ export default function DashboardPage() {
                 <span className="filter-chip">
                   DT: {sizeRangeFilter === 'under_20' ? '< 20m²' : sizeRangeFilter === '20_35' ? '20-35m²' : sizeRangeFilter === '35_50' ? '35-50m²' : '> 50m²'}
                   <button onClick={() => { setSizeRangeFilter(''); setPage(1) }}><X size={12} /></button>
-                </span>
-              )}
-              {proximityFilter && (
-                <span className="filter-chip">
-                  Cự ly: {proximityFilter === 'beach_1_5km' ? 'Biển ≤ 1.5km' : proximityFilter === 'beach_3km' ? 'Biển ≤ 3km' : proximityFilter === 'cbd_2km' ? 'CBD ≤ 2km' : 'ĐH ≤ 1.5km'}
-                  <button onClick={() => { setProximityFilter(''); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {reqElevator && (

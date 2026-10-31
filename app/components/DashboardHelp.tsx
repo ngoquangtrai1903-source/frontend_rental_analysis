@@ -13,7 +13,7 @@ const guides = [
       'Bản đồ tải dữ liệu theo khung nhìn hiện tại, hiển thị tối đa 1.500 tọa độ mỗi lượt và gom điểm gần nhau thành cụm. Bấm cụm để phóng to, hoặc kéo bản đồ để tải khu vực khác.',
       'Bật lớp Giá thuê theo phường trong menu Lớp bản đồ. Rê chuột lên vùng nhiệt để xem giá trung bình, trung vị và số tin có tọa độ trong dữ liệu đang tải.',
       'Bấm điểm đã phóng to để xem thông tin của tin đăng.',
-      'Kết hợp bộ lọc khu vực, giá và cự ly để thu hẹp phạm vi tìm kiếm.',
+      'Kết hợp bộ lọc khu vực và giá để thu hẹp phạm vi tìm kiếm.',
       'Số điểm trên bản đồ có thể ít hơn số tin trong bảng nếu tin thiếu tọa độ hợp lệ.'
     ]
   },
@@ -56,7 +56,7 @@ export default function DashboardHelp({ activeNav }: { activeNav: string }) {
       <summary>Bộ lọc và tìm kiếm</summary>
       <ul>
         <li>Bấm Bộ lọc ở đầu trang. Các điều kiện được kết hợp với nhau và dùng chung khi chuyển tab.</li>
-        <li>Chọn khu vực, loại hình, nội thất, giá, diện tích, cự ly và mức rủi ro. Tích tiện ích để chỉ giữ tin có tiện ích đó.</li>
+        <li>Chọn khu vực, loại hình, nội thất, giá, diện tích và mức rủi ro. Tích tiện ích để chỉ giữ tin có tiện ích đó.</li>
         <li>Ngày đăng từ / đến lọc theo ngày đăng tin. Có thể chỉ chọn một đầu khoảng; ngày bắt đầu không được sau ngày kết thúc.</li>
         <li>Tìm kiếm theo khu vực hoặc loại hình. Đợi dữ liệu tải xong sau khi thay đổi điều kiện.</li>
         <li>Nếu không có kết quả, bỏ bớt điều kiện hoặc dùng nút xóa bộ lọc để đặt lại tất cả, kể cả ngày đăng.</li>
