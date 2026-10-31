@@ -14,6 +14,7 @@ interface RentalMapboxProps {
   loading?: boolean
   selectedPoint: MapRentalPoint | null
   onSelectPoint: (point: MapRentalPoint | null) => void
+  lang?: 'vi' | 'en'
 }
 
 interface ListingFeatureProperties {
@@ -149,7 +150,8 @@ export default function RentalMapbox({
   points,
   loading = false,
   selectedPoint,
-  onSelectPoint
+  onSelectPoint,
+  lang = 'vi'
 }: RentalMapboxProps) {
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
   const mapRef = useRef<MapRef>(null)
@@ -356,17 +358,17 @@ export default function RentalMapbox({
           onClick={() => setLayerMenuOpen((open) => !open)}
           style={{ alignItems: 'center', background: '#fff', border: '1px solid #dbe3ef', borderRadius: 9, boxShadow: '0 3px 10px #0f172a26', cursor: 'pointer', display: 'flex', fontSize: 12, fontWeight: 700, gap: 8, padding: '9px 12px' }}
         >
-          <Layers size={15} color="#3078f0" /> Lớp bản đồ
+          <Layers size={15} color="#3078f0" /> {lang === 'en' ? 'Map Layers' : 'Lớp bản đồ'}
           <span style={{ background: '#eaf1ff', borderRadius: 99, color: '#3078f0', fontSize: 10, padding: '2px 7px' }}>
-            {[showPropertyPins, showDistricts, showFloodZones].filter(Boolean).length} bật
+            {[showPropertyPins, showDistricts, showFloodZones].filter(Boolean).length} {lang === 'en' ? 'active' : 'bật'}
           </span>
         </button>
 
         {layerMenuOpen && (
           <div style={{ background: '#fff', border: '1px solid #dbe3ef', borderRadius: 11, boxShadow: '0 12px 28px #0f172a2e', display: 'grid', gap: 12, marginTop: 8, padding: 13, width: 280 }}>
-            <strong style={{ color: '#64748b', fontSize: 10, letterSpacing: '.5px' }}>BẬT / TẮT LỚP BẢN ĐỒ</strong>
+            <strong style={{ color: '#64748b', fontSize: 10, letterSpacing: '.5px' }}>{lang === 'en' ? 'TOGGLE MAP LAYERS' : 'BẬT / TẮT LỚP BẢN ĐỒ'}</strong>
             <label style={toggleStyle}>
-              <span style={{ alignItems: 'center', display: 'flex', gap: 7 }}><MapPin size={14} color="#3078f0" /> Tin cho thuê ({points.length.toLocaleString('vi-VN')})</span>
+              <span style={{ alignItems: 'center', display: 'flex', gap: 7 }}><MapPin size={14} color="#3078f0" /> {lang === 'en' ? 'Rental Listings' : 'Tin cho thuê'} ({points.length.toLocaleString(lang === 'en' ? 'en-US' : 'vi-VN')})</span>
               <input type="checkbox" checked={showPropertyPins} onChange={(event) => setShowPropertyPins(event.target.checked)} />
             </label>
             <label style={toggleStyle}>
@@ -374,7 +376,7 @@ export default function RentalMapbox({
               <input type="checkbox" checked={showDistricts} onChange={(event) => setShowDistricts(event.target.checked)} />
             </label>
             <label style={toggleStyle}>
-              <span style={{ alignItems: 'center', display: 'flex', gap: 7 }}><ShieldAlert size={14} color="#ef4444" /> Vùng ngập lịch sử</span>
+              <span style={{ alignItems: 'center', display: 'flex', gap: 7 }}><ShieldAlert size={14} color="#ef4444" /> {lang === 'en' ? 'Historical Flood Zones' : 'Vùng ngập lịch sử'}</span>
               <input type="checkbox" checked={showFloodZones} onChange={(event) => setShowFloodZones(event.target.checked)} />
             </label>
             <label style={{ ...toggleStyle, borderTop: '1px solid #eef2f7', paddingTop: 10 }}>
@@ -382,23 +384,23 @@ export default function RentalMapbox({
               <input type="checkbox" checked={clustering} onChange={(event) => setClustering(event.target.checked)} />
             </label>
             <small style={{ color: '#64748b', lineHeight: 1.4 }}>
-              * GeoJSON hiện có là ranh giới Quận/Huyện dạng xấp xỉ, chưa phải ranh giới Phường chính thức.
+              {lang === 'en' ? '* GeoJSON currently approximates district boundaries, not official ward boundaries.' : '* GeoJSON hiện có là ranh giới Quận/Huyện dạng xấp xỉ, chưa phải ranh giới Phường chính thức.'}
             </small>
           </div>
         )}
       </div>
 
       <div style={{ alignItems: 'center', display: 'flex', gap: 7, position: 'absolute', right: 16, top: 16, zIndex: 2 }}>
-        <button type="button" aria-label="Thu nhỏ bản đồ" onClick={() => mapRef.current?.zoomOut()} style={controlButtonStyle}><Minus size={15} /></button>
-        <button type="button" aria-label="Phóng to bản đồ" onClick={() => mapRef.current?.zoomIn()} style={controlButtonStyle}><Plus size={15} /></button>
+        <button type="button" aria-label={lang === "en" ? "Zoom out" : "Thu nhỏ bản đồ"} onClick={() => mapRef.current?.zoomOut()} style={controlButtonStyle}><Minus size={15} /></button>
+        <button type="button" aria-label={lang === "en" ? "Zoom in" : "Phóng to bản đồ"} onClick={() => mapRef.current?.zoomIn()} style={controlButtonStyle}><Plus size={15} /></button>
         <button type="button" onClick={resetOverview} style={{ ...controlButtonStyle, color: '#3078f0', fontSize: 11, fontWeight: 700, gap: 6, padding: '8px 10px' }}>
-          <Maximize2 size={13} /> Toàn cảnh
+          <Maximize2 size={13} /> {lang === 'en' ? 'Overview' : 'Toàn cảnh'}
         </button>
       </div>
 
       {(loading || points.length > 0) && (
         <div style={{ background: '#fff', borderRadius: 7, boxShadow: '0 2px 8px #0f172a26', color: '#334155', fontSize: 11, fontWeight: 700, left: 16, padding: '7px 10px', position: 'absolute', top: 68, zIndex: 2 }}>
-          {loading ? 'Đang tải tọa độ...' : `${points.length.toLocaleString('vi-VN')} vị trí · ${detailedMarkers.length.toLocaleString('vi-VN')} marker chi tiết trong khung nhìn`}
+          {loading ? (lang === 'en' ? 'Loading coordinates...' : 'Đang tải tọa độ...') : (lang === 'en' ? `${points.length.toLocaleString('en-US')} locations · ${detailedMarkers.length.toLocaleString('en-US')} detailed markers in view` : `${points.length.toLocaleString('vi-VN')} vị trí · ${detailedMarkers.length.toLocaleString('vi-VN')} marker chi tiết trong khung nhìn`)}
         </div>
       )}
 
@@ -416,13 +418,18 @@ export default function RentalMapbox({
       )}
 
       <div style={{ background: '#fff', border: '1px solid #dbe3ef', borderRadius: 9, bottom: 16, color: '#334155', display: 'grid', fontSize: 10, gap: 5, left: 16, padding: '9px 11px', pointerEvents: 'none', position: 'absolute', zIndex: 2 }}>
-        <strong style={{ color: '#64748b', fontSize: 9 }}>GIÁ THUÊ / THÁNG</strong>
-        {[
+        <strong style={{ color: '#64748b', fontSize: 9 }}>{lang === 'en' ? 'RENT / MONTH' : 'GIÁ THUÊ / THÁNG'}</strong>
+        {(lang === 'en' ? [
+          ['#10b981', 'Under 3.5M'],
+          ['#2563eb', '3.5 – 7M'],
+          ['#8b5cf6', '7 – 12M'],
+          ['#ef4444', 'Over 12M']
+        ] : [
           ['#10b981', 'Dưới 3,5 triệu'],
           ['#2563eb', '3,5 – 7 triệu'],
           ['#8b5cf6', '7 – 12 triệu'],
           ['#ef4444', 'Trên 12 triệu']
-        ].map(([color, label]) => (
+        ]).map(([color, label]) => (
           <span key={label} style={{ alignItems: 'center', display: 'flex', gap: 6 }}>
             <i style={{ background: color, borderRadius: '50%', height: 8, width: 8 }} />{label}
           </span>

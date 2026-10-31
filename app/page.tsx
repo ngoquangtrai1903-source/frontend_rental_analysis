@@ -1302,6 +1302,7 @@ export default function DashboardPage() {
           {activeNav === 'Phân tích nâng cao' && (
             <AdvancedAnalyticsView
               filterQueryString={filterQueryString}
+              lang={lang}
             />
           )}
 
@@ -1520,14 +1521,14 @@ export default function DashboardPage() {
                     {/* Top Wards */}
                     <div className="card area-card">
                       <CardHeader
-                        title="Tất cả khu vực (Nguồn cung)"
-                        subtitle="Toàn bộ khu vực có tin đăng, sắp xếp theo số lượng giảm dần"
+                        title={lang === 'en' ? 'All Areas (Supply)' : 'Tất cả khu vực (Nguồn cung)'}
+                        subtitle={lang === 'en' ? 'All areas with listings, sorted descending by volume' : 'Toàn bộ khu vực có tin đăng, sắp xếp theo số lượng giảm dần'}
                         action=""
                       />
                       <div className="ward-list">
                         {wards.length === 0 ? (
                           <div style={{ padding: '20px', textAlign: 'center', color: 'var(--muted)' }}>
-                            Không có dữ liệu khu vực phù hợp
+                            {lang === 'en' ? 'No matching area data' : 'Không có dữ liệu khu vực phù hợp'}
                           </div>
                         ) : (
                           wards.map((ward, index) => {
@@ -1542,14 +1543,14 @@ export default function DashboardPage() {
                                 </div>
                                 <div className="ward-name">
                                   <strong>{ward.name}</strong>
-                                  <small>{ward.count} tin đăng</small>
+                                  <small>{ward.count} {lang === 'en' ? 'listings' : 'tin đăng'}</small>
                                 </div>
                                 <div className="ward-bar">
                                   <span style={{ width: `${Math.max(10, barWidth)}%` }} />
                                 </div>
                                 <div className="ward-price">
-                                  <strong>{(ward.avgPrice / 1000000).toFixed(1)} tr</strong>
-                                  <small>TB / tháng</small>
+                                  <strong>{(ward.avgPrice / 1000000).toFixed(1)} {lang === 'en' ? 'M' : 'tr'}</strong>
+                                  <small>{lang === 'en' ? 'Avg / mo' : 'TB / tháng'}</small>
                                 </div>
                               </div>
                             )
@@ -1574,7 +1575,7 @@ export default function DashboardPage() {
                           <span>{lang === 'en' ? 'POSTED' : 'NGÀY ĐĂNG'}</span>
                         </div>
                         {filtering ? (
-                          <div className="listings-skeleton" role="status" aria-label="Đang tải tin đăng">
+                          <div className="listings-skeleton" role="status" aria-label={lang === 'en' ? 'Loading listings' : 'Đang tải tin đăng'}>
                             {Array.from({ length: 5 }, (_, index) => (
                               <div className="listings-skeleton-row" aria-hidden="true" key={index}>
                                 <span /><span /><span /><span /><span />
@@ -1583,12 +1584,14 @@ export default function DashboardPage() {
                           </div>
                         ) : records.length === 0 ? (
                           <div style={{ padding: '30px', textAlign: 'center', color: 'var(--muted)' }}>
-                            Không tìm thấy tin đăng nào phù hợp với bộ lọc hiện tại.
+                            {lang === 'en' ? 'No listings found matching current filters.' : 'Không tìm thấy tin đăng nào phù hợp với bộ lọc hiện tại.'}
                           </div>
                         ) : (
                           records.map((r, index) => {
                             const riskText =
-                              r.flood_risk_label === 0 ? 'Thấp' : r.flood_risk_label === 1 ? 'Trung bình' : 'Cao'
+                              lang === 'en'
+                                ? (r.flood_risk_label === 0 ? 'Low' : r.flood_risk_label === 1 ? 'Medium' : 'High')
+                                : (r.flood_risk_label === 0 ? 'Thấp' : r.flood_risk_label === 1 ? 'Trung bình' : 'Cao')
                             const riskClass =
                               r.flood_risk_label === 0 ? 'low' : r.flood_risk_label === 1 ? 'medium' : 'high'
 
@@ -1597,15 +1600,15 @@ export default function DashboardPage() {
                                 <div>
                                   <strong>{r.ward_name || 'N/A'}</strong>
                                   <div style={{ fontSize: '9px', color: 'var(--muted)' }}>
-                                    {r.category_name || 'Phòng cho thuê'}
+                                    {r.category_name || (lang === 'en' ? 'Rental Room' : 'Phòng cho thuê')}
                                   </div>
                                 </div>
                                 <span>
-                                  {r.price_vnd ? `${(r.price_vnd / 1000000).toFixed(1)} tr` : 'Thỏa thuận'}
+                                  {r.price_vnd ? `${(r.price_vnd / 1000000).toFixed(1)} ${lang === 'en' ? 'M' : 'tr'}` : (lang === 'en' ? 'Negotiable' : 'Thỏa thuận')}
                                 </span>
                                 <span>{r.size_m2 ? `${Math.round(r.size_m2)} m²` : 'N/A'}</span>
                                 <span className={`risk ${riskClass}`}>{riskText}</span>
-                                <small>{r.posted_date ? r.posted_date.slice(0, 10) : 'Gần đây'}</small>
+                                <small>{r.posted_date ? r.posted_date.slice(0, 10) : (lang === 'en' ? 'Recent' : 'Gần đây')}</small>
                               </div>
                             )
                           })

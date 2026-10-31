@@ -33,11 +33,20 @@ interface DashboardChartsProps {
 
 const COLORS = ['#3078f0', '#53c39c', '#f19a52', '#8977df']
 
+function translateDistributionLabel(label: string, isEn: boolean): string {
+  if (!isEn) return label
+  if (label.includes('Dưới')) return label.replace('Dưới', 'Under ').replace('triệu', 'M')
+  if (label.includes('Trên')) return label.replace('Trên', 'Over ').replace('triệu', 'M')
+  return label.replace('triệu', 'M')
+}
+
 export default function DashboardCharts({ trend, distribution, total, lang = 'vi' }: DashboardChartsProps) {
   const isEn = lang === 'en'
   const trendTickInterval = Math.max(0, Math.ceil(trend.length / 8) - 1)
   const pie = distribution.map((item, index) => ({
     ...item,
+    label: translateDistributionLabel(item.label, isEn),
+    originalLabel: item.label,
     value: item.percentage,
     color: COLORS[index % COLORS.length]
   }))
@@ -72,7 +81,13 @@ export default function DashboardCharts({ trend, distribution, total, lang = 'vi
                 />
                 <YAxis yAxisId="left" tick={{ fontSize: 10 }} />
                 <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} />
-                <Tooltip />
+                <Tooltip
+                  formatter={(value: any, name: any) => [
+                    typeof value === 'number' ? value.toLocaleString(isEn ? 'en-US' : 'vi-VN') : value,
+                    name
+                  ]}
+                  labelFormatter={(label) => `${isEn ? 'Period:' : 'Thời gian:'} ${label}`}
+                />
                 <Line
                   yAxisId="left"
                   type="monotone"
@@ -115,7 +130,9 @@ export default function DashboardCharts({ trend, distribution, total, lang = 'vi
               <>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Tooltip />
+                    <Tooltip
+                      formatter={(value: any) => [`${value}%`, isEn ? 'Share' : 'Tỷ trọng']}
+                    />
                     <Pie
                       data={pie}
                       dataKey="value"

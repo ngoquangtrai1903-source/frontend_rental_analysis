@@ -116,6 +116,7 @@ export default function LocationMapView({
         loading={loading}
         selectedPoint={selectedPoint}
         onSelectPoint={handleSelectPoint}
+        lang={lang}
       />
 
       {/* 4. Selected Property Detailed Inspector Card */}
