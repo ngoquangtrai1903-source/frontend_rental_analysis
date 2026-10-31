@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
-import { Home, Sparkles, CheckCircle2, TrendingUp, DollarSign, Sliders, Layers } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Home, Sliders } from 'lucide-react'
 
 interface AmenityLiftItem {
   key: string
@@ -15,11 +16,48 @@ interface AmenityLiftItem {
   ppm2Without: number
 }
 
-export default function AmenitiesView({ filterQueryString = '' }: { filterQueryString?: string }) {
-  const [amenitiesData, setAmenitiesData] = useState<AmenityLiftItem[]>([])
-  const [baselines, setBaselines] = useState<{ apartmentBaseMillion: number; roomBaseMillion: number; totalApts: number; totalRooms: number } | null>(null)
-  const [loading, setLoading] = useState(true)
+interface AmenitiesViewProps {
+  filterQueryString?: string
+  lang?: 'vi' | 'en'
+}
+
+export default function AmenitiesView({ filterQueryString = '', lang = 'vi' }: AmenitiesViewProps) {
+  const isEn = lang === 'en'
   const [filterCategory, setFilterCategory] = useState<string>('all')
+  const query = useQuery({
+    queryKey: ['amenities', filterCategory, filterQueryString],
+    queryFn: async ({ signal }) => {
+      const params = new URLSearchParams(filterQueryString)
+      params.set('mode', 'amenities')
+      if (filterCategory !== 'all') params.set('category', filterCategory)
+
+      const baselineParams = new URLSearchParams(filterQueryString)
+      baselineParams.set('mode', 'baselines')
+      const [amenitiesRes, baselinesRes] = await Promise.all([
+        fetch(`/api/gold-query?${params.toString()}`, { signal }),
+        fetch(`/api/gold-query?${baselineParams.toString()}`, { signal })
+      ])
+      const readResponse = async (res: Response) => {
+        if (res.ok) return res.json()
+        const response = await res.json().catch(() => ({}))
+        throw new Error(response.message || response.error || (isEn ? `Server error (${res.status})` : `Lỗi máy chủ (${res.status})`))
+      }
+      const [amenitiesJson, baselinesJson] = await Promise.all([
+        readResponse(amenitiesRes),
+        readResponse(baselinesRes)
+      ])
+      if (!Array.isArray(amenitiesJson) || !baselinesJson || typeof baselinesJson !== 'object') {
+        throw new Error(isEn ? 'Invalid amenities analysis response.' : 'Dữ liệu phân tích tiện ích trả về không hợp lệ.')
+      }
+      return {
+        amenities: amenitiesJson as AmenityLiftItem[],
+        baselines: baselinesJson as { apartmentBaseMillion: number; roomBaseMillion: number; totalApts: number; totalRooms: number }
+      }
+    }
+  })
+  const amenitiesData = query.data?.amenities ?? []
+  const baselines = query.data?.baselines ?? null
+  const loading = query.isLoading
 
   // Amenity Simulator State
   const [simElevator, setSimElevator] = useState(false)
@@ -31,39 +69,8 @@ export default function AmenitiesView({ filterQueryString = '' }: { filterQueryS
   const [simMezzanine, setSimMezzanine] = useState(false)
   const [simRoomType, setSimRoomType] = useState<'room' | 'apartment'>('room')
 
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true)
-      try {
-        const params = new URLSearchParams(filterQueryString)
-        params.set('mode', 'amenities')
-        if (filterCategory !== 'all') params.set('category', filterCategory)
-
-        const [amenitiesRes, baselinesRes] = await Promise.all([
-          fetch(`/api/gold-query?${params.toString()}`),
-          fetch(`/api/gold-query?mode=baselines${filterQueryString ? `&${filterQueryString}` : ''}`)
-        ])
-
-        if (amenitiesRes.ok) {
-          const json = await amenitiesRes.json()
-          setAmenitiesData(json || [])
-        }
-        if (baselinesRes.ok) {
-          const json = await baselinesRes.json()
-          setBaselines(json)
-        }
-      } catch (e) {
-        console.error('Failed to load amenity data:', e)
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadData()
-  }, [filterCategory, filterQueryString])
-
   // Calculated simulated price strictly from Supabase baselines and marginal lifts
   const simulatedPrice = useMemo(() => {
-    // Dynamic base price from Supabase
     const baseApt = baselines?.apartmentBaseMillion || 9.5
     const baseRoom = baselines?.roomBaseMillion || 2.8
     let current = simRoomType === 'apartment' ? baseApt * 0.75 : baseRoom * 0.8
@@ -94,13 +101,33 @@ export default function AmenitiesView({ filterQueryString = '' }: { filterQueryS
         </div>
         <div>
           <span className="eyebrow">AMENITY PREMIUM & VALUE LIFT ANALYSIS</span>
-          <h2>Phân tích Giá trị Gia tăng theo Tiện ích Phòng trọ</h2>
-          <p>Đo lường mức tăng giá thuê và giá/m² dựa trên 9 tiện ích thực tế trong Data Warehouse.</p>
+          <h2>
+            {isEn ? 'Value-Add Amenities & Pricing Premium Analysis' : 'Phân tích Giá trị Gia tăng theo Tiện ích Phòng trọ'}
+          </h2>
+          <p>
+            {isEn
+              ? 'Measures rental rate appreciation and VND/m² premium across 9 real-world amenities in Data Warehouse.'
+              : 'Đo lường mức tăng giá thuê và giá/m² dựa trên 9 tiện ích thực tế trong Data Warehouse.'}
+          </p>
         </div>
         <span className="analysis-status">
-          <span className="live-dot" /> Dữ liệu đã hiệu chỉnh
+          <span className="live-dot" />{' '}
+          {loading
+            ? isEn ? 'Loading data…' : 'Đang tải dữ liệu…'
+            : query.isError
+              ? isEn ? 'Failed to load' : 'Tải dữ liệu thất bại'
+              : isEn ? 'Calibrated data' : 'Dữ liệu đã hiệu chỉnh'}
         </span>
       </div>
+
+      {query.isError && (
+        <div role="alert" className="card data-error-state">
+          <span>{isEn ? `Failed to load amenity data: ${query.error.message}` : `Không tải được dữ liệu tiện ích: ${query.error.message}`}</span>
+          <button type="button" className="button secondary" onClick={() => void query.refetch()}>
+            {isEn ? 'Retry' : 'Thử tải lại'}
+          </button>
+        </div>
+      )}
 
       {/* Category selector */}
       <div className="toolbar" style={{ margin: '10px 0 0' }}>
@@ -109,19 +136,19 @@ export default function AmenitiesView({ filterQueryString = '' }: { filterQueryS
             className={`tab ${filterCategory === 'all' ? 'active' : ''}`}
             onClick={() => setFilterCategory('all')}
           >
-            Toàn bộ thị trường
+            {isEn ? 'Entire Market' : 'Toàn bộ thị trường'}
           </button>
           <button
             className={`tab ${filterCategory === 'Căn hộ/Chung cư' ? 'active' : ''}`}
             onClick={() => setFilterCategory('Căn hộ/Chung cư')}
           >
-            Chuyên sâu Căn hộ
+            {isEn ? 'Apartments Deep-dive' : 'Chuyên sâu Căn hộ'}
           </button>
           <button
             className={`tab ${filterCategory === 'Phòng trọ' ? 'active' : ''}`}
             onClick={() => setFilterCategory('Phòng trọ')}
           >
-            Chuyên sâu Phòng trọ
+            {isEn ? 'Rental Rooms Deep-dive' : 'Chuyên sâu Phòng trọ'}
           </button>
         </div>
       </div>
@@ -133,28 +160,28 @@ export default function AmenitiesView({ filterQueryString = '' }: { filterQueryS
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <strong style={{ fontSize: '13px' }}>{item.label}</strong>
               <span className={`lift-badge ${item.liftPct > 0 ? 'positive' : 'neutral'}`}>
-                {item.liftPct > 0 ? `+${item.liftPct}% giá` : `${item.liftPct}%`}
+                {item.liftPct > 0 ? `+${item.liftPct}% ${isEn ? 'lift' : 'giá'}` : `${item.liftPct}%`}
               </span>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '6px' }}>
               <div>
-                <span style={{ fontSize: '10px', color: 'var(--muted)' }}>Có tiện ích</span>
+                <span style={{ fontSize: '10px', color: 'var(--muted)' }}>{isEn ? 'With amenity' : 'Có tiện ích'}</span>
                 <div style={{ font: '800 18px Manrope', color: 'var(--blue)' }}>
-                  {item.avgPriceWithMillion} tr
+                  {item.avgPriceWithMillion} {isEn ? 'M' : 'tr'}
                 </div>
                 <small style={{ fontSize: '10px', color: 'var(--muted)' }}>
-                  {item.ppm2With.toLocaleString()} đ/m²
+                  {item.ppm2With.toLocaleString()} {isEn ? 'VND/m²' : 'đ/m²'}
                 </small>
               </div>
 
               <div style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: '10px', color: 'var(--muted)' }}>Không có</span>
+                <span style={{ fontSize: '10px', color: 'var(--muted)' }}>{isEn ? 'Without' : 'Không có'}</span>
                 <div style={{ font: '700 15px Manrope', color: 'var(--muted)' }}>
-                  {item.avgPriceWithoutMillion} tr
+                  {item.avgPriceWithoutMillion} {isEn ? 'M' : 'tr'}
                 </div>
                 <small style={{ fontSize: '10px', color: 'var(--muted)' }}>
-                  {item.ppm2Without.toLocaleString()} đ/m²
+                  {item.ppm2Without.toLocaleString()} {isEn ? 'VND/m²' : 'đ/m²'}
                 </small>
               </div>
             </div>
@@ -162,7 +189,7 @@ export default function AmenitiesView({ filterQueryString = '' }: { filterQueryS
             {/* Coverage bar */}
             <div style={{ marginTop: '10px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginBottom: '4px', color: 'var(--muted)' }}>
-                <span>Độ phổ biến: {item.countWith} tin</span>
+                <span>{isEn ? `Prevalence: ${item.countWith} listings` : `Độ phổ biến: ${item.countWith} tin`}</span>
                 <span>{item.countWith + item.countWithout > 0 ? Math.round((item.countWith / (item.countWith + item.countWithout)) * 100) : 0}%</span>
               </div>
               <div className="summary-track">
@@ -175,25 +202,36 @@ export default function AmenitiesView({ filterQueryString = '' }: { filterQueryS
             </div>
           </div>
         ))}
+        {!loading && amenitiesData.length === 0 && (
+          <div role="status" className="chart-empty-state">
+            {query.isError
+              ? (isEn ? 'Unable to display data when request fails.' : 'Không thể hiển thị dữ liệu khi yêu cầu tải thất bại.')
+              : (isEn ? 'Insufficient data to compare amenities with current filters.' : 'Chưa đủ dữ liệu để so sánh các tiện ích với bộ lọc hiện tại.')}
+          </div>
+        )}
       </div>
 
       {/* Interactive Price Simulator for Landlords / Investors */}
-      <div className="card" style={{ padding: '24px', background: '#ffffff', marginTop: '16px' }}>
+      <div className="card" style={{ padding: '24px', background: 'var(--surface-card)', marginTop: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
           <div className="kpi-icon blue" style={{ margin: 0 }}><Sliders size={18} /></div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '16px' }}>Bộ Mô Phỏng Giá Thuê Theo Tiện Ích (Landlord Pricing Estimator)</h3>
+            <h3 style={{ margin: 0, fontSize: '16px' }}>
+              {isEn ? 'Amenity Pricing Simulator (Landlord Pricing Estimator)' : 'Bộ Mô Phỏng Giá Thuê Theo Tiện Ích (Landlord Pricing Estimator)'}
+            </h3>
             <p style={{ margin: 0, color: 'var(--muted)', fontSize: '11px' }}>
-              Chọn các tiện ích bạn dự định đầu tư trang bị để tính toán mức giá thuê kỳ vọng chuẩn thị trường Đà Nẵng.
+              {isEn
+                ? 'Select amenities you plan to equip to calculate the market-standard expected rent in Da Nang.'
+                : 'Chọn các tiện ích bạn dự định đầu tư trang bị để tính toán mức giá thuê kỳ vọng chuẩn thị trường Đà Nẵng.'}
             </p>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '24px', marginTop: '16px' }}>
+        <div className="amenity-simulator-grid" style={{ gap: '24px', marginTop: '16px' }}>
           <div>
             <div style={{ marginBottom: '14px' }}>
               <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--muted)', display: 'block', marginBottom: '6px' }}>
-                MÔ HÌNH PHÁT TRIỂN
+                {isEn ? 'DEVELOPMENT MODEL' : 'MÔ HÌNH PHÁT TRIỂN'}
               </label>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button
@@ -201,69 +239,69 @@ export default function AmenitiesView({ filterQueryString = '' }: { filterQueryS
                   style={{ flex: 1 }}
                   onClick={() => setSimRoomType('room')}
                 >
-                  Phòng trọ cho thuê
+                  {isEn ? 'Rental Room' : 'Phòng trọ cho thuê'}
                 </button>
                 <button
                   className={`button ${simRoomType === 'apartment' ? 'primary' : 'secondary'}`}
                   style={{ flex: 1 }}
                   onClick={() => setSimRoomType('apartment')}
                 >
-                  Căn hộ dịch vụ / Mini
+                  {isEn ? 'Serviced / Mini Apt' : 'Căn hộ dịch vụ / Mini'}
                 </button>
               </div>
             </div>
 
             <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--muted)', display: 'block', marginBottom: '8px' }}>
-              TIỆN ÍCH DỰ KIẾN LẮP ĐẶT
+              {isEn ? 'PLANNED AMENITIES' : 'TIỆN ÍCH DỰ KIẾN LẮP ĐẶT'}
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div className="amenity-simulator-options" style={{ gap: '10px' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
                 <input type="checkbox" checked={simBalcony} onChange={(e) => setSimBalcony(e.target.checked)} />
-                Ban công riêng thoáng
+                {isEn ? 'Private airy balcony' : 'Ban công riêng thoáng'}
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
                 <input type="checkbox" checked={simElevator} onChange={(e) => setSimElevator(e.target.checked)} />
-                Thang máy tốc độ cao
+                {isEn ? 'High-speed elevator' : 'Thang máy tốc độ cao'}
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
                 <input type="checkbox" checked={simPrivateBath} onChange={(e) => setSimPrivateBath(e.target.checked)} />
-                WC khép kín riêng
+                {isEn ? 'Private en-suite bathroom' : 'WC khép kín riêng'}
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
                 <input type="checkbox" checked={simParking} onChange={(e) => setSimParking(e.target.checked)} />
-                Nhà để xe có bảo vệ
+                {isEn ? 'Secured parking garage' : 'Nhà để xe có bảo vệ'}
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
                 <input type="checkbox" checked={simFreeHours} onChange={(e) => setSimFreeHours(e.target.checked)} />
-                Giờ giấc tự do (Khóa vân tay)
+                {isEn ? '24/7 Free hours (fingerprint lock)' : 'Giờ giấc tự do (Khóa vân tay)'}
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
                 <input type="checkbox" checked={simWifi} onChange={(e) => setSimWifi(e.target.checked)} />
-                Wi-Fi cáp quang riêng
+                {isEn ? 'Dedicated high-speed Wi-Fi' : 'Wi-Fi cáp quang riêng'}
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
                 <input type="checkbox" checked={simMezzanine} onChange={(e) => setSimMezzanine(e.target.checked)} />
-                Gác lửng kiên cố
+                {isEn ? 'Solid mezzanine loft' : 'Gác lửng kiên cố'}
               </label>
             </div>
           </div>
 
           {/* Simulator Result Box */}
-          <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid var(--line)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>GIÁ THUÊ ƯỚC TÍNH KHUYẾN NGHỊ</span>
+          <div style={{ background: 'var(--surface-subtle)', padding: '20px', borderRadius: '12px', border: '1px solid var(--line)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>
+              {isEn ? 'RECOMMENDED ESTIMATED RENT' : 'GIÁ THUÊ ƯỚC TÍNH KHUYẾN NGHỊ'}
+            </span>
             <div style={{ font: '800 32px Manrope', color: 'var(--blue)', margin: '8px 0' }}>
-              {simedValueFormatted(simulatedPrice)}
+              {simulatedPrice.toFixed(1)} {isEn ? 'M VND / mo' : 'tr / tháng'}
             </div>
-            <p style={{ margin: 0, fontSize: '11px', color: '#62708b', lineHeight: 1.5 }}>
-              Dựa trên mô hình hồi quy biên lợi ích từ dữ liệu 3,238 phòng tại Đà Nẵng. Mức giá này đảm bảo tỷ lệ lấp đầy &gt; 85% trong 30 ngày.
+            <p style={{ margin: 0, fontSize: '11px', color: 'var(--muted)', lineHeight: 1.5 }}>
+              {isEn
+                ? 'Based on marginal benefit regression from 3,238 listings in Da Nang. Assures >85% occupancy in 30 days.'
+                : 'Dựa trên mô hình hồi quy biên lợi ích từ dữ liệu 3,238 phòng tại Đà Nẵng. Mức giá này đảm bảo tỷ lệ lấp đầy > 85% trong 30 ngày.'}
             </p>
           </div>
         </div>
       </div>
     </div>
   )
-}
-
-function simedValueFormatted(val: number) {
-  return `${val.toFixed(1)} tr / tháng`
 }

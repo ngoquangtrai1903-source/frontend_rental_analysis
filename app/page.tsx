@@ -1,11 +1,16 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import AmenitiesView from './components/AmenitiesView'
 import FloodRiskView from './components/FloodRiskView'
 import AdvancedAnalyticsView from './components/AdvancedAnalyticsView'
 import PricePredictionView from './components/PricePredictionView'
+import DashboardCharts from './components/DashboardCharts'
+import DashboardHelp from './components/DashboardHelp'
+import { useFilterStore } from './store/filterStore'
+import { useTranslation } from './store/languageStore'
+import { Language } from './i18n/translations'
 
 const LocationMapView = dynamic(() => import('./components/LocationMapView'), {
   ssr: false,
@@ -49,16 +54,52 @@ import {
   ShieldAlert,
   Sparkles,
   TrendingUp,
-  X
+  X,
+  LogIn,
+  LogOut
 } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import { fetchAllRecords, toCsv } from '@/lib/csv'
+
+const SETTINGS_STORAGE_KEY = 'rentiq.dashboard.settings.v1'
+const DEFAULT_START_DATE = '2026-01-01'
+
+function getTodayDate() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function getProfileAvatarUrl(user: {
+  user_metadata?: Record<string, unknown>
+  identities?: Array<{ provider?: string; identity_data?: Record<string, unknown> | null }> | null
+} | null | undefined): string | null {
+  const googleIdentity = user?.identities?.find((identity) => identity.provider === 'google')
+  const candidates = [
+    googleIdentity?.identity_data?.picture,
+    googleIdentity?.identity_data?.avatar_url,
+    user?.user_metadata?.picture,
+    user?.user_metadata?.avatar_url
+  ]
+
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string') continue
+    try {
+      const url = new URL(candidate)
+      if (url.protocol === 'https:') return url.href
+    } catch {
+      continue
+    }
+  }
+
+  return null
+}
 
 const navItems = [
-  { label: 'Tổng quan', icon: LayoutDashboard },
-  { label: 'Vị trí & khu vực', icon: MapPin },
-  { label: 'Tiện ích', icon: Home },
-  { label: 'Rủi ro ngập lụt', icon: ShieldAlert },
-  { label: 'Phân tích nâng cao', icon: BarChart3 },
-  { label: 'Dự đoán giá AI', icon: Sparkles }
+  { id: 'Tổng quan', labelVi: 'Tổng quan', labelEn: 'Overview', icon: LayoutDashboard },
+  { id: 'Vị trí & khu vực', labelVi: 'Vị trí & khu vực', labelEn: 'Location & Area', icon: MapPin },
+  { id: 'Tiện ích', labelVi: 'Tiện ích', labelEn: 'Amenities', icon: Home },
+  { id: 'Rủi ro ngập lụt', labelVi: 'Rủi ro ngập lụt', labelEn: 'Flood Risk', icon: ShieldAlert },
+  { id: 'Phân tích nâng cao', labelVi: 'Phân tích nâng cao', labelEn: 'Advanced Analytics', icon: BarChart3 },
+  { id: 'Dự đoán giá AI', labelVi: 'Dự đoán giá AI', labelEn: 'AI Price Prediction', icon: Sparkles }
 ]
 
 const WARDS_OPTIONS = [
@@ -132,27 +173,225 @@ export default function DashboardPage() {
   const [activeNav, setActiveNav] = useState('Tổng quan')
   const [filterOpen, setFilterOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('Tổng quan')
+  const [darkMode, setDarkMode] = useState(false)
+  const [autoRefresh, setAutoRefresh] = useState(true)
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
+  const [settingsSaved, setSettingsSaved] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+  const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null)
+  const [authLoading, setAuthLoading] = useState(false)
+  const [authMessage, setAuthMessage] = useState('')
+  const signingOut = useRef(false)
+  const dashboardRequestId = useRef(0)
+  const dashboardAbortController = useRef<AbortController | null>(null)
+  const accountMenuRef = useRef<HTMLDivElement>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
+  const modalTriggerRef = useRef<HTMLElement | null>(null)
+  const modalOpen = settingsOpen || helpOpen
+
+  const openSettings = () => {
+    modalTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    setHelpOpen(false)
+    setSettingsOpen(true)
+  }
+
+  const openHelp = () => {
+    modalTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    setSettingsOpen(false)
+    setHelpOpen(true)
+  }
+
+  const closeModal = () => {
+    setSettingsOpen(false)
+    setHelpOpen(false)
+  }
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || 'null')
+      if (saved && typeof saved === 'object') {
+        if (typeof saved.darkMode === 'boolean') setDarkMode(saved.darkMode)
+        if (typeof saved.autoRefresh === 'boolean') setAutoRefresh(saved.autoRefresh)
+      }
+    } catch {
+      // Unavailable storage or invalid saved data must not prevent using the app.
+    } finally {
+      setSettingsLoaded(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!settingsLoaded) return
+    document.body.classList.toggle('dark-mode', darkMode)
+    try {
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({ darkMode, autoRefresh }))
+      setSettingsSaved(true)
+    } catch {
+      setSettingsSaved(false)
+    }
+  }, [settingsLoaded, darkMode, autoRefresh])
+
+  useEffect(() => {
+    let mounted = true
+    let hadSession = false
+    const url = new URL(window.location.href)
+    if (url.searchParams.has('auth_error')) {
+      setAuthMessage('Không thể hoàn tất đăng nhập Google. Vui lòng thử lại.')
+      url.searchParams.delete('auth_error')
+      window.history.replaceState(null, '', url)
+    }
+    const checkSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession()
+        if (!mounted) return
+        if (error) throw error
+        if (hadSession && !data.session && !signingOut.current) setAuthMessage('Phiên đăng nhập đã kết thúc. Vui lòng đăng nhập lại.')
+        hadSession = Boolean(data.session)
+        setUserEmail(data.session?.user.email ?? null)
+        setUserAvatarUrl(getProfileAvatarUrl(data.session?.user))
+      } catch (error) {
+        console.error('Failed to read Supabase auth session:', error)
+        if (mounted) setAuthMessage('Không thể kiểm tra phiên đăng nhập. Kiểm tra kết nối hoặc đăng nhập lại.')
+      }
+    }
+    void checkSession()
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return
+      if (event === 'SIGNED_OUT' && hadSession && !signingOut.current) setAuthMessage('Phiên đăng nhập đã kết thúc. Vui lòng đăng nhập lại.')
+      hadSession = Boolean(session)
+      setUserEmail(session?.user?.email ?? null)
+      setUserAvatarUrl(getProfileAvatarUrl(session?.user))
+      if (session) setAuthMessage('')
+    })
+    window.addEventListener('focus', checkSession)
+    const timer = window.setInterval(checkSession, 60_000)
+    return () => { mounted = false; listener.subscription.unsubscribe(); window.removeEventListener('focus', checkSession); window.clearInterval(timer) }
+  }, [])
+
+  useEffect(() => {
+    if (!accountMenuOpen) return
+
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (event.target instanceof Node && !accountMenuRef.current?.contains(event.target)) {
+        setAccountMenuOpen(false)
+      }
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setAccountMenuOpen(false)
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsideClick)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [accountMenuOpen])
+
+  useEffect(() => {
+    if (!modalOpen) return
+
+    const modal = modalRef.current
+    const getFocusableElements = () => Array.from(
+      modal?.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      ) ?? []
+    )
+    getFocusableElements()[0]?.focus()
+
+    const keepFocusInside = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        closeModal()
+        return
+      }
+      if (event.key !== 'Tab') return
+
+      const focusable = getFocusableElements()
+      if (focusable.length === 0) {
+        event.preventDefault()
+        modal?.focus()
+        return
+      }
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && (document.activeElement === first || !modal?.contains(document.activeElement))) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && (document.activeElement === last || !modal?.contains(document.activeElement))) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', keepFocusInside)
+    return () => {
+      document.removeEventListener('keydown', keepFocusInside)
+      const trigger = modalTriggerRef.current
+      if (trigger?.isConnected) trigger.focus()
+      else document.querySelector<HTMLElement>('.top-avatar')?.focus()
+    }
+  }, [modalOpen])
+
+  const signInWithGoogle = async () => {
+    setAuthLoading(true)
+    setAuthMessage('')
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback` } })
+      if (error) throw error
+    } catch (error) {
+      console.error('Google OAuth sign-in failed:', error)
+      setAuthMessage('Không thể mở đăng nhập Google. Kiểm tra kết nối và thử lại.')
+    } finally { setAuthLoading(false) }
+  }
+
+  const signOut = async () => {
+    signingOut.current = true
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      setAuthMessage(''); setAccountMenuOpen(false)
+    } catch (error) {
+      console.error('Supabase sign-out failed:', error)
+      setAuthMessage('Đăng xuất chưa thành công. Vui lòng thử lại trong menu tài khoản.')
+    }
+    finally { signingOut.current = false }
+  }
+
+  // Language & Translation
+  const { lang, setLang, toggleLang } = useTranslation()
 
   // Filter States (BĐS Domain Standards)
-  const [wardFilter, setWardFilter] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('')
-  const [furnishingFilter, setFurnishingFilter] = useState('')
-  const [priceRangeFilter, setPriceRangeFilter] = useState('')
-  const [sizeRangeFilter, setSizeRangeFilter] = useState('')
-  const [proximityFilter, setProximityFilter] = useState('')
-  const [floodRiskFilter, setFloodRiskFilter] = useState('')
-  const [reqElevator, setReqElevator] = useState(false)
-  const [reqBalcony, setReqBalcony] = useState(false)
-  const [reqPrivateBath, setReqPrivateBath] = useState(false)
-  const [reqParking, setReqParking] = useState(false)
-  const [searchInput, setSearchInput] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
+  const filterStore = useFilterStore()
+  const { wardFilter, categoryFilter, furnishingFilter, priceRangeFilter, sizeRangeFilter, floodRiskFilter, reqElevator, reqBalcony, reqPrivateBath, reqParking, searchInput, searchQuery, setFilter } = filterStore
+  const setWardFilter = (value: string) => setFilter('wardFilter', value)
+  const setCategoryFilter = (value: string) => setFilter('categoryFilter', value)
+  const setFurnishingFilter = (value: string) => setFilter('furnishingFilter', value)
+  const setPriceRangeFilter = (value: string) => setFilter('priceRangeFilter', value)
+  const setSizeRangeFilter = (value: string) => setFilter('sizeRangeFilter', value)
+  const setFloodRiskFilter = (value: string) => setFilter('floodRiskFilter', value)
+  const setReqElevator = (value: boolean) => setFilter('reqElevator', value)
+  const setReqBalcony = (value: boolean) => setFilter('reqBalcony', value)
+  const setReqPrivateBath = (value: boolean) => setFilter('reqPrivateBath', value)
+  const setReqParking = (value: boolean) => setFilter('reqParking', value)
+  const setSearchInput = (value: string) => setFilter('searchInput', value)
+  const setSearchQuery = (value: string) => setFilter('searchQuery', value)
 
   // Pagination & Sorting States
   const [page, setPage] = useState(1)
   const [pageSize] = useState(10)
   const [sortBy, setSortBy] = useState('posted_date')
   const [ascending, setAscending] = useState(false)
+  const [todayDate] = useState(getTodayDate)
+  const [startDate, setStartDate] = useState(DEFAULT_START_DATE)
+  const [endDate, setEndDate] = useState(todayDate)
 
   // Dashboard Data States
   const [kpiData, setKpiData] = useState<KpiData | null>(null)
@@ -166,6 +405,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [filtering, setFiltering] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [lastRefreshAt, setLastRefreshAt] = useState<Date | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const [exportMessage, setExportMessage] = useState('')
 
   // Debounce search input
   useEffect(() => {
@@ -179,12 +421,12 @@ export default function DashboardPage() {
   // Count active filters
   const activeFiltersCount = useMemo(() => {
     let count = 0
+    if (startDate || endDate) count++
     if (wardFilter) count++
     if (categoryFilter) count++
     if (furnishingFilter) count++
     if (priceRangeFilter) count++
     if (sizeRangeFilter) count++
-    if (proximityFilter) count++
     if (floodRiskFilter) count++
     if (reqElevator) count++
     if (reqBalcony) count++
@@ -193,12 +435,13 @@ export default function DashboardPage() {
     if (searchQuery) count++
     return count
   }, [
+    startDate,
+    endDate,
     wardFilter,
     categoryFilter,
     furnishingFilter,
     priceRangeFilter,
     sizeRangeFilter,
-    proximityFilter,
     floodRiskFilter,
     reqElevator,
     reqBalcony,
@@ -209,12 +452,14 @@ export default function DashboardPage() {
 
   // Clear all filters
   const handleClearFilters = () => {
+    setStartDate(DEFAULT_START_DATE)
+    setEndDate(todayDate)
+    filterStore.reset()
     setWardFilter('')
     setCategoryFilter('')
     setFurnishingFilter('')
     setPriceRangeFilter('')
     setSizeRangeFilter('')
-    setProximityFilter('')
     setFloodRiskFilter('')
     setReqElevator(false)
     setReqBalcony(false)
@@ -228,6 +473,8 @@ export default function DashboardPage() {
   // Global Filter Query String builder - Shared Across All Workspace Tabs
   const filterQueryString = useMemo(() => {
     const params = new URLSearchParams()
+    if (startDate) params.set('start_date', startDate)
+    if (endDate) params.set('end_date', endDate)
 
     if (wardFilter) params.set('ward_name', wardFilter)
     if (categoryFilter) params.set('category_name', categoryFilter)
@@ -264,12 +511,6 @@ export default function DashboardPage() {
       params.set('min_size', '50')
     }
 
-    // Hotspot proximity
-    if (proximityFilter === 'beach_1_5km') params.set('max_dist_beach', '1.5')
-    else if (proximityFilter === 'beach_3km') params.set('max_dist_beach', '3.0')
-    else if (proximityFilter === 'cbd_2km') params.set('max_dist_cbd', '2.0')
-    else if (proximityFilter === 'uni_1_5km') params.set('max_dist_uni', '1.5')
-
     // Amenities
     if (reqElevator) params.set('has_elevator', '1')
     if (reqBalcony) params.set('has_balcony', '1')
@@ -278,12 +519,13 @@ export default function DashboardPage() {
 
     return params.toString()
   }, [
+    startDate,
+    endDate,
     wardFilter,
     categoryFilter,
     furnishingFilter,
     priceRangeFilter,
     sizeRangeFilter,
-    proximityFilter,
     floodRiskFilter,
     reqElevator,
     reqBalcony,
@@ -294,6 +536,11 @@ export default function DashboardPage() {
 
   // Reactive Data Fetcher
   const fetchDashboardData = useCallback(async () => {
+    dashboardAbortController.current?.abort()
+    const controller = new AbortController()
+    dashboardAbortController.current = controller
+
+    const requestId = ++dashboardRequestId.current
     setFiltering(true)
     try {
       const params = new URLSearchParams(filterQueryString)
@@ -303,16 +550,22 @@ export default function DashboardPage() {
       params.set('sortBy', sortBy)
       params.set('ascending', String(ascending))
 
-      const res = await fetch(`/api/gold-query?${params.toString()}`)
+      const res = await fetch(`/api/gold-query?${params.toString()}`, {
+        signal: controller.signal
+      })
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}))
-        console.error('API Error details:', errJson)
-        setErrorMessage(errJson.message || errJson.error || `Lỗi máy chủ (${res.status})`)
+        if (requestId === dashboardRequestId.current) {
+          console.error('API Error details:', errJson)
+          setErrorMessage(errJson.message || errJson.error || `Lỗi máy chủ (${res.status})`)
+        }
         return
       }
 
-      setErrorMessage(null)
       const json = await res.json()
+      if (requestId !== dashboardRequestId.current || controller.signal.aborted) return
+
+      setErrorMessage(null)
       setKpiData(json.kpi || null)
       setWards(json.wards || [])
       setPriceDistribution(json.priceDistribution || [])
@@ -320,12 +573,18 @@ export default function DashboardPage() {
       setRecords(json.records?.data || [])
       setTotalCount(json.records?.count || 0)
       setTotalPages(json.records?.totalPages || 1)
+      setLastRefreshAt(new Date())
     } catch (err: any) {
+      if (err?.name === 'AbortError' || controller.signal.aborted || requestId !== dashboardRequestId.current) {
+        return
+      }
       console.error('Failed to query Supabase gold schema:', err)
       setErrorMessage(err?.message || 'Không thể kết nối đến máy chủ')
     } finally {
-      setFiltering(false)
-      setLoading(false)
+      if (requestId === dashboardRequestId.current) {
+        setFiltering(false)
+        setLoading(false)
+      }
     }
   }, [
     page,
@@ -337,7 +596,21 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchDashboardData()
+    return () => {
+      dashboardAbortController.current?.abort()
+    }
   }, [fetchDashboardData])
+
+  useEffect(() => {
+    // Wait until the current request finishes before scheduling another refresh.
+    if (!settingsLoaded || !autoRefresh || filtering || loading) return
+
+    const timer = window.setTimeout(() => {
+      void fetchDashboardData()
+    }, 60_000)
+
+    return () => window.clearTimeout(timer)
+  }, [settingsLoaded, autoRefresh, filtering, loading, fetchDashboardData])
 
   // Dynamic conic gradient for price distribution donut chart
   const donutGradient = useMemo(() => {
@@ -437,41 +710,44 @@ export default function DashboardPage() {
           <span>Rent<span className="brand-accent">IQ</span></span>
         </div>
         <div className="workspace-label">WORKSPACE</div>
-        <div className="workspace-select">
+        <button className={`workspace-select workspace-button ${workspaceMenuOpen ? 'selected' : ''}`} onClick={() => setWorkspaceMenuOpen(!workspaceMenuOpen)}>
           <div className="workspace-avatar">DN</div>
           <div>
             <strong>Da Nang Market</strong>
             <small>Data Warehouse · gold</small>
           </div>
           <ChevronDown size={15} />
-        </div>
+        </button>
+        {workspaceMenuOpen && <div className="sidebar-popover workspace-popover"><strong>Da Nang Market</strong><span>Gold Data Warehouse</span><button onClick={() => setWorkspaceMenuOpen(false)}>Đang sử dụng</button></div>}
         <nav className="main-nav">
           {navItems.map((item) => {
             const Icon = item.icon
             return (
               <button
-                key={item.label}
-                className={`nav-item ${activeNav === item.label ? 'active' : ''}`}
-                onClick={() => setActiveNav(item.label)}
+                key={item.id}
+                className={`nav-item ${activeNav === item.id ? 'active' : ''}`}
+                onClick={() => setActiveNav(item.id)}
               >
                 <Icon size={18} />
-                <span>{item.label}</span>
-                {item.label === 'Rủi ro ngập lụt' && <span className="nav-dot" />}
+                <span>{lang === 'en' ? item.labelEn : item.labelVi}</span>
+                {item.id === 'Rủi ro ngập lụt' && <span className="nav-dot" />}
               </button>
             )
           })}
         </nav>
         <div className="sidebar-bottom">
-          <button className="nav-item"><Settings2 size={18} /><span>Cài đặt</span></button>
-          <button className="nav-item"><CircleHelp size={18} /><span>Trợ giúp</span></button>
-          <div className="user-card">
-            <div className="user-avatar">NT</div>
-            <div>
-              <strong>Nguyễn Trí</strong>
-              <small>Data Architect</small>
-            </div>
-            <MoreHorizontal size={17} />
-          </div>
+          <button className="nav-item" onClick={openSettings}><Settings2 size={18} /><span>{lang === 'en' ? 'Settings' : 'Cài đặt'}</span></button>
+          <button className="nav-item" onClick={openHelp}><CircleHelp size={18} /><span>{lang === 'en' ? 'Help' : 'Trợ giúp'}</span></button>
+          <button className={`user-card ${accountMenuOpen ? 'selected' : ''}`} aria-label="Mở menu tài khoản" onClick={() => setAccountMenuOpen((open) => !open)}>
+            <span className="user-avatar">
+              {userAvatarUrl ? <img className="profile-avatar-image" src={userAvatarUrl} alt="" onError={() => setUserAvatarUrl(null)} /> : userEmail ? userEmail.slice(0, 2).toUpperCase() : '??'}
+            </span>
+            <span>
+              <strong>{userEmail ? userEmail.split('@')[0] : 'Chưa đăng nhập'}</strong>
+              <small>{userEmail || 'Tài khoản Google'}</small>
+            </span>
+              <MoreHorizontal size={17} />
+          </button>
         </div>
       </aside>
 
@@ -485,25 +761,119 @@ export default function DashboardPage() {
           <div className="breadcrumb">
             <span>Dashboard</span>
             <span>/</span>
-            <strong>{activeNav}</strong>
+            <strong>{lang === 'en' ? (navItems.find((n) => n.id === activeNav)?.labelEn || activeNav) : activeNav}</strong>
           </div>
           <div className="top-actions">
+            <button
+              className="lang-toggle-button"
+              onClick={toggleLang}
+              title={lang === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
+              aria-label="Đổi ngôn ngữ / Change language"
+            >
+              <span className={lang === 'vi' ? 'lang-active' : ''}>VI</span>
+              <span className="lang-sep">/</span>
+              <span className={lang === 'en' ? 'lang-active' : ''}>EN</span>
+            </button>
             <div className="search-box">
               <Search size={16} />
               <input
-                placeholder="Tìm khu vực, loại hình..."
+                placeholder={lang === 'en' ? 'Search area, category...' : 'Tìm khu vực, loại hình...'}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
               />
               <kbd>⌘ K</kbd>
             </div>
-            <button className="icon-button" aria-label="Notifications"><Bell size={18} /><i /></button>
-            <button className="top-avatar">NT</button>
-            <button className="mobile-menu" aria-label="Menu"><Menu size={20} /></button>
+            <button className="icon-button" aria-label="Thông báo" title="Thông báo và trạng thái dữ liệu" onClick={() => setNotificationsOpen(!notificationsOpen)}><Bell size={18} /><i /></button>
+            <div className="account-menu-anchor" ref={accountMenuRef}>
+              <button
+                className="top-avatar"
+                aria-label="Mở menu tài khoản"
+                title={userEmail ? `Tài khoản: ${userEmail}` : 'Mở menu tài khoản'}
+                aria-expanded={accountMenuOpen}
+                aria-haspopup="menu"
+                onClick={() => setAccountMenuOpen((open) => !open)}
+              >
+                {userAvatarUrl ? (
+                  <img className="profile-avatar-image" src={userAvatarUrl} alt="" onError={() => setUserAvatarUrl(null)} />
+                ) : userEmail ? userEmail.slice(0, 2).toUpperCase() : '??'}
+              </button>
+              {accountMenuOpen && (
+                <div className="sidebar-popover account-popover" role="menu">
+                  {userEmail ? (
+                    <>
+                      <div className="account-popover-header">
+                        <div className="user-avatar">
+                          {userAvatarUrl ? (
+                            <img className="profile-avatar-image" src={userAvatarUrl} alt="" onError={() => setUserAvatarUrl(null)} />
+                          ) : userEmail.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="account-identity">
+                          <strong>{userEmail.split('@')[0]}</strong>
+                          <small>{userEmail}</small>
+                        </div>
+                      </div>
+                      <button role="menuitem" onClick={() => { openSettings(); setAccountMenuOpen(false) }}>
+                        <Settings2 size={14} /> Hồ sơ & cài đặt
+                      </button>
+                      <button role="menuitem" className="account-signout" onClick={() => void signOut()}>
+                        <LogOut size={14} /> Đăng xuất
+                      </button>
+                    </>
+                  ) : (
+                    <button role="menuitem" onClick={() => void signInWithGoogle()}>
+                      <LogIn size={14} /> {authLoading ? 'Đang chuyển tới Google...' : 'Đăng nhập bằng Google'}
+                    </button>
+                  )}
+                  <button role="menuitem" className="account-close" onClick={() => setAccountMenuOpen(false)}>Đóng menu</button>
+                </div>
+              )}
+            </div>
+            <button className="mobile-menu" aria-label="Menu điều hướng" title="Mở menu điều hướng" onClick={() => setMobileNavOpen(!mobileNavOpen)}><Menu size={20} /></button>
           </div>
         </header>
 
+        {notificationsOpen && <div className="quick-popover notification-popover"><strong>Trạng thái dữ liệu</strong>
+          {filtering ? <p><span className="live-dot" /> Đang làm mới dữ liệu theo bộ lọc hiện tại…</p> : errorMessage ? <p style={{ color: '#c65361' }}>⚠ Không thể tải dữ liệu: {errorMessage}</p> : <p><span className="live-dot" /> Dữ liệu đang hoạt động bình thường.</p>}
+          <p>{lastRefreshAt ? `Cập nhật lần cuối: ${lastRefreshAt.toLocaleTimeString('vi-VN')}` : 'Chưa có lần cập nhật thành công.'}</p>
+          {!filtering && !errorMessage && <p>{totalCount.toLocaleString('vi-VN')} tin đăng phù hợp với bộ lọc hiện tại.</p>}
+          <button onClick={() => { setNotificationsOpen(false); void fetchDashboardData() }}>Làm mới ngay</button><button onClick={() => setNotificationsOpen(false)}>Đóng</button>
+        </div>}
+        {mobileNavOpen && <div className="mobile-nav-popover">
+          {navItems.map((item) => <button key={item.id} onClick={() => { setActiveNav(item.id); setMobileNavOpen(false) }}>{lang === 'en' ? item.labelEn : item.labelVi}</button>)}
+          <button onClick={() => { setMobileNavOpen(false); openSettings() }}>{lang === 'en' ? 'Settings' : 'Cài đặt'}</button>
+          <button onClick={() => { setMobileNavOpen(false); openHelp() }}>{lang === 'en' ? 'Help' : 'Trợ giúp'}</button>
+        </div>}
+        {modalOpen && <div className="modal-backdrop" onClick={closeModal}><div ref={modalRef} className="quick-modal" role="dialog" aria-modal="true" aria-labelledby="dashboard-modal-title" tabIndex={-1} onClick={(e) => e.stopPropagation()}>
+          {settingsOpen ? <>
+            <div className="modal-heading"><div><span className="modal-eyebrow">WORKSPACE</span><h3 id="dashboard-modal-title">{lang === 'en' ? 'Dashboard Settings' : 'Cài đặt dashboard'}</h3><p>{lang === 'en' ? 'Customize display preferences and data behavior.' : 'Tùy chỉnh trải nghiệm hiển thị và dữ liệu.'}</p></div><button className="modal-close-button" aria-label="Đóng" title="Đóng cài đặt" onClick={closeModal}><X size={17} /></button></div>
+            <div className="settings-group"><span className="settings-group-title">{lang === 'en' ? 'Language' : 'Ngôn ngữ'}</span>
+              <label className="setting-row"><span><strong>{lang === 'en' ? 'Display Language' : 'Ngôn ngữ hiển thị'}</strong><small>{lang === 'en' ? 'Switch between Vietnamese and English' : 'Chuyển đổi giữa Tiếng Việt và English'}</small></span>
+                <select className="filter-control" style={{ width: '130px', padding: '6px 8px', fontSize: '12px' }} value={lang} onChange={(e) => setLang(e.target.value as Language)}>
+                  <option value="vi">Tiếng Việt</option>
+                  <option value="en">English</option>
+                </select>
+              </label>
+            </div>
+            <div className="settings-group"><span className="settings-group-title">{lang === 'en' ? 'Appearance' : 'Giao diện'}</span>
+              <label className="setting-row"><span><strong>{lang === 'en' ? 'Dark Mode' : 'Chế độ tối'}</strong><small>{lang === 'en' ? 'Reduce brightness for night-time work' : 'Giảm độ sáng khi làm việc ban đêm'}</small></span><input type="checkbox" checked={darkMode} onChange={(e) => setDarkMode(e.target.checked)} /></label>
+            </div>
+            <div className="settings-group"><span className="settings-group-title">{lang === 'en' ? 'Data' : 'Dữ liệu'}</span>
+              <label className="setting-row"><span><strong>{lang === 'en' ? 'Auto-refresh Data' : 'Tự động làm mới dữ liệu'}</strong><small>{lang === 'en' ? 'Refresh overview every 60 seconds after data loads' : 'Làm mới tổng quan sau mỗi 60 giây khi tải xong dữ liệu'}</small></span><input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} /></label>
+            </div>
+            <div className="settings-status"><span className="live-dot" /> {settingsSaved ? (lang === 'en' ? 'Settings saved on this browser' : 'Cài đặt đã lưu trên trình duyệt này') : (lang === 'en' ? 'Settings apply to this session only' : 'Cài đặt chỉ áp dụng trong phiên này; chưa lưu được trên trình duyệt')}</div>
+          </> : <>
+            <div className="modal-heading"><div><span className="modal-eyebrow">{lang === 'en' ? 'USER GUIDE' : 'HƯỚNG DẪN'}</span><h3 id="dashboard-modal-title">{lang === 'en' ? 'Help & Documentation' : 'Trợ giúp'}</h3></div><button className="modal-close-button" aria-label="Đóng" title="Đóng hướng dẫn" onClick={closeModal}><X size={17} /></button></div>
+            <DashboardHelp activeNav={activeNav} lang={lang} />
+          </>}
+          <button className="button primary modal-action" onClick={closeModal}>{lang === 'en' ? 'Got It' : 'Đã hiểu'}</button>
+        </div></div>}
+
         <div className="page-wrap">
+          {authMessage && <div role="alert" className="card" style={{ padding: 16, marginBottom: 16 }}>
+            <p>{authMessage}</p>
+            <button className="button secondary" disabled={authLoading} onClick={() => void signInWithGoogle()}>{authLoading ? 'Đang mở Google…' : 'Đăng nhập lại'}</button>
+            <button className="button secondary" onClick={() => setAuthMessage('')}>Đóng</button>
+          </div>}
           <div className="page-heading">
             <div>
               <div className="eyebrow">
@@ -514,8 +884,8 @@ export default function DashboardPage() {
                   </span>
                 )}
               </div>
-              <h1>Bảng Điều Khiển Thị Trường Thuê Đà Nẵng</h1>
-              <p>Dữ liệu tổng hợp từ Data Warehouse tầng Gold với cơ chế Dynamic Query Builder.</p>
+              <h1>{lang === 'en' ? 'Da Nang Rental Market Dashboard' : 'Bảng Điều Khiển Thị Trường Thuê Đà Nẵng'}</h1>
+              <p>{lang === 'en' ? 'Aggregated analytics from Gold layer Data Warehouse with Dynamic Query Builder.' : 'Dữ liệu tổng hợp từ Data Warehouse tầng Gold với cơ chế Dynamic Query Builder.'}</p>
             </div>
 
             <div className="heading-actions">
@@ -523,28 +893,49 @@ export default function DashboardPage() {
                 className={`button ${activeNav === 'Dự đoán giá AI' ? 'primary' : 'secondary'}`}
                 onClick={() => setActiveNav('Dự đoán giá AI')}
               >
-                <Sparkles size={16} /> Dự đoán giá AI
+                <Sparkles size={16} /> {lang === 'en' ? 'AI Price Prediction' : 'Dự đoán giá AI'}
               </button>
               <button
                 className="button secondary"
-                onClick={() => {
-                  const csv = records.map(r => `${r.ward_name},${r.category_name},${r.price_vnd},${r.size_m2}`).join('\n')
-                  const blob = new Blob([`Khu vực,Loại hình,Giá,Diện tích\n${csv}`], { type: 'text/csv;charset=utf-8;' })
-                  const url = URL.createObjectURL(blob)
-                  const a = document.createElement('a')
-                  a.href = url
-                  a.download = 'rental_gold_export.csv'
-                  a.click()
+                disabled={exporting}
+                onClick={async () => {
+                  setExporting(true)
+                  setExportMessage('')
+                  try {
+                    const params = new URLSearchParams(filterQueryString)
+                    params.set('sortBy', sortBy)
+                    params.set('ascending', String(ascending))
+                    const allRecords = await fetchAllRecords<RentalRecord>(params.toString())
+                    const csv = toCsv([
+                      [lang === 'en' ? 'Ward' : 'Khu vực', lang === 'en' ? 'Category' : 'Loại hình', lang === 'en' ? 'Price' : 'Giá', lang === 'en' ? 'Size' : 'Diện tích'],
+                      ...allRecords.map(r => [r.ward_name, r.category_name, r.price_vnd, r.size_m2])
+                    ])
+                    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = 'rental_gold_export.csv'
+                    document.body.appendChild(a)
+                    a.click()
+                    a.remove()
+                    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+                    setExportMessage(lang === 'en'
+                      ? `Exported ${allRecords.length.toLocaleString('en-US')} listings according to filters at export time.`
+                      : `Đã xuất ${allRecords.length.toLocaleString('vi-VN')} tin theo bộ lọc lúc bấm xuất.`)
+                  } catch (error) {
+                    setExportMessage(error instanceof Error ? error.message : (lang === 'en' ? 'Failed to export CSV. Please try again.' : 'Không thể xuất CSV. Vui lòng thử lại.'))
+                  } finally {
+                    setExporting(false)
+                  }
                 }}
               >
-                <Download size={16} /> Xuất CSV
+                <Download size={16} /> {exporting ? (lang === 'en' ? 'Exporting…' : 'Đang xuất…') : (lang === 'en' ? 'Export CSV' : 'Xuất CSV')}
               </button>
 
               <button
                 className={`button ${filterOpen ? 'primary' : 'secondary'}`}
                 onClick={() => setFilterOpen(!filterOpen)}
               >
-                <Filter size={16} /> Bộ lọc
+                <Filter size={16} /> {lang === 'en' ? 'Filters' : 'Bộ lọc'}
                 {activeFiltersCount > 0 && (
                   <span className="filter-count">{activeFiltersCount}</span>
                 )}
@@ -552,6 +943,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {exportMessage && <p role="status">{exportMessage}</p>}
           {errorMessage && (
             <div style={{
               marginTop: '16px',
@@ -580,7 +972,62 @@ export default function DashboardPage() {
           {filterOpen && (
             <div className="filter-panel">
               <div className="filter-item">
-                <label>Khu vực (Ward)</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label htmlFor="posted-start">{lang === 'en' ? 'Posted from' : 'Ngày đăng từ'}</label>
+                  {startDate !== DEFAULT_START_DATE && (
+                    <button
+                      type="button"
+                      style={{ background: 'none', border: 'none', color: 'var(--blue)', fontSize: '10px', cursor: 'pointer', padding: 0 }}
+                      onClick={() => { setStartDate(DEFAULT_START_DATE); setPage(1) }}
+                      title="Khôi phục mốc mặc định từ tháng 1/2026"
+                    >
+                      {lang === 'en' ? 'Reset Jan 2026' : 'Về T1/2026'}
+                    </button>
+                  )}
+                  {startDate === DEFAULT_START_DATE && (
+                    <button
+                      type="button"
+                      style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '10px', cursor: 'pointer', padding: 0 }}
+                      onClick={() => { setStartDate(''); setPage(1) }}
+                      title="Bỏ mốc tháng 1/2026 để xem toàn bộ dữ liệu lịch sử trước 2026"
+                    >
+                      {lang === 'en' ? 'All history' : 'Tất cả lịch sử'}
+                    </button>
+                  )}
+                </div>
+                <input
+                  id="posted-start"
+                  className="filter-control"
+                  type="date"
+                  value={startDate}
+                  max={endDate || todayDate}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    if (val && endDate && val > endDate) return
+                    setStartDate(val)
+                    setPage(1)
+                  }}
+                />
+              </div>
+              <div className="filter-item">
+                <label htmlFor="posted-end">{lang === 'en' ? 'Posted to' : 'Ngày đăng đến'}</label>
+                <input
+                  id="posted-end"
+                  className="filter-control"
+                  type="date"
+                  value={endDate}
+                  min={startDate || undefined}
+                  max={todayDate}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    if (val && ((startDate && val < startDate) || val > todayDate)) return
+                    setEndDate(val)
+                    setPage(1)
+                  }}
+                />
+              </div>
+              <div className="filter-item">
+                <label>{lang === 'en' ? 'Ward' : 'Khu vực (Ward)'}</label>
                 <select
                   className="filter-control"
                   value={wardFilter}
@@ -589,7 +1036,7 @@ export default function DashboardPage() {
                     setPage(1)
                   }}
                 >
-                  <option value="">Tất cả quận/huyện</option>
+                  <option value="">{lang === 'en' ? 'All districts' : 'Tất cả quận/huyện'}</option>
                   {WARDS_OPTIONS.map((w) => (
                     <option key={w} value={w}>{w}</option>
                   ))}
@@ -597,7 +1044,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="filter-item">
-                <label>Loại hình</label>
+                <label>{lang === 'en' ? 'Category' : 'Loại hình'}</label>
                 <select
                   className="filter-control"
                   value={categoryFilter}
@@ -606,7 +1053,7 @@ export default function DashboardPage() {
                     setPage(1)
                   }}
                 >
-                  <option value="">Tất cả loại hình</option>
+                  <option value="">{lang === 'en' ? 'All categories' : 'Tất cả loại hình'}</option>
                   {CATEGORY_OPTIONS.map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
@@ -614,7 +1061,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="filter-item">
-                <label>Nội thất</label>
+                <label>{lang === 'en' ? 'Furnishing' : 'Nội thất'}</label>
                 <select
                   className="filter-control"
                   value={furnishingFilter}
@@ -623,7 +1070,7 @@ export default function DashboardPage() {
                     setPage(1)
                   }}
                 >
-                  <option value="">Tất cả nội thất</option>
+                  <option value="">{lang === 'en' ? 'All furnishings' : 'Tất cả nội thất'}</option>
                   {FURNISHING_OPTIONS.map((f) => (
                     <option key={f} value={f}>{f}</option>
                   ))}
@@ -631,7 +1078,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="filter-item">
-                <label>Khoảng giá</label>
+                <label>{lang === 'en' ? 'Price Range' : 'Khoảng giá'}</label>
                 <select
                   className="filter-control"
                   value={priceRangeFilter}
@@ -640,7 +1087,7 @@ export default function DashboardPage() {
                     setPage(1)
                   }}
                 >
-                  <option value="">Tất cả mức giá</option>
+                  <option value="">{lang === 'en' ? 'All price ranges' : 'Tất cả mức giá'}</option>
                   <option value="under_3m">Dưới 3 triệu (Bình dân)</option>
                   <option value="3m_5m">3 — 5 triệu (Tiêu chuẩn)</option>
                   <option value="5m_8m">5 — 8 triệu (Căn hộ dịch vụ)</option>
@@ -650,7 +1097,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="filter-item">
-                <label>Diện tích</label>
+                <label>{lang === 'en' ? 'Area Size' : 'Diện tích'}</label>
                 <select
                   className="filter-control"
                   value={sizeRangeFilter}
@@ -659,7 +1106,7 @@ export default function DashboardPage() {
                     setPage(1)
                   }}
                 >
-                  <option value="">Tất cả diện tích</option>
+                  <option value="">{lang === 'en' ? 'All sizes' : 'Tất cả diện tích'}</option>
                   <option value="under_20">Dưới 20 m² (Phòng nhỏ / KTX)</option>
                   <option value="20_35">20 — 35 m² (Studio / 1PN)</option>
                   <option value="35_50">35 — 50 m² (Rộng / 1-2PN)</option>
@@ -667,26 +1114,9 @@ export default function DashboardPage() {
                 </select>
               </div>
 
-              <div className="filter-item">
-                <label>Cự ly điểm nóng</label>
-                <select
-                  className="filter-control"
-                  value={proximityFilter}
-                  onChange={(e) => {
-                    setProximityFilter(e.target.value)
-                    setPage(1)
-                  }}
-                >
-                  <option value="">Tất cả cự ly</option>
-                  <option value="beach_1_5km">🏖️ Cận biển Mỹ Khê (≤ 1.5 km)</option>
-                  <option value="beach_3km">🏖️ Cận biển (≤ 3.0 km)</option>
-                  <option value="cbd_2km">🏙️ Cận CBD Cầu Rồng (≤ 2.0 km)</option>
-                  <option value="uni_1_5km">🎓 Cận cụm ĐH lớn (≤ 1.5 km)</option>
-                </select>
-              </div>
 
               <div className="filter-item">
-                <label>Rủi ro ngập</label>
+                <label>{lang === 'en' ? 'Flood Risk' : 'Rủi ro ngập'}</label>
                 <select
                   className="filter-control"
                   value={floodRiskFilter}
@@ -695,7 +1125,7 @@ export default function DashboardPage() {
                     setPage(1)
                   }}
                 >
-                  <option value="">Tất cả cấp độ</option>
+                  <option value="">{lang === 'en' ? 'All risk levels' : 'Tất cả cấp độ'}</option>
                   <option value="0">Thấp / An toàn (0)</option>
                   <option value="1">Trung bình (1)</option>
                   <option value="2">Nguy cơ cao (2)</option>
@@ -703,7 +1133,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="filter-item" style={{ minWidth: '220px', flex: '1 1 100%' }}>
-                <label>Tiện ích thiết yếu</label>
+                <label>{lang === 'en' ? 'Essential Amenities' : 'Tiện ích thiết yếu'}</label>
                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', paddingTop: '4px' }}>
                   <label style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', cursor: 'pointer', fontWeight: 500, color: 'var(--ink)' }}>
                     <input
@@ -743,22 +1173,43 @@ export default function DashboardPage() {
               <div className="filter-actions">
                 {activeFiltersCount > 0 && (
                   <button className="clear-filter" onClick={handleClearFilters}>
-                    <RotateCcw size={14} /> Đặt lại
+                    <RotateCcw size={14} /> {lang === 'en' ? 'Reset' : 'Đặt lại'}
                   </button>
                 )}
                 <button className="clear-filter" onClick={() => setFilterOpen(false)}>
-                  <X size={14} /> Đóng
+                  <X size={14} /> {lang === 'en' ? 'Close' : 'Đóng'}
                 </button>
               </div>
             </div>
           )}
 
-          {/* Active Filter Chips */}
+          {/* Active Filter Summary */}
           {activeFiltersCount > 0 && (
-            <div className="active-filters-wrap">
+            <div className="active-filters-wrap" aria-label="Điều kiện lọc đang áp dụng">
               <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>
-                Đang lọc ({activeFiltersCount}):
+                {lang === 'en' ? `Active Filters (${activeFiltersCount})` : `Điều kiện đang áp dụng (${activeFiltersCount})`}
               </span>
+              {(startDate || endDate) && (
+                <span className="filter-chip">
+                  Ngày đăng: {startDate || 'bất kỳ'} — {endDate || 'bất kỳ'}
+                  <button
+                    aria-label="Đặt lại điều kiện ngày đăng"
+                    title={startDate === DEFAULT_START_DATE && endDate === todayDate ? 'Xóa lọc ngày để xem tất cả lịch sử' : 'Đặt lại về mặc định từ tháng 1/2026'}
+                    onClick={() => {
+                      if (startDate === DEFAULT_START_DATE && endDate === todayDate) {
+                        setStartDate('')
+                        setEndDate('')
+                      } else {
+                        setStartDate(DEFAULT_START_DATE)
+                        setEndDate(todayDate)
+                      }
+                      setPage(1)
+                    }}
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
               {wardFilter && (
                 <span className="filter-chip">
                   Khu vực: {wardFilter}
@@ -787,12 +1238,6 @@ export default function DashboardPage() {
                 <span className="filter-chip">
                   DT: {sizeRangeFilter === 'under_20' ? '< 20m²' : sizeRangeFilter === '20_35' ? '20-35m²' : sizeRangeFilter === '35_50' ? '35-50m²' : '> 50m²'}
                   <button onClick={() => { setSizeRangeFilter(''); setPage(1) }}><X size={12} /></button>
-                </span>
-              )}
-              {proximityFilter && (
-                <span className="filter-chip">
-                  Cự ly: {proximityFilter === 'beach_1_5km' ? 'Biển ≤ 1.5km' : proximityFilter === 'beach_3km' ? 'Biển ≤ 3km' : proximityFilter === 'cbd_2km' ? 'CBD ≤ 2km' : 'ĐH ≤ 1.5km'}
-                  <button onClick={() => { setProximityFilter(''); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {reqElevator && (
@@ -839,26 +1284,30 @@ export default function DashboardPage() {
             <LocationMapView
               filterQueryString={filterQueryString}
               activeFiltersCount={activeFiltersCount}
+              lang={lang}
             />
           )}
           {activeNav === 'Tiện ích' && (
             <AmenitiesView
               filterQueryString={filterQueryString}
+              lang={lang}
             />
           )}
           {activeNav === 'Rủi ro ngập lụt' && (
             <FloodRiskView
               filterQueryString={filterQueryString}
+              lang={lang}
             />
           )}
           {activeNav === 'Phân tích nâng cao' && (
             <AdvancedAnalyticsView
               filterQueryString={filterQueryString}
+              lang={lang}
             />
           )}
 
           {activeNav === 'Dự đoán giá AI' && (
-            <PricePredictionView />
+            <PricePredictionView lang={lang} />
           )}
 
           {activeNav === 'Tổng quan' && (
@@ -871,7 +1320,7 @@ export default function DashboardPage() {
                     role="tab"
                     aria-selected={activeTab === 'Tổng quan'}
                   >
-                    Tổng quan
+                    {lang === 'en' ? 'Overview' : 'Tổng quan'}
                   </button>
                   <button
                     className={`tab ${activeTab === 'Thị trường' ? 'active' : ''}`}
@@ -879,7 +1328,7 @@ export default function DashboardPage() {
                     role="tab"
                     aria-selected={activeTab === 'Thị trường'}
                   >
-                    Thị trường
+                    {lang === 'en' ? 'Market' : 'Thị trường'}
                   </button>
                   <button
                     className={`tab ${activeTab === 'Nguồn cung' ? 'active' : ''}`}
@@ -887,7 +1336,7 @@ export default function DashboardPage() {
                     role="tab"
                     aria-selected={activeTab === 'Nguồn cung'}
                   >
-                    Nguồn cung
+                    {lang === 'en' ? 'Supply' : 'Nguồn cung'}
                   </button>
                   <button
                     className={`tab ${activeTab === 'Dự đoán giá AI' ? 'active' : ''}`}
@@ -895,36 +1344,39 @@ export default function DashboardPage() {
                     role="tab"
                     aria-selected={activeTab === 'Dự đoán giá AI'}
                   >
-                    Dự đoán giá AI
+                    {lang === 'en' ? 'AI Price Prediction' : 'Dự đoán giá AI'}
                   </button>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ fontSize: '11px', color: 'var(--muted)' }}>
-                    Sắp xếp:
+                    {lang === 'en' ? 'Sort by:' : 'Sắp xếp:'}
                   </span>
                   <select
                     className="filter-control"
                     style={{ width: 'auto', height: '32px', fontSize: '11px' }}
                     value={`${sortBy}_${ascending}`}
                     onChange={(e) => {
-                      const [col, asc] = e.target.value.split('_')
+                      const separator = e.target.value.lastIndexOf('_')
+                      const col = e.target.value.slice(0, separator)
+                      const asc = e.target.value.slice(separator + 1)
                       setSortBy(col)
                       setAscending(asc === 'true')
                       setPage(1)
                     }}
                   >
-                    <option value="posted_date_false">Mới nhất trước</option>
-                    <option value="posted_date_true">Cũ nhất trước</option>
-                    <option value="price_vnd_false">Giá giảm dần</option>
-                    <option value="price_vnd_true">Giá tăng dần</option>
-                    <option value="size_m2_false">Diện tích giảm dần</option>
+                    <option value="posted_date_false">{lang === 'en' ? 'Newest first' : 'Mới nhất trước'}</option>
+                    <option value="posted_date_true">{lang === 'en' ? 'Oldest first' : 'Cũ nhất trước'}</option>
+                    <option value="price_vnd_false">{lang === 'en' ? 'Price: High to Low' : 'Giá giảm dần'}</option>
+                    <option value="price_vnd_true">{lang === 'en' ? 'Price: Low to High' : 'Giá tăng dần'}</option>
+                    <option value="size_m2_false">{lang === 'en' ? 'Size: Large to Small' : 'Diện tích giảm dần'}</option>
+                    <option value="size_m2_true">{lang === 'en' ? 'Size: Small to Large' : 'Diện tích tăng dần'}</option>
                   </select>
                 </div>
               </div>
 
               {activeTab === 'Dự đoán giá AI' && (
-                <PricePredictionView />
+                <PricePredictionView lang={lang} />
               )}
 
               {activeTab !== 'Tổng quan' && activeTab !== 'Dự đoán giá AI' && (
@@ -942,40 +1394,42 @@ export default function DashboardPage() {
                   <section className="kpi-grid">
                     <Kpi
                       icon={<Home size={18} />}
-                      label="Tin đăng (sau lọc)"
+                      label={lang === 'en' ? 'Listings (Filtered)' : 'Tin đăng (sau lọc)'}
                       value={kpiData?.total_listings.toLocaleString() || '0'}
-                      delta={totalCount === 3238 ? 'Toàn bộ' : `${((totalCount / 3238) * 100).toFixed(0)}% mẫu`}
-                      note="dữ liệu kho gold"
+                      delta={totalCount === 3238 ? (lang === 'en' ? 'All' : 'Toàn bộ') : `${((totalCount / 3238) * 100).toFixed(0)}% ${lang === 'en' ? 'sample' : 'mẫu'}`}
+                      note={lang === 'en' ? 'gold schema' : 'dữ liệu kho gold'}
                       tone="blue"
                     />
                     <Kpi
                       icon={<TrendingUp size={18} />}
-                      label="Giá thuê trung bình"
-                      value={`${kpiData?.avg_price_million.toFixed(2) || '0'} tr`}
-                      delta={kpiData?.avg_price_million && kpiData.avg_price_million > 6 ? 'Phân khúc cao' : 'Bình dân'}
-                      note="VNĐ / tháng"
+                      label={lang === 'en' ? 'Average Rent' : 'Giá thuê trung bình'}
+                      value={`${kpiData?.avg_price_million.toFixed(2) || '0'} ${lang === 'en' ? 'M' : 'tr'}`}
+                      delta={kpiData?.avg_price_million && kpiData.avg_price_million > 6 ? (lang === 'en' ? 'Premium' : 'Phân khúc cao') : (lang === 'en' ? 'Budget' : 'Bình dân')}
+                      note={lang === 'en' ? 'VND / month' : 'VNĐ / tháng'}
                       tone="orange"
                     />
                     <Kpi
                       icon={<Activity size={18} />}
-                      label="Diện tích trung bình"
+                      label={lang === 'en' ? 'Average Size' : 'Diện tích trung bình'}
                       value={`${kpiData?.avg_size_m2.toFixed(1) || '0'} m²`}
-                      delta="Chuẩn thị trường"
-                      note="m²/phòng"
+                      delta={lang === 'en' ? 'Market standard' : 'Chuẩn thị trường'}
+                      note={lang === 'en' ? 'm² / unit' : 'm²/phòng'}
                       tone="purple"
                     />
                     <Kpi
                       icon={<ShieldAlert size={18} />}
-                      label="Tỷ lệ an toàn ngập lụt"
+                      label={lang === 'en' ? 'Flood Safety Ratio' : 'Tỷ lệ an toàn ngập lụt'}
                       value={`${kpiData?.flood_risk_low_percentage.toFixed(0) || '0'}%`}
-                      delta={kpiData && kpiData.flood_risk_low_percentage > 70 ? 'An toàn' : 'Cần chú ý'}
-                      note="khu vực rủi ro = 0"
+                      delta={kpiData && kpiData.flood_risk_low_percentage > 70 ? (lang === 'en' ? 'Safe' : 'An toàn') : (lang === 'en' ? 'Caution' : 'Cần chú ý')}
+                      note={lang === 'en' ? 'zero risk = 0' : 'khu vực rủi ro = 0'}
                       tone="green"
                     />
                   </section>
 
                   {/* CHARTS GRID */}
-                  <section className="main-grid">
+                  <DashboardCharts trend={trendData} distribution={priceDistribution} total={kpiData?.total_listings || 0} lang={lang} />
+                  {/* Legacy chart markup retained below for layout compatibility */}
+                  <section style={{ display: 'none' }} className="main-grid">
                     {/* SVG Trend Chart */}
                     <div className="card trend-card">
                       <CardHeader
@@ -1067,14 +1521,14 @@ export default function DashboardPage() {
                     {/* Top Wards */}
                     <div className="card area-card">
                       <CardHeader
-                        title="Top Khu vực (Nguồn cung)"
-                        subtitle="Khu vực có nhiều tin đăng nhất theo tiêu chí lọc"
+                        title={lang === 'en' ? 'All Areas (Supply)' : 'Tất cả khu vực (Nguồn cung)'}
+                        subtitle={lang === 'en' ? 'All areas with listings, sorted descending by volume' : 'Toàn bộ khu vực có tin đăng, sắp xếp theo số lượng giảm dần'}
                         action=""
                       />
                       <div className="ward-list">
                         {wards.length === 0 ? (
                           <div style={{ padding: '20px', textAlign: 'center', color: 'var(--muted)' }}>
-                            Không có dữ liệu khu vực phù hợp
+                            {lang === 'en' ? 'No matching area data' : 'Không có dữ liệu khu vực phù hợp'}
                           </div>
                         ) : (
                           wards.map((ward, index) => {
@@ -1083,20 +1537,20 @@ export default function DashboardPage() {
                             const barWidth = (ward.count / maxCount) * 100
                             return (
                               <div className="ward-row" key={ward.name}>
-                                <span className="rank">0{index + 1}</span>
+                                <span className="rank">{index + 1 < 10 ? `0${index + 1}` : index + 1}</span>
                                 <div className={`ward-icon ${tones[index % tones.length]}`}>
                                   <MapPin size={15} />
                                 </div>
                                 <div className="ward-name">
                                   <strong>{ward.name}</strong>
-                                  <small>{ward.count} tin đăng</small>
+                                  <small>{ward.count} {lang === 'en' ? 'listings' : 'tin đăng'}</small>
                                 </div>
                                 <div className="ward-bar">
                                   <span style={{ width: `${Math.max(10, barWidth)}%` }} />
                                 </div>
                                 <div className="ward-price">
-                                  <strong>{(ward.avgPrice / 1000000).toFixed(1)} tr</strong>
-                                  <small>TB / tháng</small>
+                                  <strong>{(ward.avgPrice / 1000000).toFixed(1)} {lang === 'en' ? 'M' : 'tr'}</strong>
+                                  <small>{lang === 'en' ? 'Avg / mo' : 'TB / tháng'}</small>
                                 </div>
                               </div>
                             )
@@ -1108,26 +1562,36 @@ export default function DashboardPage() {
                     {/* Paginated Listings Table */}
                     <div className="card activity-card">
                       <CardHeader
-                        title="Danh sách tin đăng thực tế (gold.rental_room)"
-                        subtitle={`Hiển thị ${records.length} / ${totalCount.toLocaleString()} kết quả`}
+                        title={lang === 'en' ? 'Actual Listings (gold.rental_room)' : 'Danh sách tin đăng thực tế (gold.rental_room)'}
+                        subtitle={lang === 'en' ? `Showing ${records.length} / ${totalCount.toLocaleString('en-US')} results` : `Hiển thị ${records.length} / ${totalCount.toLocaleString('vi-VN')} kết quả`}
                         action=""
                       />
-                      <div className="activity-table">
+                      <div className="activity-table" aria-busy={filtering}>
                         <div className="table-head">
-                          <span>KHU VỰC</span>
-                          <span>GIÁ THUÊ</span>
-                          <span>DIỆN TÍCH</span>
-                          <span>RỦI RO NGẬP</span>
-                          <span>NGÀY ĐĂNG</span>
+                          <span>{lang === 'en' ? 'AREA' : 'KHU VỰC'}</span>
+                          <span>{lang === 'en' ? 'RENT' : 'GIÁ THUÊ'}</span>
+                          <span>{lang === 'en' ? 'SIZE' : 'DIỆN TÍCH'}</span>
+                          <span>{lang === 'en' ? 'FLOOD RISK' : 'RỦI RO NGẬP'}</span>
+                          <span>{lang === 'en' ? 'POSTED' : 'NGÀY ĐĂNG'}</span>
                         </div>
-                        {records.length === 0 ? (
+                        {filtering ? (
+                          <div className="listings-skeleton" role="status" aria-label={lang === 'en' ? 'Loading listings' : 'Đang tải tin đăng'}>
+                            {Array.from({ length: 5 }, (_, index) => (
+                              <div className="listings-skeleton-row" aria-hidden="true" key={index}>
+                                <span /><span /><span /><span /><span />
+                              </div>
+                            ))}
+                          </div>
+                        ) : records.length === 0 ? (
                           <div style={{ padding: '30px', textAlign: 'center', color: 'var(--muted)' }}>
-                            Không tìm thấy tin đăng nào phù hợp với bộ lọc hiện tại.
+                            {lang === 'en' ? 'No listings found matching current filters.' : 'Không tìm thấy tin đăng nào phù hợp với bộ lọc hiện tại.'}
                           </div>
                         ) : (
                           records.map((r, index) => {
                             const riskText =
-                              r.flood_risk_label === 0 ? 'Thấp' : r.flood_risk_label === 1 ? 'Trung bình' : 'Cao'
+                              lang === 'en'
+                                ? (r.flood_risk_label === 0 ? 'Low' : r.flood_risk_label === 1 ? 'Medium' : 'High')
+                                : (r.flood_risk_label === 0 ? 'Thấp' : r.flood_risk_label === 1 ? 'Trung bình' : 'Cao')
                             const riskClass =
                               r.flood_risk_label === 0 ? 'low' : r.flood_risk_label === 1 ? 'medium' : 'high'
 
@@ -1136,15 +1600,15 @@ export default function DashboardPage() {
                                 <div>
                                   <strong>{r.ward_name || 'N/A'}</strong>
                                   <div style={{ fontSize: '9px', color: 'var(--muted)' }}>
-                                    {r.category_name || 'Phòng cho thuê'}
+                                    {r.category_name || (lang === 'en' ? 'Rental Room' : 'Phòng cho thuê')}
                                   </div>
                                 </div>
                                 <span>
-                                  {r.price_vnd ? `${(r.price_vnd / 1000000).toFixed(1)} tr` : 'Thỏa thuận'}
+                                  {r.price_vnd ? `${(r.price_vnd / 1000000).toFixed(1)} ${lang === 'en' ? 'M' : 'tr'}` : (lang === 'en' ? 'Negotiable' : 'Thỏa thuận')}
                                 </span>
                                 <span>{r.size_m2 ? `${Math.round(r.size_m2)} m²` : 'N/A'}</span>
                                 <span className={`risk ${riskClass}`}>{riskText}</span>
-                                <small>{r.posted_date ? r.posted_date.slice(0, 10) : 'Gần đây'}</small>
+                                <small>{r.posted_date ? r.posted_date.slice(0, 10) : (lang === 'en' ? 'Recent' : 'Gần đây')}</small>
                               </div>
                             )
                           })
@@ -1154,7 +1618,7 @@ export default function DashboardPage() {
                       {/* Pagination Bar */}
                       <div className="pagination-container">
                         <span>
-                          Trang {page} / {totalPages || 1} ({totalCount.toLocaleString()} tin)
+                          {lang === 'en' ? `Page ${page} / ${totalPages || 1} (${totalCount.toLocaleString('en-US')} listings)` : `Trang ${page} / ${totalPages || 1} (${totalCount.toLocaleString('vi-VN')} tin)`}
                         </span>
                         <div className="pagination-controls">
                           <button
@@ -1162,14 +1626,14 @@ export default function DashboardPage() {
                             disabled={page <= 1}
                             onClick={() => setPage((p) => Math.max(1, p - 1))}
                           >
-                            <ChevronLeft size={14} /> Trước
+                            <ChevronLeft size={14} /> {lang === 'en' ? 'Prev' : 'Trước'}
                           </button>
                           <button
                             className="page-btn"
                             disabled={page >= totalPages}
                             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                           >
-                            Sau <ChevronRight size={14} />
+                            {lang === 'en' ? 'Next' : 'Sau'} <ChevronRight size={14} />
                           </button>
                         </div>
                       </div>

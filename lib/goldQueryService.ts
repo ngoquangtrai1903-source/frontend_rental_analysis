@@ -34,6 +34,10 @@ export interface GoldFilterParams {
   max_dist_beach?: number | null
   max_dist_cbd?: number | null
   max_dist_uni?: number | null
+  min_latitude?: number | null
+  max_latitude?: number | null
+  min_longitude?: number | null
+  max_longitude?: number | null
 }
 
 /**
@@ -42,6 +46,7 @@ export interface GoldFilterParams {
 export interface QueryPaginationOptions {
   page?: number
   pageSize?: number
+  offset?: number
   sortBy?: string
   ascending?: boolean
 }
@@ -205,17 +210,43 @@ export function buildGoldQuery(
   if (isValidFilterValue(filters.max_dist_uni)) {
     query = query.lte('dist_to_nearest_uni', Number(filters.max_dist_uni))
   }
+  if (isValidFilterValue(filters.min_latitude)) {
+    query = query.gte('latitude', Number(filters.min_latitude))
+  }
+  if (isValidFilterValue(filters.max_latitude)) {
+    query = query.lte('latitude', Number(filters.max_latitude))
+  }
+  if (isValidFilterValue(filters.min_longitude)) {
+    query = query.gte('longitude', Number(filters.min_longitude))
+  }
+  if (isValidFilterValue(filters.max_longitude)) {
+    query = query.lte('longitude', Number(filters.max_longitude))
+  }
 
   // 8. Dynamic Sorting
-  const sortBy = pagination?.sortBy || 'posted_date'
+  const requestedSortBy = pagination?.sortBy || 'posted_date'
+  const sortAliases: Record<string, string> = {
+    price: 'price_vnd',
+    posted_date: 'posted_date',
+    price_vnd: 'price_vnd',
+    size_m2: 'size_m2'
+  }
+  // Never pass a client-controlled column name directly to PostgREST.
+  const sortBy = sortAliases[requestedSortBy] || 'posted_date'
   const ascending = pagination?.ascending ?? false
   query = query.order(sortBy, { ascending, nullsFirst: false })
+  // Stable pagination when several listings share the same date or price.
+  if (sortBy !== 'source') query = query.order('source', { ascending: true })
+  if (sortBy !== 'list_id') query = query.order('list_id', { ascending: true })
 
   // 9. Dynamic Pagination (.range())
   if (pagination?.page && pagination?.pageSize) {
     const page = Math.max(1, pagination.page)
     const pageSize = Math.min(10000, Math.max(1, pagination.pageSize))
-    const from = (page - 1) * pageSize
+    const requestedOffset = pagination.offset
+    const from = Number.isSafeInteger(requestedOffset) && requestedOffset !== undefined
+      ? Math.max(0, requestedOffset)
+      : (page - 1) * pageSize
     const to = from + pageSize - 1
     query = query.range(from, to)
   }
@@ -362,7 +393,7 @@ export async function fetchGoldPriceDistribution(
  */
 export async function fetchGoldWardStats(
   filters: GoldFilterParams = {},
-  topN: number = 5,
+  topN?: number,
   client: any = supabaseGold
 ) {
   const query = buildGoldQuery(client, filters, undefined, 'ward_name, price_vnd')
@@ -394,8 +425,8 @@ export async function fetchGoldWardStats(
       count: stats.count,
       avgPrice: stats.count > 0 && stats.sumPrice > 0 ? stats.sumPrice / stats.count : 0
     }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, topN)
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'vi'))
+    .filter((_, index) => topN === undefined || topN <= 0 || index < topN)
 }
 
 /**
@@ -405,14 +436,48 @@ export async function fetchGoldTrendData(
   filters: GoldFilterParams = {},
   client: any = supabaseGold
 ) {
-  const query = buildGoldQuery(client, filters, undefined, 'posted_date, price_vnd')
-  const { data, error } = await query
+  const chunkSize = 1000
+  const firstPage = await buildGoldQuery(
+    client,
+    filters,
+    { page: 1, pageSize: chunkSize, sortBy: 'posted_date', ascending: true },
+    'posted_date, price_vnd'
+  )
+  const { data: firstRows, count, error: firstError } = await firstPage
 
-  if (error) {
-    throw new Error(`Failed to fetch trend data from gold: ${error.message}`)
+  if (firstError) {
+    throw new Error(`Failed to fetch trend data from gold: ${firstError.message}`)
   }
 
-  const rows = (data as unknown as Array<{ posted_date: string | null; price_vnd: number | null }>) || []
+  const rows = (firstRows ?? []) as Array<{ posted_date: string | null; price_vnd: number | null }>
+  const expectedCount = count ?? rows.length
+  const pageCount = Math.ceil(expectedCount / chunkSize)
+
+  for (let firstPageNumber = 2; firstPageNumber <= pageCount; firstPageNumber += 4) {
+    const pageNumbers = Array.from(
+      { length: Math.min(4, pageCount - firstPageNumber + 1) },
+      (_, index) => firstPageNumber + index
+    )
+    const pages = await Promise.all(
+      pageNumbers.map(async (page) => {
+        const result = await buildGoldQuery(
+          client,
+          filters,
+          { page, pageSize: chunkSize, sortBy: 'posted_date', ascending: true },
+          'posted_date, price_vnd'
+        )
+        if (result.error) {
+          throw new Error(`Failed to fetch trend data page ${page} from gold: ${result.error.message}`)
+        }
+        return (result.data ?? []) as Array<{ posted_date: string | null; price_vnd: number | null }>
+      })
+    )
+    rows.push(...pages.flat())
+  }
+
+  if (rows.length !== expectedCount) {
+    throw new Error(`Trend query returned ${rows.length} of ${expectedCount} matching rows`)
+  }
 
   // Group by month YYYY-MM
   const monthMap: Record<string, { count: number; sumPrice: number; priceCount: number }> = {}
@@ -431,7 +496,7 @@ export async function fetchGoldTrendData(
   }
 
   const sortedMonths = Object.keys(monthMap).sort()
-  return sortedMonths.slice(-7).map((month) => {
+  return sortedMonths.map((month) => {
     const item = monthMap[month]
     return {
       period: month,
@@ -471,15 +536,20 @@ export interface MapRentalPoint {
   has_mezzanine: number | null
 }
 
+export interface MapCoordinatesResult {
+  points: MapRentalPoint[]
+  total: number
+}
+
 /**
- * Fetches all geographic coordinates in stable pages, overcoming PostgREST's
- * per-request row limit without silently truncating large result sets.
+ * Fetches geographic coordinates in stable pages, overcoming PostgREST's
+ * per-request row limit while keeping the total matching count.
  */
 export async function fetchGoldMapCoordinates(
   filters: GoldFilterParams = {},
   limit: number = Number.POSITIVE_INFINITY,
   client: any = supabaseGold
-): Promise<MapRentalPoint[]> {
+): Promise<MapCoordinatesResult> {
   const selectColumns =
     'list_id, ward_name, category_name, price_vnd, size_m2, price_per_m2_vnd, latitude, longitude, flood_risk_label, dist_to_beach, dist_to_cbd, dist_to_nearest_uni, dist_to_airport, furnishing_status, rooms, has_balcony, has_elevator, private_bathroom, has_parking, wifi, free_hours, has_mezzanine'
 
@@ -512,7 +582,13 @@ export async function fetchGoldMapCoordinates(
         const result = await buildGoldQuery(
           client,
           filters,
-          { page, pageSize: CHUNK_SIZE, sortBy: 'list_id', ascending: true },
+          {
+            page,
+            pageSize: Math.min(CHUNK_SIZE, targetCount - (page - 1) * CHUNK_SIZE),
+            offset: (page - 1) * CHUNK_SIZE,
+            sortBy: 'list_id',
+            ascending: true
+          },
           selectColumns
         )
         if (result.error) {
@@ -533,7 +609,7 @@ export async function fetchGoldMapCoordinates(
     }
   }
 
-  return uniqueRows
+  const points = uniqueRows
     .filter((r) => r.latitude !== null && r.longitude !== null && r.latitude > 15.5 && r.latitude < 16.5 && r.longitude > 107.5 && r.longitude < 108.7)
     .map((r) => ({
       list_id: r.list_id,
@@ -559,6 +635,8 @@ export async function fetchGoldMapCoordinates(
       free_hours: r.free_hours,
       has_mezzanine: r.has_mezzanine
     }))
+
+  return { points, total: matchingCount }
 }
 
 /**
@@ -687,6 +765,186 @@ export async function fetchGoldAmenityPricing(
       ppm2Without: Math.round(ppm2Without)
     }
   })
+}
+
+export interface PriceInsightRecord {
+  wardName: string
+  category: string
+  priceMillion: number
+  sizeM2: number
+  pricePerM2: number
+}
+
+export interface PriceBoxPlot {
+  wardName: string
+  count: number
+  min: number
+  q1: number
+  median: number
+  q3: number
+  max: number
+}
+
+export interface PriceHeatmapCell {
+  wardName: string
+  category: string
+  count: number
+  medianPriceMillion: number
+}
+
+export interface RentalPriceInsights {
+  boxPlot: PriceBoxPlot[]
+  heatmap: PriceHeatmapCell[]
+  histogram: Array<{ range: string; count: number }>
+  scatter: PriceInsightRecord[]
+}
+
+function percentile(sortedValues: number[], fraction: number): number {
+  const index = (sortedValues.length - 1) * fraction
+  const lowerIndex = Math.floor(index)
+  const upperIndex = Math.ceil(index)
+  const weight = index - lowerIndex
+  return sortedValues[lowerIndex] * (1 - weight) + sortedValues[upperIndex] * weight
+}
+
+export async function fetchGoldRentalPriceInsights(
+  filters: GoldFilterParams = {},
+  client: any = supabaseGold
+): Promise<RentalPriceInsights> {
+  const chunkSize = 1000
+  const selectColumns = 'ward_name, category_name, price_vnd, size_m2'
+  const firstPage = await buildGoldQuery(
+    client,
+    filters,
+    { page: 1, pageSize: chunkSize, sortBy: 'posted_date', ascending: true },
+    selectColumns
+  )
+  const { data: firstRows, count, error: firstError } = await firstPage
+
+  if (firstError) {
+    throw new Error(`Failed to fetch rental price insights: ${firstError.message}`)
+  }
+
+  const rows = (firstRows ?? []) as Array<{
+    ward_name: string | null
+    category_name: string | null
+    price_vnd: number | null
+    size_m2: number | null
+  }>
+  const expectedCount = count ?? rows.length
+  const pageCount = Math.ceil(expectedCount / chunkSize)
+
+  for (let firstPageNumber = 2; firstPageNumber <= pageCount; firstPageNumber += 4) {
+    const pageNumbers = Array.from(
+      { length: Math.min(4, pageCount - firstPageNumber + 1) },
+      (_, index) => firstPageNumber + index
+    )
+    const pages = await Promise.all(
+      pageNumbers.map(async (page) => {
+        const result = await buildGoldQuery(
+          client,
+          filters,
+          { page, pageSize: chunkSize, sortBy: 'posted_date', ascending: true },
+          selectColumns
+        )
+        if (result.error) {
+          throw new Error(`Failed to fetch rental price insights page ${page}: ${result.error.message}`)
+        }
+        return (result.data ?? []) as typeof rows
+      })
+    )
+    rows.push(...pages.flat())
+  }
+
+  if (rows.length !== expectedCount) {
+    throw new Error(`Rental price insights returned ${rows.length} of ${expectedCount} matching rows`)
+  }
+
+  const validPriceRows = rows.filter((row): row is typeof row & {
+    price_vnd: number
+  } => Boolean(
+    row.price_vnd !== null &&
+    row.price_vnd >= 500_000 &&
+    row.price_vnd <= 60_000_000
+  ))
+  const categorizedRows = validPriceRows.filter((row): row is typeof row & {
+    ward_name: string
+    category_name: string
+  } => Boolean(row.ward_name && row.category_name))
+
+  const wardPrices = new Map<string, number[]>()
+  const categoryWardPrices = new Map<string, number[]>()
+  const histogramBuckets = Array.from({ length: 11 }, (_, index) => ({
+    range: index === 10 ? '20+ tr' : `${index * 2}–${(index + 1) * 2} tr`,
+    count: 0
+  }))
+
+  for (const row of validPriceRows) {
+    const priceMillion = row.price_vnd / 1_000_000
+    histogramBuckets[Math.min(10, Math.floor(priceMillion / 2))].count++
+  }
+
+  for (const row of categorizedRows) {
+    const priceMillion = row.price_vnd / 1_000_000
+    const wardValues = wardPrices.get(row.ward_name) ?? []
+    wardValues.push(priceMillion)
+    wardPrices.set(row.ward_name, wardValues)
+
+    const pairKey = `${row.ward_name}\u0000${row.category_name}`
+    const pairValues = categoryWardPrices.get(pairKey) ?? []
+    pairValues.push(priceMillion)
+    categoryWardPrices.set(pairKey, pairValues)
+
+  }
+
+  const boxPlot = [...wardPrices.entries()]
+    .filter(([, values]) => values.length >= 5)
+    .map(([wardName, values]) => {
+      const sorted = [...values].sort((a, b) => a - b)
+      const q1 = percentile(sorted, 0.25)
+      const median = percentile(sorted, 0.5)
+      const q3 = percentile(sorted, 0.75)
+      const iqr = q3 - q1
+      const inliers = sorted.filter((value) => value >= q1 - 1.5 * iqr && value <= q3 + 1.5 * iqr)
+      return {
+        wardName,
+        count: values.length,
+        min: Number(inliers[0].toFixed(2)),
+        q1: Number(q1.toFixed(2)),
+        median: Number(median.toFixed(2)),
+        q3: Number(q3.toFixed(2)),
+        max: Number(inliers[inliers.length - 1].toFixed(2))
+      }
+    })
+    .sort((a, b) => b.count - a.count)
+
+  const heatmap = [...categoryWardPrices.entries()].map(([key, values]) => {
+    const [wardName, category] = key.split('\u0000')
+    return {
+      wardName,
+      category,
+      count: values.length,
+      medianPriceMillion: Number(percentile([...values].sort((a, b) => a - b), 0.5).toFixed(2))
+    }
+  })
+
+  const scatterRows = validPriceRows
+    .filter(
+      (row): row is typeof row & { size_m2: number } =>
+        row.size_m2 !== null && row.size_m2 >= 10 && row.size_m2 <= 300
+    )
+    .sort((a, b) => a.size_m2 - b.size_m2)
+  const scatter = scatterRows
+    .filter((_, index) => index % Math.max(1, Math.ceil(scatterRows.length / 500)) === 0)
+    .map((row) => ({
+      wardName: row.ward_name ?? 'Khác',
+      category: row.category_name ?? 'Không xác định',
+      priceMillion: Number((row.price_vnd / 1_000_000).toFixed(2)),
+      sizeM2: row.size_m2,
+      pricePerM2: Math.round(row.price_vnd / row.size_m2)
+    }))
+
+  return { boxPlot, heatmap, histogram: histogramBuckets, scatter }
 }
 
 /**
