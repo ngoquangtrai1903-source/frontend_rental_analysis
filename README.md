@@ -1,5 +1,25 @@
 # RentIQ · Da Nang Rental Market Analytics & Real Estate Intelligence Platform
 
+## Chạy trên điện thoại cùng mạng Wi‑Fi
+
+Trên máy tính chạy:
+
+```powershell
+npm run dev:lan
+ipconfig
+```
+
+Lấy địa chỉ `IPv4 Address` của Wi‑Fi, ví dụ `192.168.1.10`, rồi mở trên điện thoại:
+`http://192.168.1.10:3000`. Hai thiết bị phải cùng mạng Wi‑Fi và Windows Firewall phải cho phép Node.js qua mạng Private.
+
+Nếu cần HTTPS local:
+
+```powershell
+npm run dev:lan:https
+```
+
+Mở `https://192.168.1.10:3000`; chứng chỉ tự ký sẽ hiện cảnh báo trên điện thoại. Đây là giới hạn của chứng chỉ local, không phải lỗi ứng dụng. Muốn hết cảnh báo cần dùng `mkcert` và cài CA vào điện thoại, hoặc deploy bằng domain HTTPS thật.
+
 <p align="center">
   <img src="https://img.shields.io/badge/Next.js-16.4.2-black?style=for-the-badge&logo=next.js" alt="Next.js" />
   <img src="https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react" alt="React" />
