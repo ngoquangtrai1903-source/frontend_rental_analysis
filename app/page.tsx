@@ -6,6 +6,7 @@ import AmenitiesView from './components/AmenitiesView'
 import FloodRiskView from './components/FloodRiskView'
 import AdvancedAnalyticsView from './components/AdvancedAnalyticsView'
 import PricePredictionView from './components/PricePredictionView'
+import FinderLocationMap, { hasLocation } from './components/FinderLocationMap'
 
 const LocationMapView = dynamic(() => import('./components/LocationMapView'), {
   ssr: false,
@@ -45,6 +46,7 @@ import {
   MoreHorizontal,
   RotateCcw,
   Search,
+  SlidersHorizontal,
   Settings2,
   ShieldAlert,
   Sparkles,
@@ -54,6 +56,7 @@ import {
 
 const navItems = [
   { label: 'Tổng quan', icon: LayoutDashboard },
+  { label: 'Smart Rental Finder', icon: SlidersHorizontal },
   { label: 'Vị trí & khu vực', icon: MapPin },
   { label: 'Tiện ích', icon: Home },
   { label: 'Rủi ro ngập lụt', icon: ShieldAlert },
@@ -107,6 +110,8 @@ interface TrendPoint {
 }
 
 interface RentalRecord {
+  latitude?: number | null
+  longitude?: number | null
   source: string
   list_id: string
   posted_date: string | null
@@ -122,6 +127,10 @@ interface RentalRecord {
 interface KpiData {
   total_listings: number
   avg_price_million: number
+  avg_room_price_million: number
+  avg_apartment_price_million: number
+  room_price_count: number
+  apartment_price_count: number
   avg_size_m2: number
   flood_risk_low_percentage: number
   apartment_percentage: number
@@ -306,7 +315,8 @@ export default function DashboardPage() {
       const res = await fetch(`/api/gold-query?${params.toString()}`)
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}))
-        console.error('API Error details:', errJson)
+        // Keep transient API failures visible in the page without triggering Next.js' dev error overlay.
+        console.warn('API Error details:', errJson)
         setErrorMessage(errJson.message || errJson.error || `Lỗi máy chủ (${res.status})`)
         return
       }
@@ -519,6 +529,9 @@ export default function DashboardPage() {
             </div>
 
             <div className="heading-actions">
+              <button className={`button ${activeNav === 'Smart Rental Finder' ? 'primary' : 'secondary'}`} onClick={() => setActiveNav('Smart Rental Finder')}>
+                <SlidersHorizontal size={16} /> Tìm phòng theo ngân sách
+              </button>
               <button
                 className={`button ${activeNav === 'Dự đoán giá AI' ? 'primary' : 'secondary'}`}
                 onClick={() => setActiveNav('Dự đoán giá AI')}
@@ -860,6 +873,9 @@ export default function DashboardPage() {
           {activeNav === 'Dự đoán giá AI' && (
             <PricePredictionView />
           )}
+          {activeNav === 'Smart Rental Finder' && (
+            <SmartRentalFinder />
+          )}
 
           {activeNav === 'Tổng quan' && (
             <>
@@ -948,14 +964,33 @@ export default function DashboardPage() {
                       note="dữ liệu kho gold"
                       tone="blue"
                     />
+                    
                     <Kpi
                       icon={<TrendingUp size={18} />}
-                      label="Giá thuê trung bình"
-                      value={`${kpiData?.avg_price_million.toFixed(2) || '0'} tr`}
-                      delta={kpiData?.avg_price_million && kpiData.avg_price_million > 6 ? 'Phân khúc cao' : 'Bình dân'}
+                      label="Giá thuê TB phòng trọ"
+                      value={`${(kpiData?.avg_room_price_million ?? 0).toFixed(2)} tr`}
+                      delta={
+                        kpiData?.room_price_count
+                          ? `${kpiData.room_price_count.toLocaleString('vi-VN')} tin đăng`
+                          : 'Chưa có dữ liệu'
+                      }
                       note="VNĐ / tháng"
                       tone="orange"
                     />
+
+                    <Kpi
+                      icon={<TrendingUp size={18} />}
+                      label="Giá thuê TB căn hộ/chung cư"
+                      value={`${(kpiData?.avg_apartment_price_million ?? 0).toFixed(2)} tr`}
+                      delta={
+                        kpiData?.apartment_price_count
+                          ? `${kpiData.apartment_price_count.toLocaleString('vi-VN')} tin đăng`
+                          : 'Chưa có dữ liệu'
+                      }
+                      note="VNĐ / tháng"
+                      tone="purple"
+                    />
+
                     <Kpi
                       icon={<Activity size={18} />}
                       label="Diện tích trung bình"
@@ -1182,6 +1217,102 @@ export default function DashboardPage() {
         </div>
       </section>
     </main>
+  )
+}
+
+function SmartRentalFinder() {
+  const [selectedRoom, setSelectedRoom] = useState(0)
+  const [budget, setBudget] = useState('8')
+  const [livingCost, setLivingCost] = useState('2')
+  const [ward, setWard] = useState('')
+  const [category, setCategory] = useState('')
+  const [size, setSize] = useState('')
+  const [amenities, setAmenities] = useState({ balcony: false, parking: false, bathroom: false, elevator: false })
+  const [results, setResults] = useState<RentalRecord[]>([])
+  const [searched, setSearched] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [finderError, setFinderError] = useState('')
+  const [resultBudget, setResultBudget] = useState(0)
+  const [matchCount, setMatchCount] = useState(0)
+
+  const monthlyBudget = Math.max(0, Number(budget) || 0)
+  const monthlyLivingCost = Math.max(0, Number(livingCost) || 0)
+  const maxRent = Math.max(0, monthlyBudget - monthlyLivingCost) * 1000000
+
+  const runSearch = async () => {
+    if (!Number.isFinite(Number(budget)) || !Number.isFinite(Number(livingCost)) || Number(budget) <= 0 || Number(livingCost) < 0 || maxRent <= 0 || (size !== '' && (!Number.isFinite(Number(size)) || Number(size) < 0))) {
+      setFinderError('Vui lòng nhập ngân sách lớn hơn chi phí sinh hoạt và diện tích không âm.')
+      return
+    }
+    setBusy(true)
+    setFinderError('')
+    setResults([])
+    setSearched(false)
+    try {
+      const params = new URLSearchParams({ mode: 'records', page: '1', pageSize: '12', sortBy: 'price_vnd', ascending: 'true' })
+      params.set('max_price', String(maxRent))
+      params.set('min_price', '1')
+      if (ward) params.set('ward_name', ward)
+      if (category) params.set('category_name', category)
+      if (size) params.set('min_size', size)
+      if (amenities.balcony) params.set('has_balcony', '1')
+      if (amenities.parking) params.set('has_parking', '1')
+      if (amenities.bathroom) params.set('private_bathroom', '1')
+      if (amenities.elevator) params.set('has_elevator', '1')
+      const response = await fetch(`/api/gold-query?${params}`)
+      const json = await response.json()
+      if (!response.ok) throw new Error('Không thể tải danh sách phòng. Vui lòng thử lại.')
+      setResults(json.data || [])
+      setSelectedRoom(Math.max(0, (json.data || []).findIndex((room: RentalRecord) => hasLocation(room))))
+      setMatchCount(json.count || 0)
+      setResultBudget(maxRent / 1000000)
+      setSearched(true)
+    } catch {
+      setFinderError('Không thể tải danh sách phòng. Vui lòng thử lại.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const toggle = (key: keyof typeof amenities) => setAmenities((current) => ({ ...current, [key]: !current[key] }))
+  const remaining = (price: number | null) => resultBudget - (price || 0) / 1000000
+
+  return (
+    <section className="finder-page">
+      <div className="finder-hero">
+        <div>
+          <span className="eyebrow"><Sparkles size={13} /> SMART MATCHING</span>
+          <h1>Tìm phòng phù hợp với ngân sách</h1>
+          <p>Cho chúng tôi biết ngân sách và ưu tiên của bạn. RentIQ sẽ lọc các phòng đang có trong kho dữ liệu Đà Nẵng.</p>
+        </div>
+        <div className="finder-hero-art"><Home size={34} /><span>Phù hợp hơn<br />mỗi ngày</span></div>
+      </div>
+
+      <div className="finder-grid">
+        <div className="card finder-form">
+          <div className="card-header"><div><h2>Ngân sách của bạn</h2><p>Đơn vị: triệu VNĐ / tháng</p></div><SlidersHorizontal size={19} /></div>
+          <label>Ngân sách tối đa<input type="number" min="0" step="0.5" value={budget} onChange={(e) => setBudget(e.target.value)} /></label>
+          <label>Chi phí sinh hoạt dự kiến<input type="number" min="0" step="0.5" value={livingCost} onChange={(e) => setLivingCost(e.target.value)} /></label>
+          <div className="finder-budget-summary"><span>Tiền thuê còn lại</span><strong>{(maxRent / 1000000).toFixed(1)} triệu / tháng</strong></div>
+          <div className="finder-fields">
+            <label>Khu vực<select value={ward} onChange={(e) => setWard(e.target.value)}><option value="">Tất cả khu vực</option>{WARDS_OPTIONS.map((item) => <option key={item}>{item}</option>)}</select></label>
+            <label>Loại hình<select value={category} onChange={(e) => setCategory(e.target.value)}><option value="">Tất cả loại hình</option>{CATEGORY_OPTIONS.map((item) => <option key={item}>{item}</option>)}</select></label>
+            <label>Diện tích tối thiểu<input type="number" min="0" placeholder="Ví dụ: 20 m²" value={size} onChange={(e) => setSize(e.target.value)} /></label>
+          </div>
+          <div className="finder-amenities"><span>Tiện ích bắt buộc</span><div>{([['balcony', 'Ban công'], ['parking', 'Chỗ để xe'], ['bathroom', 'WC riêng'], ['elevator', 'Thang máy']] as const).map(([key, label]) => <button key={key} className={amenities[key] ? 'selected' : ''} onClick={() => toggle(key)}>{amenities[key] ? '✓' : '+'} {label}</button>)}</div></div>
+          <button className="button primary finder-submit" onClick={runSearch} disabled={busy || maxRent <= 0}><Search size={16} /> {busy ? 'Đang tìm...' : 'Tìm phòng phù hợp'}</button>
+        </div>
+
+        <div className="card finder-results">
+          <div className="card-header"><div><h2>{searched ? `${matchCount} phòng phù hợp` : 'Gợi ý dành cho bạn'}</h2><p>{searched ? `Hiển thị ${results.length} phòng giá thấp nhất · ngân sách thuê ${(resultBudget).toFixed(1)} triệu` : 'Nhập ngân sách để xem kết quả cá nhân hóa'}</p></div><span className="finder-match-badge">THEO NGÂN SÁCH</span></div>
+          <p style={{ color: 'var(--muted)', fontSize: 12 }}>Chi phí sinh hoạt do bạn ước tính; chưa gồm tiền cọc. Kết quả theo lần tìm gần nhất. Tin trong kho dữ liệu có thể đã hết phòng.</p>
+          {finderError && <p role="alert" style={{ color: '#b91c1c' }}>{finderError}</p>}
+          {busy && <p role="status">Đang tìm phòng phù hợp…</p>}
+          {searched && results.length > 0 && <FinderLocationMap rooms={results} selected={selectedRoom} onSelect={setSelectedRoom} />}
+          {!searched ? <div className="finder-empty"><Sparkles size={28} /><strong>Bắt đầu với ngân sách của bạn</strong><span>Hệ thống sẽ ưu tiên phòng vừa túi tiền và đáp ứng đúng tiện ích.</span></div> : results.length === 0 ? <div className="finder-empty"><Search size={28} /><strong>Chưa tìm thấy phòng phù hợp</strong><span>Hãy tăng ngân sách thuê hoặc bớt một tiêu chí để có thêm lựa chọn.</span></div> : <div className="finder-list">{results.map((room, index) => <div role="button" tabIndex={0} aria-pressed={selectedRoom === index} aria-label={`Xem chi tiết phòng ${index + 1}`} onClick={() => setSelectedRoom(index)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSelectedRoom(index) } }} className={`finder-result ${selectedRoom === index ? 'finder-result-selected' : ''}`} key={`${room.source}-${room.list_id}-${index}`}><span className="finder-result-icon"><MapPin size={18} /></span><div className="finder-result-main"><strong>#{index + 1} · {room.ward_name || 'Đà Nẵng'} · {room.category_name || 'Phòng cho thuê'}</strong><span>{room.size_m2 ? `${Math.round(room.size_m2)} m²` : 'Diện tích chưa cập nhật'} · {room.furnishing_status || 'Chưa cập nhật'}</span></div><div className="finder-result-price"><strong>{room.price_vnd ? `${(room.price_vnd / 1000000).toFixed(1)} triệu` : 'Thỏa thuận'}</strong><small>{room.price_vnd ? `Còn dư ${Math.max(0, remaining(room.price_vnd)).toFixed(1)} triệu` : 'Liên hệ chủ nhà'}</small></div></div>)}</div>}
+        </div>
+      </div>
+    </section>
   )
 }
 
