@@ -2699,3 +2699,33 @@
 .dark-mode .field-error-text {
   color: #f87171;
 }
+
+/* Map Marker Popup & Inspector Dark Mode */
+.dark-mode .map-marker-popup-card {
+  background-color: var(--surface-card) !important;
+  border-color: #33415d !important;
+  color: var(--ink) !important;
+}
+
+.dark-mode .map-marker-popup-card h3 {
+  color: var(--ink) !important;
+}
+
+.dark-mode .popup-distance-grid {
+  background: #1b2940 !important;
+  border-color: #26344b !important;
+}
+
+.dark-mode .popup-distance-divider {
+  border-color: #26344b !important;
+}
+
+.dark-mode .popup-amenity-tag {
+  background: #1b2940 !important;
+  color: #cbd5e1 !important;
+}
+
+.dark-mode .selected-property-card {
+  background: var(--surface-card) !important;
+  border-color: #3b82f6 !important;
+}

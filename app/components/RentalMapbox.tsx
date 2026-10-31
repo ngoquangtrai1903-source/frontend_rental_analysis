@@ -113,13 +113,13 @@ const floodOutlineLayer: LayerProps = {
   paint: { 'line-color': '#dc2626', 'line-width': 2.5, 'line-dasharray': [2, 2] }
 }
 
-function formatBadgePrice(priceVnd: number | null): string {
-  if (!priceVnd || priceVnd <= 0) return 'Thỏa thuận'
+function formatBadgePrice(priceVnd: number | null, isEn = false): string {
+  if (!priceVnd || priceVnd <= 0) return isEn ? 'Negotiable' : 'Thỏa thuận'
   const million = priceVnd / 1_000_000
-  return `${million >= 10 ? million.toFixed(0) : million.toFixed(1)} tr`
+  return `${million >= 10 ? million.toFixed(0) : million.toFixed(1)} ${isEn ? 'M' : 'tr'}`
 }
 
-function createListingsGeoJson(points: MapRentalPoint[]): FeatureCollection<GeoJSONPoint, ListingFeatureProperties> {
+function createListingsGeoJson(points: MapRentalPoint[], isEn = false): FeatureCollection<GeoJSONPoint, ListingFeatureProperties> {
   return {
     type: 'FeatureCollection',
     features: points.map((point) => ({
@@ -132,7 +132,7 @@ function createListingsGeoJson(points: MapRentalPoint[]): FeatureCollection<GeoJ
       properties: {
         list_id: point.list_id,
         price_vnd: point.price_vnd ?? 0,
-        price_label: formatBadgePrice(point.price_vnd)
+        price_label: formatBadgePrice(point.price_vnd, isEn)
       }
     }))
   }
@@ -165,8 +165,8 @@ export default function RentalMapbox({
   const [bounds, setBounds] = useState<readonly [number, number, number, number] | null>(null)
 
   const listingsGeoJson = useMemo(
-    () => createListingsGeoJson(showPropertyPins ? points : []),
-    [points, showPropertyPins]
+    () => createListingsGeoJson(showPropertyPins ? points : [], lang === 'en'),
+    [points, showPropertyPins, lang]
   )
   const sourceId = `rental-listings-${clustering ? 'clustered' : 'plain'}`
   const pointById = useMemo(
@@ -328,7 +328,7 @@ export default function RentalMapbox({
             >
               <button
                 type="button"
-                aria-label={`${formatBadgePrice(point.price_vnd)} tại ${point.ward_name || 'Đà Nẵng'}`}
+                aria-label={lang === 'en' ? `${formatBadgePrice(point.price_vnd, true)} in ${point.ward_name || 'Da Nang'}` : `${formatBadgePrice(point.price_vnd)} tại ${point.ward_name || 'Đà Nẵng'}`}
                 onMouseEnter={() => setActivePopupPoint(point)}
                 style={{
                   background: '#fff',
@@ -342,7 +342,7 @@ export default function RentalMapbox({
                   whiteSpace: 'nowrap'
                 }}
               >
-                {formatBadgePrice(point.price_vnd)}
+                {formatBadgePrice(point.price_vnd, lang === 'en')}
               </button>
             </Marker>
           )
@@ -372,7 +372,7 @@ export default function RentalMapbox({
               <input type="checkbox" checked={showPropertyPins} onChange={(event) => setShowPropertyPins(event.target.checked)} />
             </label>
             <label style={toggleStyle}>
-              <span style={{ alignItems: 'center', display: 'flex', gap: 7 }}><Layers size={14} color="#3b82f6" /> Ranh giới Quận/Huyện*</span>
+              <span style={{ alignItems: 'center', display: 'flex', gap: 7 }}><Layers size={14} color="#3b82f6" /> {lang === 'en' ? 'District Boundaries*' : 'Ranh giới Quận/Huyện*'}</span>
               <input type="checkbox" checked={showDistricts} onChange={(event) => setShowDistricts(event.target.checked)} />
             </label>
             <label style={toggleStyle}>
@@ -413,6 +413,7 @@ export default function RentalMapbox({
               setActivePopupPoint(null)
               onSelectPoint(point)
             }}
+            lang={lang}
           />
         </div>
       )}

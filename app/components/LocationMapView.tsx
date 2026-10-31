@@ -11,7 +11,7 @@ import {
 import { MapRentalPoint } from '@/lib/goldQueryService'
 import useRentalMapData from '@/app/hooks/useRentalMapData'
 import RentalMapbox from './RentalMapbox'
-import { getPriceTierTheme, getFloodRiskBadge, formatVndPrice } from './MapMarkerPopup'
+import { getPriceTierTheme, getFloodRiskBadge, formatVndPrice, translateCategoryName } from './MapMarkerPopup'
 
 interface LocationMapViewProps {
   filterQueryString?: string
@@ -29,6 +29,14 @@ export default function LocationMapView({
   const [selectedPoint, setSelectedPoint] = useState<MapRentalPoint | null>(null)
   const handleSelectPoint = useCallback((point: MapRentalPoint | null) => {
     setSelectedPoint(point)
+    if (point) {
+      setTimeout(() => {
+        const el = document.getElementById('property-inspector-card')
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        }
+      }, 60)
+    }
   }, [])
 
   return (
@@ -122,21 +130,25 @@ export default function LocationMapView({
       {/* 4. Selected Property Detailed Inspector Card */}
       {selectedPoint && (
         <div
-          className="card"
+          id="property-inspector-card"
+          className="card selected-property-card"
           style={{
             padding: '22px',
-            background: '#ffffff',
             border: '2px solid #3078f0',
             marginTop: '16px',
             borderRadius: '14px',
-            boxShadow: '0 4px 20px rgba(48, 120, 240, 0.12)'
+            boxShadow: '0 4px 20px rgba(48, 120, 240, 0.15)'
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <span className="eyebrow">{isEn ? `INSPECTING PROPERTY (ID: ${selectedPoint.list_id})` : `TOẠ ĐỘ ĐANG THANH TRA (ID: ${selectedPoint.list_id})`}</span>
-              <h3 style={{ margin: '4px 0 2px', fontSize: '19px', fontWeight: 800, color: '#0f172a' }}>
-                {selectedPoint.category_name} {isEn ? 'in' : 'tại'} {selectedPoint.ward_name}, TP. Đà Nẵng
+              <span className="eyebrow">
+                {isEn
+                  ? `SELECTED PROPERTY DETAILS (ID: ${selectedPoint.list_id})`
+                  : `CHI TIẾT PHÒNG TRỌ ĐANG CHỌN (ID: ${selectedPoint.list_id})`}
+              </span>
+              <h3 style={{ margin: '4px 0 2px', fontSize: '19px', fontWeight: 800, color: 'var(--ink)' }}>
+                {translateCategoryName(selectedPoint.category_name, isEn)} {isEn ? 'in' : 'tại'} {selectedPoint.ward_name}, TP. Đà Nẵng
               </h3>
               <div style={{ fontSize: '11px', color: 'var(--muted)' }}>
                 {isEn ? 'GPS WGS84 Coordinates:' : 'Toạ độ GPS WGS84:'} {selectedPoint.latitude.toFixed(5)}, {selectedPoint.longitude.toFixed(5)}
@@ -147,31 +159,31 @@ export default function LocationMapView({
               onClick={() => setSelectedPoint(null)}
               style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
             >
-              <X size={16} /> {isEn ? 'Close inspection panel' : 'Đóng bảng thanh tra'}
+              <X size={16} /> {isEn ? 'Close details' : 'Đóng chi tiết'}
             </button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginTop: '16px' }}>
             <div>
               <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>{isEn ? 'LISTED RENT' : 'GIÁ THUÊ NIÊM YẾT'}</span>
-              <div style={{ font: '800 22px Manrope', color: getPriceTierTheme(selectedPoint.price_vnd).color, marginTop: '3px' }}>
-                {formatVndPrice(selectedPoint.price_vnd)}
+              <div style={{ font: '800 22px Manrope', color: getPriceTierTheme(selectedPoint.price_vnd, isEn).color, marginTop: '3px' }}>
+                {formatVndPrice(selectedPoint.price_vnd, isEn)}
               </div>
             </div>
 
             <div>
               <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>{isEn ? 'SIZE & RATE' : 'DIỆN TÍCH & ĐƠN GIÁ'}</span>
-              <div style={{ font: '700 16px Manrope', color: '#1e293b', marginTop: '4px' }}>
-                {selectedPoint.size_m2} m² ({selectedPoint.price_per_m2_vnd?.toLocaleString()} {isEn ? 'VND/m²' : 'đ/m²'})
+              <div style={{ font: '700 16px Manrope', color: 'var(--ink)', marginTop: '4px' }}>
+                {selectedPoint.size_m2 ? `${Math.round(selectedPoint.size_m2)} m²` : (isEn ? 'N/A' : 'Chưa rõ DT')} ({selectedPoint.price_per_m2_vnd ? `${selectedPoint.price_per_m2_vnd.toLocaleString()} ${isEn ? 'VND/m²' : 'đ/m²'}` : 'N/A'})
               </div>
             </div>
 
             <div>
               <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>{isEn ? 'STRATEGIC HOTSPOT DISTANCES' : 'CỰ LY ĐIỂM NÓNG CHIẾN LƯỢC'}</span>
               <div style={{ fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'grid', gap: '2px' }}>
-                <div>🏖️ {isEn ? 'My Khe Beach' : 'Biển Mỹ Khê'}: {selectedPoint.dist_to_beach?.toFixed(1) || 'N/A'} km</div>
-                <div>🏙️ {isEn ? 'Dragon Bridge CBD' : 'CBD Cầu Rồng'}: {selectedPoint.dist_to_cbd?.toFixed(1) || 'N/A'} km</div>
-                <div>🎓 {isEn ? 'Nearest University' : 'Đại học gần nhất'}: {selectedPoint.dist_to_nearest_uni?.toFixed(1) || 'N/A'} km</div>
+                <div>🏖️ {isEn ? 'My Khe Beach' : 'Biển Mỹ Khê'}: {selectedPoint.dist_to_beach ? `${selectedPoint.dist_to_beach.toFixed(1)} km` : '—'}</div>
+                <div>🏙️ {isEn ? 'Dragon Bridge CBD' : 'CBD Cầu Rồng'}: {selectedPoint.dist_to_cbd ? `${selectedPoint.dist_to_cbd.toFixed(1)} km` : '—'}</div>
+                <div>🎓 {isEn ? 'Nearest University' : 'Đại học gần nhất'}: {selectedPoint.dist_to_nearest_uni ? `${selectedPoint.dist_to_nearest_uni.toFixed(1)} km` : '—'}</div>
               </div>
             </div>
 
@@ -193,11 +205,16 @@ export default function LocationMapView({
                   }}
                 >
                   {selectedPoint.flood_risk_label === 0
-                    ? (isEn ? '🟢 High ground / Safe' : '🟢 Cốt nền cao an toàn')
+                    ? (isEn ? '🟢 High ground · Safe' : '🟢 Cốt nền cao an toàn')
                     : (isEn ? '🔴 Flood caution' : '🔴 Cần lưu ý ngập')}
                 </span>
-                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
-                  {isEn ? 'Furnishing: ' : 'Nội thất: '}{selectedPoint.furnishing_status || (isEn ? 'Basic' : 'Cơ bản')}
+                <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '2px' }}>
+                  {isEn ? 'Furnishing: ' : 'Nội thất: '}
+                  {selectedPoint.furnishing_status
+                    ? (isEn
+                        ? (selectedPoint.furnishing_status.toLowerCase().includes('đầy đủ') ? 'Fully furnished' : selectedPoint.furnishing_status.toLowerCase().includes('cơ bản') ? 'Semi furnished' : 'Unfurnished')
+                        : selectedPoint.furnishing_status)
+                    : (isEn ? 'Basic' : 'Cơ bản')}
                 </div>
               </div>
             </div>
