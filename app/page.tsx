@@ -958,18 +958,59 @@ export default function DashboardPage() {
           {filterOpen && (
             <div className="filter-panel">
               <div className="filter-item">
-                <label htmlFor="posted-start">Ngày đăng từ</label>
-                <input id="posted-start" className="filter-control" type="date" value={startDate} min={DEFAULT_START_DATE} max={endDate || todayDate} onChange={(e) => {
-                  if (e.target.value && (e.target.value < DEFAULT_START_DATE || e.target.value > (endDate || todayDate))) return
-                  setStartDate(e.target.value); setPage(1)
-                }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label htmlFor="posted-start">Ngày đăng từ</label>
+                  {startDate !== DEFAULT_START_DATE && (
+                    <button
+                      type="button"
+                      style={{ background: 'none', border: 'none', color: 'var(--blue)', fontSize: '10px', cursor: 'pointer', padding: 0 }}
+                      onClick={() => { setStartDate(DEFAULT_START_DATE); setPage(1) }}
+                      title="Khôi phục mốc mặc định từ tháng 1/2026"
+                    >
+                      Về T1/2026
+                    </button>
+                  )}
+                  {startDate === DEFAULT_START_DATE && (
+                    <button
+                      type="button"
+                      style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '10px', cursor: 'pointer', padding: 0 }}
+                      onClick={() => { setStartDate(''); setPage(1) }}
+                      title="Bỏ mốc tháng 1/2026 để xem toàn bộ dữ liệu lịch sử trước 2026"
+                    >
+                      Tất cả lịch sử
+                    </button>
+                  )}
+                </div>
+                <input
+                  id="posted-start"
+                  className="filter-control"
+                  type="date"
+                  value={startDate}
+                  max={endDate || todayDate}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    if (val && endDate && val > endDate) return
+                    setStartDate(val)
+                    setPage(1)
+                  }}
+                />
               </div>
               <div className="filter-item">
                 <label htmlFor="posted-end">Ngày đăng đến</label>
-                <input id="posted-end" className="filter-control" type="date" value={endDate} min={startDate || DEFAULT_START_DATE} max={todayDate} onChange={(e) => {
-                  if (e.target.value && (e.target.value < (startDate || DEFAULT_START_DATE) || e.target.value > todayDate)) return
-                  setEndDate(e.target.value); setPage(1)
-                }} />
+                <input
+                  id="posted-end"
+                  className="filter-control"
+                  type="date"
+                  value={endDate}
+                  min={startDate || undefined}
+                  max={todayDate}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    if (val && ((startDate && val < startDate) || val > todayDate)) return
+                    setEndDate(val)
+                    setPage(1)
+                  }}
+                />
               </div>
               <div className="filter-item">
                 <label>Khu vực (Ward)</label>
@@ -1154,7 +1195,22 @@ export default function DashboardPage() {
               {(startDate || endDate) && (
                 <span className="filter-chip">
                   Ngày đăng: {startDate || 'bất kỳ'} — {endDate || 'bất kỳ'}
-                  <button aria-label="Đặt lại điều kiện ngày đăng" title="Đặt lại điều kiện ngày đăng" onClick={() => { setStartDate(DEFAULT_START_DATE); setEndDate(todayDate); setPage(1) }}><X size={12} /></button>
+                  <button
+                    aria-label="Đặt lại điều kiện ngày đăng"
+                    title={startDate === DEFAULT_START_DATE && endDate === todayDate ? 'Xóa lọc ngày để xem tất cả lịch sử' : 'Đặt lại về mặc định từ tháng 1/2026'}
+                    onClick={() => {
+                      if (startDate === DEFAULT_START_DATE && endDate === todayDate) {
+                        setStartDate('')
+                        setEndDate('')
+                      } else {
+                        setStartDate(DEFAULT_START_DATE)
+                        setEndDate(todayDate)
+                      }
+                      setPage(1)
+                    }}
+                  >
+                    <X size={12} />
+                  </button>
                 </span>
               )}
               {wardFilter && (
