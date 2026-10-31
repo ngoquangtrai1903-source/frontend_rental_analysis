@@ -923,8 +923,8 @@ export default function PricePredictionView() {
   return (
     <div className="workspace-view" style={{ marginTop: '16px' }}>
       {/* Hero Header */}
-      <div className="workspace-hero" style={{ background: 'linear-gradient(110deg, #edf4ff, #f9f6ff)' }}>
-        <div className="workspace-hero-icon" style={{ color: '#3078f0', background: '#fff' }}>
+      <div className="workspace-hero">
+        <div className="workspace-hero-icon">
           <Sparkles size={24} />
         </div>
         <div>
@@ -943,19 +943,7 @@ export default function PricePredictionView() {
         {/* Backend Online/Offline Pill */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
           <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px 14px',
-              borderRadius: '20px',
-              fontSize: '11px',
-              fontWeight: 700,
-              background: isBackendOnline ? '#eaf8f1' : '#fff4e5',
-              color: isBackendOnline ? '#1e875a' : '#b46b1f',
-              border: `1px solid ${isBackendOnline ? '#bbf7d0' : '#fed7aa'}`,
-              whiteSpace: 'nowrap'
-            }}
+            className={`predict-status-pill ${isBackendOnline ? 'online' : 'offline'}`}
           >
             <span
               style={{
@@ -1205,7 +1193,7 @@ export default function PricePredictionView() {
                     border: 'none',
                     background: 'none',
                     cursor: 'pointer',
-                    color: '#166534',
+                    color: 'inherit',
                     fontSize: '15px',
                     fontWeight: 'bold',
                     lineHeight: 1
@@ -1375,20 +1363,7 @@ export default function PricePredictionView() {
 
             {/* Error Message Alert */}
             {errorMsg && (
-              <div
-                style={{
-                  marginTop: '16px',
-                  padding: '12px 14px',
-                  background: '#fef2f2',
-                  border: '1px solid #fecaca',
-                  borderRadius: '10px',
-                  color: '#b91c1c',
-                  fontSize: '12px',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '10px'
-                }}
-              >
+              <div className="predict-error-banner">
                 <AlertCircle size={17} style={{ flexShrink: 0, marginTop: '2px' }} />
                 <div style={{ flex: 1 }}>
                   <strong>Thông báo:</strong>
@@ -1397,17 +1372,7 @@ export default function PricePredictionView() {
                     <button
                       type="button"
                       onClick={() => handlePredict(undefined, true)}
-                      style={{
-                        marginTop: '8px',
-                        padding: '4px 10px',
-                        background: '#ffffff',
-                        border: '1px solid #f87171',
-                        borderRadius: '6px',
-                        color: '#b91c1c',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        cursor: 'pointer'
-                      }}
+                      className="predict-error-btn"
                     >
                       ⚡ Chạy mô phỏng kiểm tra UI ngay (Demo Mode)
                     </button>
@@ -1445,26 +1410,10 @@ export default function PricePredictionView() {
           {/* State 1: When no prediction has been run yet */}
           {!prediction && !loading && (
             <div
-              className="card"
-              style={{
-                padding: '48px 32px',
-                textAlign: 'center',
-                background: '#ffffff',
-                borderRadius: '16px',
-                border: '1px dashed #cbd5e1'
-              }}
+              className="card predict-empty-card"
             >
               <div
-                style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '16px',
-                  background: '#edf4ff',
-                  color: 'var(--blue)',
-                  display: 'grid',
-                  placeItems: 'center',
-                  margin: '0 auto 16px'
-                }}
+                className="predict-empty-icon"
               >
                 <Calculator size={28} />
               </div>
@@ -1488,13 +1437,7 @@ export default function PricePredictionView() {
           {/* State 2: While loading */}
           {loading && (
             <div
-              className="card"
-              style={{
-                padding: '50px 32px',
-                textAlign: 'center',
-                background: '#ffffff',
-                borderRadius: '16px'
-              }}
+              className="card predict-loading-card"
             >
               <div
                 className="pulse-spinner"
@@ -1525,24 +1468,16 @@ export default function PricePredictionView() {
                       </span>
                       <span className="price-main-unit">triệu VND / tháng</span>
                     </div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>
-                      Tương đương: <strong style={{ color: '#1e293b' }}>{formatMoney(prediction?.predicted_price_vnd || ((prediction?.price_million_vnd || 0) * 1000000))}</strong>
-                      <span style={{ margin: '0 8px', color: '#cbd5e1' }}>|</span>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--muted)', marginBottom: '8px' }}>
+                      Tương đương: <strong style={{ color: 'var(--ink)' }}>{formatMoney(prediction?.predicted_price_vnd || ((prediction?.price_million_vnd || 0) * 1000000))}</strong>
+                      <span style={{ margin: '0 8px', color: 'var(--line)' }}>|</span>
                       <span>Đơn giá: <strong style={{ color: 'var(--blue)' }}>{Math.round(((prediction?.price_million_vnd || 0) * 1000000) / (sizeM2 || 1)).toLocaleString('vi-VN')} đ/m²</strong></span>
                     </div>
                   </div>
 
                   {prediction.is_simulation && (
                     <span
-                      style={{
-                        padding: '4px 10px',
-                        borderRadius: '20px',
-                        background: '#fff7ed',
-                        border: '1px solid #ffedd5',
-                        color: '#c2410c',
-                        fontSize: '11px',
-                        fontWeight: 700
-                      }}
+                      className="simulation-pill"
                     >
                       Chế độ mô phỏng kiểm tra UI
                     </span>
@@ -1551,12 +1486,12 @@ export default function PricePredictionView() {
 
                 {/* Range Estimate */}
                 {formattedRange && (
-                  <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px solid #e2e8f0' }}>
+                  <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px solid var(--line)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
-                      <span style={{ color: '#64748b', fontWeight: 600 }}>
+                      <span style={{ color: 'var(--muted)', fontWeight: 600 }}>
                         Khoảng giá tham khảo ước tính:
                       </span>
-                      <strong style={{ color: '#1e293b' }}>{formattedRange}</strong>
+                      <strong style={{ color: 'var(--ink)' }}>{formattedRange}</strong>
                     </div>
                     <div className="range-indicator">
                       <div className="range-fill" style={{ width: '100%' }} />
@@ -1578,27 +1513,27 @@ export default function PricePredictionView() {
                   <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>
                     Giá cơ sở thị trường (Base)
                   </span>
-                  <strong style={{ font: '800 18px Manrope', color: '#1e293b' }}>
+                  <strong style={{ font: '800 18px Manrope', color: 'var(--ink)' }}>
                     {formatMoney(prediction.explanation?.base_value_vnd || 2850000)}
                   </strong>
                   <small style={{ fontSize: '10px' }}>Điểm chuẩn trung bình toàn Đà Nẵng</small>
                 </div>
 
                 <div className="card metric-card" style={{ padding: '14px 16px' }}>
-                  <span style={{ fontSize: '11px', color: '#15803d', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span className="metric-tag-positive" style={{ fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <TrendingUp size={13} /> Tổng tác động tăng giá
                   </span>
-                  <strong style={{ font: '800 18px Manrope', color: '#15803d' }}>
+                  <strong className="metric-val-positive" style={{ font: '800 18px Manrope' }}>
                     +{formatMoney(impactSummary.positiveVnd)}
                   </strong>
                   <small style={{ fontSize: '10px' }}>Từ các ưu thế vị trí & tiện ích</small>
                 </div>
 
                 <div className="card metric-card" style={{ padding: '14px 16px' }}>
-                  <span style={{ fontSize: '11px', color: '#b91c1c', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span className="metric-tag-negative" style={{ fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <TrendingDown size={13} /> Tổng tác động giảm giá
                   </span>
-                  <strong style={{ font: '800 18px Manrope', color: '#b91c1c' }}>
+                  <strong className="metric-val-negative" style={{ font: '800 18px Manrope' }}>
                     -{formatMoney(impactSummary.negativeVnd)}
                   </strong>
                   <small style={{ fontSize: '10px' }}>Do xa trung tâm hoặc thiếu tiện nghi</small>
@@ -1802,14 +1737,14 @@ export default function PricePredictionView() {
                                 <span className="direction-badge neutral">Trung lập</span>
                               )}
                             </td>
-                            <td style={{ fontWeight: 600, color: isPositive ? '#15803d' : isNegative ? '#b91c1c' : 'inherit' }}>
+                            <td style={{ fontWeight: 600, color: isPositive ? 'var(--positive-text, #15803d)' : isNegative ? 'var(--negative-text, #b91c1c)' : 'inherit' }}>
                               {String(item.pct_effect)}
                             </td>
                             <td
                               style={{
                                 textAlign: 'right',
                                 fontWeight: 700,
-                                color: isPositive ? '#15803d' : isNegative ? '#b91c1c' : 'inherit'
+                                color: isPositive ? 'var(--positive-text, #15803d)' : isNegative ? 'var(--negative-text, #b91c1c)' : 'inherit'
                               }}
                             >
                               {item.vnd_effect > 0 ? `+${formatMoney(item.vnd_effect)}` : formatMoney(item.vnd_effect)}
@@ -1837,20 +1772,7 @@ export default function PricePredictionView() {
                   </table>
                 </div>
 
-                <div
-                  style={{
-                    marginTop: '16px',
-                    padding: '12px 14px',
-                    background: '#f8fafc',
-                    borderRadius: '8px',
-                    border: '1px solid #e2e8f0',
-                    fontSize: '11px',
-                    color: '#64748b',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
+                <div className="predict-info-banner">
                   <Info size={15} style={{ color: 'var(--blue)', flexShrink: 0 }} />
                   <span>
                     Công thức SHAP Additive Attribution: Giá dự đoán = Giá cơ sở + &sum;(Ảnh hưởng từng biến). Mỗi đặc trưng giải thích rõ tại sao căn phòng có giá cao hơn hay thấp hơn mặt bằng chung.

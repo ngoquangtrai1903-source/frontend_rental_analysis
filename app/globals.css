@@ -2230,3 +2230,472 @@
   opacity: 0.35;
   font-weight: 400;
 }
+
+/* ==========================================================================
+   AI Price Prediction & SHAP (Bilingual & Dark Mode Support)
+   ========================================================================== */
+
+:root {
+  --positive-text: #15803d;
+  --negative-text: #b91c1c;
+}
+
+.dark-mode {
+  --positive-text: #4ade80;
+  --negative-text: #f87171;
+}
+
+.predict-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.predict-status-pill.online {
+  background: #eaf8f1;
+  color: #1e875a;
+  border: 1px solid #bbf7d0;
+}
+
+.predict-status-pill.offline {
+  background: #fff4e5;
+  color: #b46b1f;
+  border: 1px solid #fed7aa;
+}
+
+.simulation-pill {
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: #fff7ed;
+  border: 1px solid #ffedd5;
+  color: #c2410c;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.predict-empty-card {
+  padding: 48px 32px;
+  text-align: center;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px dashed #cbd5e1;
+}
+
+.predict-empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: #edf4ff;
+  color: var(--blue);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 16px;
+}
+
+.predict-loading-card {
+  padding: 50px 32px;
+  text-align: center;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+}
+
+.predict-error-banner {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  color: #b91c1c;
+  font-size: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.predict-error-btn {
+  margin-top: 8px;
+  padding: 4px 10px;
+  background: #ffffff;
+  border: 1px solid #f87171;
+  border-radius: 6px;
+  color: #b91c1c;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.predict-info-banner {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 11px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.confidence-warning-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff7ed;
+  border: 1px solid #ffedd5;
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-size: 11px;
+  color: #c2410c;
+  font-weight: 600;
+}
+
+.metric-tag-positive, .metric-val-positive {
+  color: #15803d;
+}
+
+.metric-tag-negative, .metric-val-negative {
+  color: #b91c1c;
+}
+
+/* ==========================================================================
+   AI Price Prediction: Dark Mode Overrides
+   ========================================================================== */
+
+.dark-mode .predict-form-card {
+  background: var(--surface-card);
+  border-color: var(--line);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+}
+
+.dark-mode .preset-bar {
+  background: var(--surface-subtle);
+  border-color: #334155;
+}
+
+.dark-mode .preset-title {
+  color: #94a3b8;
+}
+
+.dark-mode .preset-chip {
+  background: #1e293b;
+  border-color: #334155;
+  color: var(--ink);
+}
+
+.dark-mode .preset-chip:hover {
+  background: #243a60;
+  border-color: var(--blue);
+  color: #9ec4ff;
+}
+
+.dark-mode .form-group-title {
+  color: #94a3b8;
+}
+
+.dark-mode .form-input,
+.dark-mode .form-select {
+  background: #1b2940;
+  color: var(--ink);
+  border-color: #34445f;
+}
+
+.dark-mode .form-input:focus,
+.dark-mode .form-select:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(48, 120, 240, 0.2);
+}
+
+.dark-mode .form-input-wrap svg {
+  color: #64748b;
+}
+
+.dark-mode .chip-btn {
+  background: #1b2940;
+  border-color: #34445f;
+  color: #94a3b8;
+}
+
+.dark-mode .chip-btn:hover {
+  background: #243a60;
+  color: var(--ink);
+  border-color: #41557a;
+}
+
+.dark-mode .chip-btn.active {
+  background: #3078f0;
+  color: #ffffff;
+  border-color: #3078f0;
+}
+
+.dark-mode .checkbox-card {
+  background: #1b2940;
+  border-color: #34445f;
+  color: var(--ink);
+}
+
+.dark-mode .checkbox-card:hover {
+  background: #243a60;
+  border-color: #4a638d;
+}
+
+.dark-mode .checkbox-card.checked {
+  background: #1e3a8a;
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+
+.dark-mode .checkbox-card .icon-box {
+  background: #151f32;
+  border-color: #34445f;
+  color: #7b88a1;
+}
+
+.dark-mode .checkbox-card.checked .icon-box {
+  background: var(--blue);
+  color: #ffffff;
+  border-color: var(--blue);
+}
+
+.dark-mode .checkbox-card .label-box strong {
+  color: var(--ink);
+}
+
+.dark-mode .checkbox-card.checked .label-box strong {
+  color: #93c5fd;
+}
+
+.dark-mode .checkbox-card .label-box small {
+  color: var(--muted);
+}
+
+.dark-mode .predict-status-pill.online {
+  background: #17392f;
+  color: #7ad4ac;
+  border-color: #235d4b;
+}
+
+.dark-mode .predict-status-pill.offline {
+  background: #3d2c16;
+  color: #f0bb72;
+  border-color: #5c3e1b;
+}
+
+.dark-mode .simulation-pill {
+  background: #3d2c16;
+  color: #f0bb72;
+  border-color: #5c3e1b;
+}
+
+.dark-mode .predict-empty-card {
+  background: var(--surface-card);
+  border-color: #334155;
+}
+
+.dark-mode .predict-empty-icon {
+  background: #1e335b;
+  color: #60a5fa;
+}
+
+.dark-mode .predict-loading-card {
+  background: var(--surface-card);
+  border-color: var(--line);
+}
+
+.dark-mode .predict-error-banner {
+  background: #3e1b1d;
+  border-color: #632a2e;
+  color: #fca5a5;
+}
+
+.dark-mode .predict-error-btn {
+  background: #4c1d24;
+  border-color: #f87171;
+  color: #fecaca;
+}
+
+.dark-mode .result-hero-card {
+  background: linear-gradient(135deg, #182235 0%, #1e2e48 100%);
+  border-color: #33415d;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .result-hero-card::after {
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+}
+
+.dark-mode .price-main-number {
+  color: #f1f5f9;
+}
+
+.dark-mode .price-main-unit {
+  color: #60a5fa;
+}
+
+.dark-mode .range-box {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+.dark-mode .range-indicator {
+  background: #334155;
+}
+
+.dark-mode .confidence-warning-pill {
+  background: #3f2713;
+  border-color: #5d3918;
+  color: #fcd34d;
+}
+
+.dark-mode .metric-tag-positive, .dark-mode .metric-val-positive {
+  color: #4ade80 !important;
+}
+
+.dark-mode .metric-tag-negative, .dark-mode .metric-val-negative {
+  color: #f87171 !important;
+}
+
+.dark-mode .shap-chart-card {
+  background: var(--surface-card);
+  border-color: var(--line);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+}
+
+.dark-mode .pill-filter-btn {
+  background: #1b2940;
+  border-color: #34445f;
+  color: #94a3b8;
+}
+
+.dark-mode .pill-filter-btn:hover {
+  background: #243a60;
+  color: var(--ink);
+}
+
+.dark-mode .pill-filter-btn.active {
+  background: #3078f0;
+  border-color: #3078f0;
+  color: #ffffff;
+}
+
+.dark-mode .shap-bar-row {
+  border-bottom-color: #26344b;
+}
+
+.dark-mode .shap-bar-row:hover {
+  background: #1e2c44;
+}
+
+.dark-mode .shap-center-axis {
+  background: #3b4d6b;
+}
+
+.dark-mode .shap-stat-col strong.positive {
+  color: #4ade80;
+}
+
+.dark-mode .shap-stat-col strong.negative {
+  color: #f87171;
+}
+
+.dark-mode .breakdown-card {
+  background: var(--surface-card);
+  border-color: var(--line);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+}
+
+.dark-mode .breakdown-table th {
+  background: #1b2940;
+  color: #94a3b8;
+  border-bottom-color: var(--line);
+}
+
+.dark-mode .breakdown-table td {
+  border-bottom-color: #26344b;
+  color: var(--ink);
+}
+
+.dark-mode .breakdown-table tr:hover td {
+  background: #1e2c44;
+}
+
+.dark-mode .breakdown-table tr.highlight-base td {
+  background: #1e2d49;
+}
+
+.dark-mode .breakdown-table tr.highlight-total td {
+  background: #1c3258;
+  border-top-color: #3078f0;
+  color: #93c5fd;
+}
+
+.dark-mode .direction-badge.increase {
+  background: #13392a;
+  color: #86efac;
+}
+
+.dark-mode .direction-badge.decrease {
+  background: #451b1e;
+  color: #fca5a5;
+}
+
+.dark-mode .direction-badge.neutral {
+  background: #1e293b;
+  color: #94a3b8;
+}
+
+.dark-mode .predict-info-banner {
+  background: #152238;
+  border-color: #273854;
+  color: #94a3b8;
+}
+
+.dark-mode .field-smart-badge {
+  color: #93c5fd;
+  background: #1b2d49;
+  border: 1px solid #26436f;
+}
+
+.dark-mode .smart-default-banner {
+  background: #132e22;
+  border-color: #1b533b;
+  color: #86efac;
+}
+
+.dark-mode .smart-toggle-btn {
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+.dark-mode .smart-toggle-btn:hover {
+  background: #1e293b;
+  color: var(--ink);
+}
+
+.dark-mode .smart-toggle-btn.active {
+  background: #1e3a8a;
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+
+.dark-mode .field-warning-text {
+  background: #382813;
+  border-color: #553c19;
+  color: #fcd34d;
+}
+
+.dark-mode .input-error {
+  background-color: #3f191b !important;
+  border-color: #ef4444 !important;
+}
+
+.dark-mode .field-error-text {
+  color: #f87171;
+}
