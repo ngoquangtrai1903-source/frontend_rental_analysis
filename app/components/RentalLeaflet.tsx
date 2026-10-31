@@ -6,7 +6,12 @@ import { CircleMarker, MapContainer, Popup, TileLayer, useMap, useMapEvents } fr
 import type { Map as LeafletMap } from 'leaflet'
 import type { MapRentalPoint } from '@/lib/goldQueryService'
 import { clusterMapPoints } from '@/lib/mapClustering'
-import type { MapViewportBounds } from '@/app/hooks/useRentalMapData'
+export interface MapViewportBounds {
+  north: number
+  south: number
+  east: number
+  west: number
+}
 
 function getViewportBounds(map: LeafletMap): MapViewportBounds {
   const bounds = map.getBounds()

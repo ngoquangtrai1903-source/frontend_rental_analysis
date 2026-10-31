@@ -61,11 +61,9 @@ export default function LocationMapView({
           <span>TỔNG TOẠ ĐỘ HIỂN THỊ</span>
           <strong>{points.length.toLocaleString()} tin</strong>
           <small>
-            {totalCount > points.length
-              ? `Đang hiển thị tối đa ${points.length.toLocaleString()} / ${totalCount.toLocaleString()} tọa độ trong khung bản đồ${activeFiltersCount > 0 ? ` · ${activeFiltersCount} điều kiện lọc` : ''}. Phóng to để xem cụ thể hơn.`
-              : activeFiltersCount > 0
-                ? `Lọc theo ${activeFiltersCount} tiêu chí và khung bản đồ hiện tại`
-                : 'Tọa độ phù hợp trong khung bản đồ hiện tại'}
+            {activeFiltersCount > 0
+              ? `Lọc theo ${activeFiltersCount} tiêu chí từ thanh bộ lọc trên cùng`
+              : 'Tải toàn bộ 100% dữ liệu toạ độ sẵn có từ kho gold'}
           </small>
         </div>
 
@@ -91,14 +89,8 @@ export default function LocationMapView({
         points={points}
         loading={loading}
         selectedPoint={selectedPoint}
-        onSelectPoint={(point) => handleSelectPoint(point)}
+        onSelectPoint={handleSelectPoint}
       />
-
-      {!loading && !error && points.length === 0 && (
-        <div role="status" className="card chart-empty-state">
-          Không có tin đăng có tọa độ trong khu vực bản đồ hiện tại.
-        </div>
-      )}
 
       {/* 4. Selected Property Detailed Inspector Card */}
       {selectedPoint && (
@@ -132,17 +124,17 @@ export default function LocationMapView({
             </button>
           </div>
 
-          <div className="selected-point-grid" style={{ gap: '16px', marginTop: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginTop: '16px' }}>
             <div>
               <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>GIÁ THUÊ NIÊM YẾT</span>
-              <div style={{ font: "800 22px 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'San Francisco', sans-serif", color: getPriceTierTheme(selectedPoint.price_vnd).color, marginTop: '3px' }}>
+              <div style={{ font: '800 22px Manrope', color: getPriceTierTheme(selectedPoint.price_vnd).color, marginTop: '3px' }}>
                 {formatVndPrice(selectedPoint.price_vnd)}
               </div>
             </div>
 
             <div>
               <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>DIỆN TÍCH & ĐƠN GIÁ</span>
-              <div style={{ font: "700 16px 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'San Francisco', sans-serif", color: '#1e293b', marginTop: '4px' }}>
+              <div style={{ font: '700 16px Manrope', color: '#1e293b', marginTop: '4px' }}>
                 {selectedPoint.size_m2} m² ({selectedPoint.price_per_m2_vnd?.toLocaleString()} đ/m²)
               </div>
             </div>

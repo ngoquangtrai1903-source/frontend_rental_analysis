@@ -1,12 +1,11 @@
 'use client'
 
 import { useCallback, useMemo, useRef, useState } from 'react'
-import MapboxMap, { Layer, Marker, NavigationControl, Popup, Source, type LayerProps, type MapRef } from 'react-map-gl/mapbox'
+import MapboxMap, { Layer, Marker, NavigationControl, Source, type LayerProps, type MapRef } from 'react-map-gl/mapbox'
 import type { FeatureCollection, Point as GeoJSONPoint } from 'geojson'
 import type { GeoJSONSource, MapLayerMouseEvent } from 'mapbox-gl'
-import { Layers, MapPin, Maximize2, Minus, Plus, ShieldAlert, Sparkles, Thermometer } from 'lucide-react'
+import { Layers, MapPin, Maximize2, Minus, Plus, ShieldAlert, Sparkles } from 'lucide-react'
 import { MapRentalPoint } from '@/lib/goldQueryService'
-import { buildWardPriceHeatmap } from '@/lib/wardPriceHeatmap'
 import { DA_NANG_DISTRICTS_GEOJSON, DA_NANG_FLOOD_ZONES_GEOJSON } from '@/app/data/daNangGeoJson'
 import MapMarkerPopup, { getPriceTierTheme } from './MapMarkerPopup'
 
@@ -64,39 +63,6 @@ const unclusteredLayer: LayerProps = {
     'circle-radius': 6,
     'circle-stroke-color': '#fff',
     'circle-stroke-width': 1.5
-  }
-}
-
-const wardPriceHeatLayer: LayerProps = {
-  id: 'ward-rental-price-heat',
-  type: 'heatmap',
-  maxzoom: 16,
-  paint: {
-    'heatmap-weight': ['get', 'heatmap_weight'],
-    'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 9, 0.7, 14, 1.4],
-    'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 9, 24, 14, 44],
-    'heatmap-opacity': 0.75,
-    'heatmap-color': [
-      'interpolate',
-      ['linear'],
-      ['heatmap-density'],
-      0, 'rgba(16, 185, 129, 0)',
-      0.15, 'rgba(16, 185, 129, 0.45)',
-      0.35, 'rgba(250, 204, 21, 0.65)',
-      0.6, 'rgba(249, 115, 22, 0.78)',
-      1, 'rgba(239, 68, 68, 0.9)'
-    ]
-  }
-}
-
-const wardPriceHoverLayer: LayerProps = {
-  id: 'ward-rental-price-hover',
-  type: 'circle',
-  paint: {
-    'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 20, 14, 36],
-    'circle-color': '#ffffff',
-    'circle-opacity': 0.01,
-    'circle-stroke-opacity': 0
   }
 }
 
@@ -188,20 +154,11 @@ export default function RentalMapbox({
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
   const mapRef = useRef<MapRef>(null)
   const [showPropertyPins, setShowPropertyPins] = useState(true)
-  const [showWardPriceHeatmap, setShowWardPriceHeatmap] = useState(true)
   const [showDistricts, setShowDistricts] = useState(true)
   const [showFloodZones, setShowFloodZones] = useState(true)
   const [clustering, setClustering] = useState(true)
   const [layerMenuOpen, setLayerMenuOpen] = useState(false)
   const [activePopupPoint, setActivePopupPoint] = useState<MapRentalPoint | null>(null)
-  const [hoveredWardPrice, setHoveredWardPrice] = useState<{
-    wardName: string
-    latitude: number
-    longitude: number
-    listingCount: number
-    averagePriceVnd: number
-    medianPriceVnd: number
-  } | null>(null)
   const [zoom, setZoom] = useState(12)
   const [bounds, setBounds] = useState<readonly [number, number, number, number] | null>(null)
 
@@ -209,7 +166,6 @@ export default function RentalMapbox({
     () => createListingsGeoJson(showPropertyPins ? points : []),
     [points, showPropertyPins]
   )
-  const wardPriceHeatmap = useMemo(() => buildWardPriceHeatmap(points), [points])
   const sourceId = `rental-listings-${clustering ? 'clustered' : 'plain'}`
   const pointById = useMemo(
     () => new globalThis.Map(points.map((point) => [point.list_id, point])),
@@ -242,9 +198,7 @@ export default function RentalMapbox({
     const features = event.features ?? map.queryRenderedFeatures(event.point, {
       layers: zoom < 14 ? ['rental-clusters', 'rental-unclustered'] : ['rental-clusters']
     })
-    const feature = features.find((candidate) =>
-      candidate.properties?.cluster || candidate.properties?.list_id
-    )
+    const feature = features[0]
     if (!feature) {
       setActivePopupPoint(null)
       return
@@ -271,28 +225,6 @@ export default function RentalMapbox({
       onSelectPoint(point)
     }
   }, [clustering, onSelectPoint, pointById, showPropertyPins, sourceId, zoom])
-
-  const handleWardPriceHover = useCallback((event: MapLayerMouseEvent) => {
-    const feature = event.features?.find(
-      (candidate) => candidate.layer.id === 'ward-rental-price-hover'
-    )
-    const properties = feature?.properties
-    if (!properties?.ward_name) {
-      setHoveredWardPrice(null)
-      return
-    }
-
-    setHoveredWardPrice({
-      wardName: String(properties.ward_name),
-      latitude: event.lngLat.lat,
-      longitude: event.lngLat.lng,
-      listingCount: Number(properties.listing_count),
-      averagePriceVnd: Number(properties.average_price_vnd),
-      medianPriceVnd: Number(properties.median_price_vnd)
-    })
-  }, [])
-
-  const clearWardPriceHover = useCallback(() => setHoveredWardPrice(null), [])
 
   const resetOverview = useCallback(() => {
     if (points.length === 0) {
@@ -334,7 +266,7 @@ export default function RentalMapbox({
   } as const
 
   return (
-    <div className="rental-mapbox-wrapper" style={{ border: '1px solid var(--line)', borderRadius: 16, boxShadow: '0 4px 20px #00000014', overflow: 'hidden', position: 'relative', width: '100%' }}>
+    <div style={{ border: '1px solid var(--line)', borderRadius: 16, boxShadow: '0 4px 20px #00000014', height: 650, overflow: 'hidden', position: 'relative', width: '100%' }}>
       <MapboxMap
         ref={mapRef}
         mapboxAccessToken={token}
@@ -342,23 +274,11 @@ export default function RentalMapbox({
         mapStyle="mapbox://styles/mapbox/streets-v12"
         onLoad={updateViewport}
         onMoveEnd={updateViewport}
-        interactiveLayerIds={[
-          ...(showWardPriceHeatmap ? ['ward-rental-price-hover'] : []),
-          ...(showPropertyPins ? ['rental-clusters', 'rental-unclustered'] : [])
-        ]}
+        interactiveLayerIds={showPropertyPins ? ['rental-clusters', 'rental-unclustered'] : []}
         onClick={handleMapClick}
-        onMouseMove={handleWardPriceHover}
-        onMouseLeave={clearWardPriceHover}
         style={{ height: '100%', width: '100%' }}
         attributionControl
       >
-        {showWardPriceHeatmap && wardPriceHeatmap.data.features.length > 0 && (
-          <Source id="ward-rental-price-data" type="geojson" data={wardPriceHeatmap.data}>
-            <Layer {...wardPriceHeatLayer} />
-            <Layer {...wardPriceHoverLayer} />
-          </Source>
-        )}
-
         {showPropertyPins && (
           <Source
             key={sourceId}
@@ -415,7 +335,7 @@ export default function RentalMapbox({
                   boxShadow: '0 2px 8px #0f172a40',
                   color: theme.color,
                   cursor: 'pointer',
-                  font: "700 11px 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'San Francisco', sans-serif",
+                  font: '700 11px DM Sans, sans-serif',
                   padding: '3px 8px',
                   whiteSpace: 'nowrap'
                 }}
@@ -426,50 +346,10 @@ export default function RentalMapbox({
           )
         })}
 
-        {showWardPriceHeatmap && hoveredWardPrice && (
-          <Popup
-            longitude={hoveredWardPrice.longitude}
-            latitude={hoveredWardPrice.latitude}
-            anchor="bottom"
-            offset={16}
-            closeButton={false}
-            closeOnClick={false}
-            className="ward-rental-price-popup"
-          >
-            <div role="tooltip" className="ward-price-popup-card">
-              <div className="ward-price-popup-header">
-                <span className="ward-price-popup-icon" aria-hidden="true">🔥</span>
-                <div>
-                  <span className="ward-price-popup-badge">BẢN ĐỒ NHIỆT GIÁ THUÊ</span>
-                  <strong className="ward-price-popup-title">Phường {hoveredWardPrice.wardName}</strong>
-                </div>
-              </div>
-
-              <div className="ward-price-popup-grid">
-                <div className="ward-price-popup-metric">
-                  <span className="metric-label">Giá trung bình</span>
-                  <strong className="metric-value">{(hoveredWardPrice.averagePriceVnd / 1_000_000).toFixed(2)} tr</strong>
-                  <span className="metric-sub">{hoveredWardPrice.averagePriceVnd.toLocaleString('vi-VN')} đ/tháng</span>
-                </div>
-                <div className="ward-price-popup-metric">
-                  <span className="metric-label">Giá trung vị</span>
-                  <strong className="metric-value">{(hoveredWardPrice.medianPriceVnd / 1_000_000).toFixed(2)} tr</strong>
-                  <span className="metric-sub">{hoveredWardPrice.medianPriceVnd.toLocaleString('vi-VN')} đ/tháng</span>
-                </div>
-              </div>
-
-              <div className="ward-price-popup-footer">
-                <span className="ward-price-dot" />
-                <span><strong>{hoveredWardPrice.listingCount.toLocaleString('vi-VN')}</strong> tin có tọa độ và giá hợp lệ</span>
-              </div>
-            </div>
-          </Popup>
-        )}
-
         <NavigationControl position="bottom-right" showCompass={false} />
       </MapboxMap>
 
-      <div className="mapbox-layer-control-wrap" style={{ left: 16, position: 'absolute', top: 16, zIndex: 2 }}>
+      <div style={{ left: 16, position: 'absolute', top: 16, zIndex: 2 }}>
         <button
           type="button"
           aria-expanded={layerMenuOpen}
@@ -478,27 +358,16 @@ export default function RentalMapbox({
         >
           <Layers size={15} color="#3078f0" /> Lớp bản đồ
           <span style={{ background: '#eaf1ff', borderRadius: 99, color: '#3078f0', fontSize: 10, padding: '2px 7px' }}>
-            {[showPropertyPins, showWardPriceHeatmap, showDistricts, showFloodZones].filter(Boolean).length} bật
+            {[showPropertyPins, showDistricts, showFloodZones].filter(Boolean).length} bật
           </span>
         </button>
 
         {layerMenuOpen && (
-          <div className="mapbox-layer-menu-popover" style={{ background: '#fff', border: '1px solid #dbe3ef', borderRadius: 11, boxShadow: '0 12px 28px #0f172a2e', display: 'grid', gap: 12, marginTop: 8, padding: 13, width: 280 }}>
+          <div style={{ background: '#fff', border: '1px solid #dbe3ef', borderRadius: 11, boxShadow: '0 12px 28px #0f172a2e', display: 'grid', gap: 12, marginTop: 8, padding: 13, width: 280 }}>
             <strong style={{ color: '#64748b', fontSize: 10, letterSpacing: '.5px' }}>BẬT / TẮT LỚP BẢN ĐỒ</strong>
             <label style={toggleStyle}>
               <span style={{ alignItems: 'center', display: 'flex', gap: 7 }}><MapPin size={14} color="#3078f0" /> Tin cho thuê ({points.length.toLocaleString('vi-VN')})</span>
               <input type="checkbox" checked={showPropertyPins} onChange={(event) => setShowPropertyPins(event.target.checked)} />
-            </label>
-            <label style={toggleStyle}>
-              <span style={{ alignItems: 'center', display: 'flex', gap: 7 }}><Thermometer size={14} color="#ef4444" /> Giá thuê theo phường ({wardPriceHeatmap.wards.length})</span>
-              <input
-                type="checkbox"
-                checked={showWardPriceHeatmap}
-                onChange={(event) => {
-                  setShowWardPriceHeatmap(event.target.checked)
-                  setHoveredWardPrice(null)
-                }}
-              />
             </label>
             <label style={toggleStyle}>
               <span style={{ alignItems: 'center', display: 'flex', gap: 7 }}><Layers size={14} color="#3b82f6" /> Ranh giới Quận/Huyện*</span>
@@ -519,26 +388,17 @@ export default function RentalMapbox({
         )}
       </div>
 
-      <div className="mapbox-zoom-controls-wrap" style={{ alignItems: 'center', display: 'flex', gap: 7, position: 'absolute', right: 16, top: 16, zIndex: 2 }}>
+      <div style={{ alignItems: 'center', display: 'flex', gap: 7, position: 'absolute', right: 16, top: 16, zIndex: 2 }}>
         <button type="button" aria-label="Thu nhỏ bản đồ" onClick={() => mapRef.current?.zoomOut()} style={controlButtonStyle}><Minus size={15} /></button>
         <button type="button" aria-label="Phóng to bản đồ" onClick={() => mapRef.current?.zoomIn()} style={controlButtonStyle}><Plus size={15} /></button>
         <button type="button" onClick={resetOverview} style={{ ...controlButtonStyle, color: '#3078f0', fontSize: 11, fontWeight: 700, gap: 6, padding: '8px 10px' }}>
-          <Maximize2 size={13} /> <span className="toan-canh-label">Toàn cảnh</span>
+          <Maximize2 size={13} /> Toàn cảnh
         </button>
       </div>
 
       {(loading || points.length > 0) && (
-        <div className="mapbox-status-chip" style={{ background: '#fff', borderRadius: 7, boxShadow: '0 2px 8px #0f172a26', color: '#334155', fontSize: 11, fontWeight: 700, left: 16, padding: '7px 10px', position: 'absolute', top: 68, zIndex: 2 }}>
+        <div style={{ background: '#fff', borderRadius: 7, boxShadow: '0 2px 8px #0f172a26', color: '#334155', fontSize: 11, fontWeight: 700, left: 16, padding: '7px 10px', position: 'absolute', top: 68, zIndex: 2 }}>
           {loading ? 'Đang tải tọa độ...' : `${points.length.toLocaleString('vi-VN')} vị trí · ${detailedMarkers.length.toLocaleString('vi-VN')} marker chi tiết trong khung nhìn`}
-        </div>
-      )}
-
-      {showWardPriceHeatmap && (
-        <div className="mapbox-heatmap-legend" style={{ background: '#fff', border: '1px solid #dbe3ef', borderRadius: 9, bottom: 16, color: '#334155', display: 'grid', fontSize: 10, gap: 6, padding: '9px 11px', pointerEvents: 'none', position: 'absolute', right: 16, zIndex: 2 }}>
-          <strong style={{ color: '#64748b', fontSize: 9 }}>NHIỆT ĐỘ GIÁ THUÊ THEO PHƯỜNG</strong>
-          <span style={{ background: 'linear-gradient(90deg, #10b981, #facc15, #f97316, #ef4444)', borderRadius: 99, height: 7, width: 130 }} />
-          <span style={{ display: 'flex', justifyContent: 'space-between' }}><span>Thấp</span><span>Cao</span></span>
-          <small style={{ color: '#64748b', lineHeight: 1.35 }}>Rê chuột lên vùng nhiệt để xem thống kê phường.</small>
         </div>
       )}
 

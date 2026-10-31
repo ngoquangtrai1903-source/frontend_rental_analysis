@@ -1,8 +1,7 @@
 'use client'
 
-import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import type { MapRentalPoint } from '@/lib/goldQueryService'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { MapRentalPoint } from '@/lib/goldQueryService'
 
 export interface MapDataStats {
   total: number
@@ -17,63 +16,43 @@ export interface MapDataStats {
   luxuryPriceCount: number // > 12m
 }
 
-export interface MapViewportBounds {
-  north: number
-  south: number
-  east: number
-  west: number
-}
+export function useRentalMapData(filterQueryString: string = '') {
+  const [points, setPoints] = useState<MapRentalPoint[]>([])
+  const [loading, setLoading] = useState(true)
+  const [totalCount, setTotalCount] = useState(0)
+  const [error, setError] = useState<string | null>(null)
 
-export const INITIAL_MAP_VIEWPORT: MapViewportBounds = {
-  north: 16.14,
-  south: 15.98,
-  east: 108.34,
-  west: 108.10
-}
-
-const MAP_POINT_LIMIT = 1500
-
-function toViewportQuery(bounds: MapViewportBounds) {
-  const roundDown = (value: number) => Math.floor(value * 100) / 100
-  const roundUp = (value: number) => Math.ceil(value * 100) / 100
-  return new URLSearchParams({
-    min_latitude: String(roundDown(bounds.south)),
-    max_latitude: String(roundUp(bounds.north)),
-    min_longitude: String(roundDown(bounds.west)),
-    max_longitude: String(roundUp(bounds.east))
-  }).toString()
-}
-
-export function useRentalMapData(
-  filterQueryString: string = '',
-  viewport: MapViewportBounds = INITIAL_MAP_VIEWPORT
-) {
-  const viewportQuery = toViewportQuery(viewport)
-  const query = useQuery({
-    queryKey: ['rental-map', filterQueryString, viewportQuery],
-    queryFn: async ({ signal }) => {
-      const params = new URLSearchParams(filterQueryString)
-      new URLSearchParams(viewportQuery).forEach((value, key) => params.set(key, value))
-      params.set('mode', 'map')
-      params.set('limit', String(MAP_POINT_LIMIT))
-      const res = await fetch(`/api/gold-query?${params.toString()}`, { signal })
+  const fetchMapData = useCallback(async (signal?: AbortSignal) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const url = `/api/gold-query?mode=map${filterQueryString ? `&${filterQueryString}` : ''}`
+      const res = await fetch(url, { signal })
       if (!res.ok) {
         throw new Error(`Lỗi tải dữ liệu toạ độ (${res.status})`)
       }
       const json: { points?: MapRentalPoint[]; total?: number; error?: string; message?: string } = await res.json()
-      if (
-        !Array.isArray(json.points) ||
-        typeof json.total !== 'number' ||
-        !Number.isSafeInteger(json.total) ||
-        json.total < json.points.length
-      ) {
+      if (!Array.isArray(json.points)) {
         throw new Error(json.message || json.error || 'Dữ liệu toạ độ trả về không hợp lệ')
       }
-      return { points: json.points, total: json.total }
+      const pts = json.points
+      setPoints(pts)
+      setTotalCount(json.total ?? pts.length)
+    } catch (err: unknown) {
+      if (!(err instanceof Error && err.name === 'AbortError')) {
+        console.error('useRentalMapData error:', err)
+        setError(err instanceof Error ? err.message : 'Không thể tải dữ liệu toạ độ')
+      }
+    } finally {
+      if (!signal?.aborted) setLoading(false)
     }
-  })
-  const points = query.data?.points ?? []
-  const totalCount = query.data?.total ?? 0
+  }, [filterQueryString])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    void fetchMapData(controller.signal)
+    return () => controller.abort()
+  }, [fetchMapData])
 
   // Calculated statistics from all matching points
   const stats = useMemo<MapDataStats>(() => {
@@ -130,11 +109,11 @@ export function useRentalMapData(
 
   return {
     points,
-    loading: query.isLoading,
+    loading,
     totalCount,
-    error: query.error instanceof Error ? query.error.message : null,
+    error,
     stats,
-    refetch: query.refetch
+    refetch: fetchMapData
   }
 }
 export default useRentalMapData

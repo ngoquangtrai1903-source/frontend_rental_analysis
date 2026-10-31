@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import AmenitiesView from './components/AmenitiesView'
 import FloodRiskView from './components/FloodRiskView'
 import AdvancedAnalyticsView from './components/AdvancedAnalyticsView'
+import PricePredictionView from './components/PricePredictionView'
 import DashboardCharts from './components/DashboardCharts'
 import DashboardHelp from './components/DashboardHelp'
 import { useFilterStore } from './store/filterStore'
@@ -95,7 +96,8 @@ const navItems = [
   { label: 'Vị trí & khu vực', icon: MapPin },
   { label: 'Tiện ích', icon: Home },
   { label: 'Rủi ro ngập lụt', icon: ShieldAlert },
-  { label: 'Phân tích nâng cao', icon: BarChart3 }
+  { label: 'Phân tích nâng cao', icon: BarChart3 },
+  { label: 'Dự đoán giá AI', icon: Sparkles }
 ]
 
 const WARDS_OPTIONS = [
@@ -876,6 +878,12 @@ export default function DashboardPage() {
 
             <div className="heading-actions">
               <button
+                className={`button ${activeNav === 'Dự đoán giá AI' ? 'primary' : 'secondary'}`}
+                onClick={() => setActiveNav('Dự đoán giá AI')}
+              >
+                <Sparkles size={16} /> Dự đoán giá AI
+              </button>
+              <button
                 className="button secondary"
                 disabled={exporting}
                 onClick={async () => {
@@ -1247,6 +1255,10 @@ export default function DashboardPage() {
             />
           )}
 
+          {activeNav === 'Dự đoán giá AI' && (
+            <PricePredictionView />
+          )}
+
           {activeNav === 'Tổng quan' && (
             <>
               <div className="toolbar">
@@ -1274,6 +1286,14 @@ export default function DashboardPage() {
                     aria-selected={activeTab === 'Nguồn cung'}
                   >
                     Nguồn cung
+                  </button>
+                  <button
+                    className={`tab ${activeTab === 'Dự đoán giá AI' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('Dự đoán giá AI')}
+                    role="tab"
+                    aria-selected={activeTab === 'Dự đoán giá AI'}
+                  >
+                    Dự đoán giá AI
                   </button>
                 </div>
 
@@ -1304,7 +1324,11 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {activeTab !== 'Tổng quan' && (
+              {activeTab === 'Dự đoán giá AI' && (
+                <PricePredictionView />
+              )}
+
+              {activeTab !== 'Tổng quan' && activeTab !== 'Dự đoán giá AI' && (
                 <AnalysisTab
                   tab={activeTab}
                   kpiData={kpiData}

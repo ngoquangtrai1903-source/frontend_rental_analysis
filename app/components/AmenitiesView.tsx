@@ -151,7 +151,7 @@ export default function AmenitiesView({ filterQueryString = '' }: { filterQueryS
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '6px' }}>
               <div>
                 <span style={{ fontSize: '10px', color: 'var(--muted)' }}>Có tiện ích</span>
-                <div style={{ font: "800 18px 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'San Francisco', sans-serif", color: 'var(--blue)' }}>
+                <div style={{ font: '800 18px Manrope', color: 'var(--blue)' }}>
                   {item.avgPriceWithMillion} tr
                 </div>
                 <small style={{ fontSize: '10px', color: 'var(--muted)' }}>
@@ -161,7 +161,7 @@ export default function AmenitiesView({ filterQueryString = '' }: { filterQueryS
 
               <div style={{ textAlign: 'right' }}>
                 <span style={{ fontSize: '10px', color: 'var(--muted)' }}>Không có</span>
-                <div style={{ font: "700 15px 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'San Francisco', sans-serif", color: 'var(--muted)' }}>
+                <div style={{ font: '700 15px Manrope', color: 'var(--muted)' }}>
                   {item.avgPriceWithoutMillion} tr
                 </div>
                 <small style={{ fontSize: '10px', color: 'var(--muted)' }}>
@@ -267,7 +267,7 @@ export default function AmenitiesView({ filterQueryString = '' }: { filterQueryS
           {/* Simulator Result Box */}
           <div style={{ background: 'var(--surface-subtle)', padding: '20px', borderRadius: '12px', border: '1px solid var(--line)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>GIÁ THUÊ ƯỚC TÍNH KHUYẾN NGHỊ</span>
-            <div style={{ font: "800 32px 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'San Francisco', sans-serif", color: 'var(--blue)', margin: '8px 0' }}>
+            <div style={{ font: '800 32px Manrope', color: 'var(--blue)', margin: '8px 0' }}>
               {simedValueFormatted(simulatedPrice)}
             </div>
             <p style={{ margin: 0, fontSize: '11px', color: 'var(--muted)', lineHeight: 1.5 }}>
