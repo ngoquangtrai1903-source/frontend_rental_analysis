@@ -1307,7 +1307,7 @@ export default function DashboardPage() {
           )}
 
           {activeNav === 'Dự đoán giá AI' && (
-            <PricePredictionView />
+            <PricePredictionView lang={lang} />
           )}
 
           {activeNav === 'Tổng quan' && (
@@ -1320,7 +1320,7 @@ export default function DashboardPage() {
                     role="tab"
                     aria-selected={activeTab === 'Tổng quan'}
                   >
-                    Tổng quan
+                    {lang === 'en' ? 'Overview' : 'Tổng quan'}
                   </button>
                   <button
                     className={`tab ${activeTab === 'Thị trường' ? 'active' : ''}`}
@@ -1328,7 +1328,7 @@ export default function DashboardPage() {
                     role="tab"
                     aria-selected={activeTab === 'Thị trường'}
                   >
-                    Thị trường
+                    {lang === 'en' ? 'Market' : 'Thị trường'}
                   </button>
                   <button
                     className={`tab ${activeTab === 'Nguồn cung' ? 'active' : ''}`}
@@ -1336,7 +1336,7 @@ export default function DashboardPage() {
                     role="tab"
                     aria-selected={activeTab === 'Nguồn cung'}
                   >
-                    Nguồn cung
+                    {lang === 'en' ? 'Supply' : 'Nguồn cung'}
                   </button>
                   <button
                     className={`tab ${activeTab === 'Dự đoán giá AI' ? 'active' : ''}`}
@@ -1344,13 +1344,13 @@ export default function DashboardPage() {
                     role="tab"
                     aria-selected={activeTab === 'Dự đoán giá AI'}
                   >
-                    Dự đoán giá AI
+                    {lang === 'en' ? 'AI Price Prediction' : 'Dự đoán giá AI'}
                   </button>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ fontSize: '11px', color: 'var(--muted)' }}>
-                    Sắp xếp:
+                    {lang === 'en' ? 'Sort by:' : 'Sắp xếp:'}
                   </span>
                   <select
                     className="filter-control"
@@ -1365,18 +1365,18 @@ export default function DashboardPage() {
                       setPage(1)
                     }}
                   >
-                    <option value="posted_date_false">Mới nhất trước</option>
-                    <option value="posted_date_true">Cũ nhất trước</option>
-                    <option value="price_vnd_false">Giá giảm dần</option>
-                    <option value="price_vnd_true">Giá tăng dần</option>
-                    <option value="size_m2_false">Diện tích giảm dần</option>
-                    <option value="size_m2_true">Diện tích tăng dần</option>
+                    <option value="posted_date_false">{lang === 'en' ? 'Newest first' : 'Mới nhất trước'}</option>
+                    <option value="posted_date_true">{lang === 'en' ? 'Oldest first' : 'Cũ nhất trước'}</option>
+                    <option value="price_vnd_false">{lang === 'en' ? 'Price: High to Low' : 'Giá giảm dần'}</option>
+                    <option value="price_vnd_true">{lang === 'en' ? 'Price: Low to High' : 'Giá tăng dần'}</option>
+                    <option value="size_m2_false">{lang === 'en' ? 'Size: Large to Small' : 'Diện tích giảm dần'}</option>
+                    <option value="size_m2_true">{lang === 'en' ? 'Size: Small to Large' : 'Diện tích tăng dần'}</option>
                   </select>
                 </div>
               </div>
 
               {activeTab === 'Dự đoán giá AI' && (
-                <PricePredictionView />
+                <PricePredictionView lang={lang} />
               )}
 
               {activeTab !== 'Tổng quan' && activeTab !== 'Dự đoán giá AI' && (
