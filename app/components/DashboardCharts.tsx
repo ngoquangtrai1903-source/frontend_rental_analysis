@@ -28,11 +28,13 @@ interface DashboardChartsProps {
   trend: TrendPoint[]
   distribution: PriceSegment[]
   total: number
+  lang?: 'vi' | 'en'
 }
 
 const COLORS = ['#3078f0', '#53c39c', '#f19a52', '#8977df']
 
-export default function DashboardCharts({ trend, distribution, total }: DashboardChartsProps) {
+export default function DashboardCharts({ trend, distribution, total, lang = 'vi' }: DashboardChartsProps) {
+  const isEn = lang === 'en'
   const trendTickInterval = Math.max(0, Math.ceil(trend.length / 8) - 1)
   const pie = distribution.map((item, index) => ({
     ...item,
@@ -42,17 +44,17 @@ export default function DashboardCharts({ trend, distribution, total }: Dashboar
   const hasDistribution = total > 0 && pie.some((item) => item.percentage > 0)
 
   return (
-    <section className="main-grid" aria-label="Biểu đồ tổng quan">
+    <section className="main-grid" aria-label={isEn ? 'Overview Charts' : 'Biểu đồ tổng quan'}>
       <div className="card trend-card">
         <div className="card-header">
           <div>
-            <h2>Xu hướng theo chu kỳ thời gian</h2>
-            <p>Số lượng tin đăng và giá thuê trung bình</p>
+            <h2>{isEn ? 'Temporal Trends & Cycles' : 'Xu hướng theo chu kỳ thời gian'}</h2>
+            <p>{isEn ? 'Listing volume and average monthly rental rates' : 'Số lượng tin đăng và giá thuê trung bình'}</p>
           </div>
         </div>
-        <div className="chart-legend" aria-label="Chú giải biểu đồ">
-          <span><i className="legend-blue" /> Tin đăng</span>
-          <span><i className="legend-orange" /> Giá TB (triệu VNĐ)</span>
+        <div className="chart-legend" aria-label={isEn ? 'Chart Legend' : 'Chú giải biểu đồ'}>
+          <span><i className="legend-blue" /> {isEn ? 'Listings' : 'Tin đăng'}</span>
+          <span><i className="legend-orange" /> {isEn ? 'Avg Rent (M VND)' : 'Giá TB (triệu VNĐ)'}</span>
         </div>
         <div className="chart-frame">
           {trend.length > 0 && total > 0 ? (
@@ -75,7 +77,7 @@ export default function DashboardCharts({ trend, distribution, total }: Dashboar
                   yAxisId="left"
                   type="monotone"
                   dataKey="count"
-                  name="Tin đăng"
+                  name={isEn ? 'Listings' : 'Tin đăng'}
                   stroke="#3078f0"
                   strokeWidth={2.5}
                   dot={trend.length === 1 ? { r: 4 } : false}
@@ -84,7 +86,7 @@ export default function DashboardCharts({ trend, distribution, total }: Dashboar
                   yAxisId="right"
                   type="monotone"
                   dataKey="avgPriceMillion"
-                  name="Giá TB (triệu)"
+                  name={isEn ? 'Avg Rent (M)' : 'Giá TB (triệu)'}
                   stroke="#f19a52"
                   strokeWidth={2.5}
                   strokeDasharray="5 4"
@@ -94,7 +96,7 @@ export default function DashboardCharts({ trend, distribution, total }: Dashboar
             </ResponsiveContainer>
           ) : (
             <div className="chart-empty" role="status">
-              Không có dữ liệu trong khoảng thời gian đã chọn.
+              {isEn ? 'No data available in the selected period.' : 'Không có dữ liệu trong khoảng thời gian đã chọn.'}
             </div>
           )}
         </div>
@@ -103,8 +105,8 @@ export default function DashboardCharts({ trend, distribution, total }: Dashboar
       <div className="card distribution-card">
         <div className="card-header">
           <div>
-            <h2>Phân bố khoảng giá</h2>
-            <p>Tỷ trọng tin đăng theo phân khúc</p>
+            <h2>{isEn ? 'Price Range Distribution' : 'Phân bố khoảng giá'}</h2>
+            <p>{isEn ? 'Listing market share by price tier' : 'Tỷ trọng tin đăng theo phân khúc'}</p>
           </div>
         </div>
         <div className="distribution-content">
@@ -128,29 +130,33 @@ export default function DashboardCharts({ trend, distribution, total }: Dashboar
                     </Pie>
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="chart-center" aria-label={`${total.toLocaleString()} tin đăng`}>
+                <div className="chart-center" aria-label={`${total.toLocaleString()} ${isEn ? 'listings' : 'tin đăng'}`}>
                   <strong>{total.toLocaleString()}</strong>
-                  <small>tin đăng</small>
+                  <small>{isEn ? 'listings' : 'tin đăng'}</small>
                 </div>
               </>
             ) : (
               <div className="chart-empty" role="status">
-                Chưa đủ dữ liệu để phân loại khoảng giá.
+                {isEn ? 'Insufficient data to classify price tiers.' : 'Chưa đủ dữ liệu để phân loại khoảng giá.'}
               </div>
             )}
           </div>
-          {hasDistribution && <div className="donut-legend">
-            {pie.map((item) => (
-              <span key={item.label}>
-                <i style={{ background: item.color }} />
-                {item.label}: {item.percentage}%
-              </span>
-            ))}
-          </div>}
+          {hasDistribution && (
+            <div className="donut-legend">
+              {pie.map((item) => (
+                <span key={item.label}>
+                  <i style={{ background: item.color }} />
+                  {item.label}: {item.percentage}%
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         {hasDistribution && pie[0] && (
           <p className="chart-insight">
-            Phân khúc {pie[0].label} chiếm {pie[0].percentage}% lượng tin đăng sau khi lọc.
+            {isEn
+              ? `${pie[0].label} tier accounts for ${pie[0].percentage}% of filtered listings.`
+              : `Phân khúc ${pie[0].label} chiếm ${pie[0].percentage}% lượng tin đăng sau khi lọc.`}
           </p>
         )}
       </div>

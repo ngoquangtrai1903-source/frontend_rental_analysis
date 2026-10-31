@@ -2200,3 +2200,33 @@
   border-color: #93c5fd;
   color: #1d4ed8;
 }
+
+/* Language Switcher */
+.lang-toggle-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f4f9;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 32px;
+}
+.lang-toggle-button:hover {
+  background: #e6edf7;
+  color: var(--ink);
+  border-color: #cbd5e1;
+}
+.lang-active {
+  color: var(--blue);
+  font-weight: 800;
+}
+.lang-sep {
+  opacity: 0.35;
+  font-weight: 400;
+}
