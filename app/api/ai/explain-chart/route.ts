@@ -1,4 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
+import fs from 'fs'
+import path from 'path'
+
+/**
+ * Resolves an environment variable from process.env, with automatic dynamic
+ * fallback to reading .env.local / .env from disk so developer updates take effect immediately.
+ */
+function resolveEnv(key: string): string | undefined {
+  if (process.env[key]) return process.env[key]
+  try {
+    const candidates = ['.env.local', '.env']
+    for (const file of candidates) {
+      const p = path.resolve(process.cwd(), file)
+      if (fs.existsSync(p)) {
+        const content = fs.readFileSync(p, 'utf8')
+        for (const line of content.split('\n')) {
+          const trimmed = line.trim()
+          if (!trimmed || trimmed.startsWith('#')) continue
+          const eqIdx = trimmed.indexOf('=')
+          if (eqIdx !== -1) {
+            const k = trimmed.slice(0, eqIdx).trim()
+            const v = trimmed.slice(eqIdx + 1).trim()
+            if (k === key && v) return v
+          }
+        }
+      }
+    }
+  } catch {
+    // Ignore fallback errors
+  }
+  return undefined
+}
 
 interface ExplainChartRequest {
   chartId: string
@@ -225,15 +257,16 @@ Văn phong chuẩn xác, logic, dựa trên dữ liệu thực tế.`
     // =========================================================================
     // 0. OPENROUTER API (OPENROUTER_API_KEY - google/gemini-2.5-flash-lite, etc.)
     // =========================================================================
-    if (process.env.OPENROUTER_API_KEY) {
+    const openRouterKey = resolveEnv('OPENROUTER_API_KEY')
+    if (openRouterKey) {
       try {
-        const model = process.env.OPENROUTER_MODEL || 'google/gemini-2.5-flash-lite'
+        const model = resolveEnv('OPENROUTER_MODEL') || 'google/gemini-2.5-flash-lite'
         const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-            'HTTP-Referer': process.env.SITE_URL || 'http://localhost:3000',
+            Authorization: `Bearer ${openRouterKey}`,
+            'HTTP-Referer': resolveEnv('SITE_URL') || 'http://localhost:3000',
             'X-Title': 'RentIQ Da Nang Rental Analysis'
           },
           body: JSON.stringify({
@@ -252,7 +285,7 @@ Văn phong chuẩn xác, logic, dựa trên dữ liệu thực tế.`
           const content = openRouterData.choices?.[0]?.message?.content
           if (content) {
             return NextResponse.json({
-              provider: `OpenRouter (${model})`,
+              provider: `OpenRouter · ${model}`,
               rawContent: content,
               isLive: true
             })
@@ -269,10 +302,11 @@ Văn phong chuẩn xác, logic, dựa trên dữ liệu thực tế.`
     // =========================================================================
     // 1. GOOGLE GEMINI API (GEMINI_API_KEY)
     // =========================================================================
-    if (process.env.GEMINI_API_KEY) {
+    const geminiKey = resolveEnv('GEMINI_API_KEY')
+    if (geminiKey) {
       try {
-        const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`
+        const model = resolveEnv('GEMINI_MODEL') || 'gemini-1.5-flash'
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -309,14 +343,15 @@ Văn phong chuẩn xác, logic, dựa trên dữ liệu thực tế.`
     // =========================================================================
     // 2. GROQ API (GROQ_API_KEY - Siêu nhanh, miễn phí)
     // =========================================================================
-    if (process.env.GROQ_API_KEY) {
+    const groqKey = resolveEnv('GROQ_API_KEY')
+    if (groqKey) {
       try {
-        const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile'
+        const model = resolveEnv('GROQ_MODEL') || 'llama-3.3-70b-versatile'
         const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.GROQ_API_KEY}`
+            Authorization: `Bearer ${groqKey}`
           },
           body: JSON.stringify({
             model,
@@ -348,14 +383,15 @@ Văn phong chuẩn xác, logic, dựa trên dữ liệu thực tế.`
     // =========================================================================
     // 3. OPENAI API (OPENAI_API_KEY)
     // =========================================================================
-    if (process.env.OPENAI_API_KEY) {
+    const openaiKey = resolveEnv('OPENAI_API_KEY')
+    if (openaiKey) {
       try {
-        const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
+        const model = resolveEnv('OPENAI_MODEL') || 'gpt-4o-mini'
         const res = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+            Authorization: `Bearer ${openaiKey}`
           },
           body: JSON.stringify({
             model,
@@ -387,10 +423,11 @@ Văn phong chuẩn xác, logic, dựa trên dữ liệu thực tế.`
     // =========================================================================
     // 4. OLLAMA / LOCAL LLM (OLLAMA_BASE_URL - Chạy offline miễn phí)
     // =========================================================================
-    if (process.env.OLLAMA_BASE_URL) {
+    const ollamaBaseUrl = resolveEnv('OLLAMA_BASE_URL')
+    if (ollamaBaseUrl) {
       try {
-        const baseUrl = process.env.OLLAMA_BASE_URL.replace(/\/$/, '')
-        const model = process.env.OLLAMA_MODEL || 'llama3.2'
+        const baseUrl = ollamaBaseUrl.replace(/\/$/, '')
+        const model = resolveEnv('OLLAMA_MODEL') || 'llama3.2'
         const res = await fetch(`${baseUrl}/api/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

@@ -176,15 +176,25 @@ export default function ChartAIExplainer({
                 style={{
                   fontSize: '10px',
                   fontWeight: 600,
-                  padding: '1px 6px',
+                  padding: '2px 8px',
                   borderRadius: '10px',
                   background: isLive ? '#dcfce7' : '#f1f5f9',
                   color: isLive ? '#15803d' : '#64748b',
-                  border: isLive ? '1px solid #bbf7d0' : '1px solid #e2e8f0'
+                  border: isLive ? '1px solid #86efac' : '1px solid #e2e8f0',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
                 }}
                 title={provider}
               >
-                {isLive ? 'Live LLM' : isEn ? 'Ready for API' : 'Sẵn sàng kết nối API'}
+                {isLive ? (
+                  <>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a', display: 'inline-block' }} />
+                    {provider || 'Live LLM'}
+                  </>
+                ) : (
+                  isEn ? 'Ready for API' : 'Sẵn sàng kết nối API'
+                )}
               </span>
             </div>
 
@@ -264,10 +274,57 @@ export default function ChartAIExplainer({
             </div>
           )}
 
-          {/* Live LLM Raw Response */}
+          {/* Live LLM Raw Response (Formatted Markdown) */}
           {!loading && rawText && (
-            <div style={{ whiteSpace: 'pre-line', fontSize: '12.5px', color: '#1e293b' }}>
-              {rawText}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12.5px', color: '#1e293b', lineHeight: 1.6 }}>
+              {rawText.split('\n').map((line, idx) => {
+                const trimmed = line.trim()
+                if (!trimmed) return null
+
+                // Headings ## or ###
+                if (trimmed.startsWith('### ') || trimmed.startsWith('## ') || trimmed.startsWith('# ')) {
+                  const heading = trimmed.replace(/^#+\s*/, '')
+                  return (
+                    <h4 key={idx} style={{ margin: '8px 0 2px', fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>
+                      {heading}
+                    </h4>
+                  )
+                }
+
+                // Bullets * or -
+                if (trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
+                  const itemText = trimmed.slice(2)
+                  const parts = itemText.split(/(\*\*.*?\*\*)/g)
+                  return (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', paddingLeft: '8px' }}>
+                      <span style={{ color: '#6366f1', marginTop: '1px', fontSize: '14px', lineHeight: 1 }}>•</span>
+                      <div style={{ flex: 1 }}>
+                        {parts.map((p, pIdx) =>
+                          p.startsWith('**') && p.endsWith('**') ? (
+                            <strong key={pIdx} style={{ color: '#0f172a' }}>{p.slice(2, -2)}</strong>
+                          ) : (
+                            <span key={pIdx}>{p}</span>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )
+                }
+
+                // Paragraph with **bold**
+                const parts = trimmed.split(/(\*\*.*?\*\*)/g)
+                return (
+                  <p key={idx} style={{ margin: 0 }}>
+                    {parts.map((p, pIdx) =>
+                      p.startsWith('**') && p.endsWith('**') ? (
+                        <strong key={pIdx} style={{ color: '#0f172a' }}>{p.slice(2, -2)}</strong>
+                      ) : (
+                        <span key={pIdx}>{p}</span>
+                      )
+                    )}
+                  </p>
+                )
+              })}
             </div>
           )}
 
