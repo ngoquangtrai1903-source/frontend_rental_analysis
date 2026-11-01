@@ -223,6 +223,50 @@ Văn phong chuẩn xác, logic, dựa trên dữ liệu thực tế.`
       : `Biểu đồ: ${chartTitle} (Mã: ${chartId})\nDữ liệu thống kê & Chỉ số kinh tế lượng:\n${JSON.stringify(summaryData, null, 2)}`
 
     // =========================================================================
+    // 0. OPENROUTER API (OPENROUTER_API_KEY - google/gemini-2.5-flash-lite, etc.)
+    // =========================================================================
+    if (process.env.OPENROUTER_API_KEY) {
+      try {
+        const model = process.env.OPENROUTER_MODEL || 'google/gemini-2.5-flash-lite'
+        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            'HTTP-Referer': process.env.SITE_URL || 'http://localhost:3000',
+            'X-Title': 'RentIQ Da Nang Rental Analysis'
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt }
+            ],
+            temperature: 0.3,
+            max_tokens: 800
+          })
+        })
+
+        if (res.ok) {
+          const openRouterData = await res.json()
+          const content = openRouterData.choices?.[0]?.message?.content
+          if (content) {
+            return NextResponse.json({
+              provider: `OpenRouter (${model})`,
+              rawContent: content,
+              isLive: true
+            })
+          }
+        } else {
+          const errBody = await res.text()
+          console.warn('OpenRouter API returned error:', res.status, errBody)
+        }
+      } catch (openRouterErr) {
+        console.warn('OpenRouter API call failed, trying next provider:', openRouterErr)
+      }
+    }
+
+    // =========================================================================
     // 1. GOOGLE GEMINI API (GEMINI_API_KEY)
     // =========================================================================
     if (process.env.GEMINI_API_KEY) {
