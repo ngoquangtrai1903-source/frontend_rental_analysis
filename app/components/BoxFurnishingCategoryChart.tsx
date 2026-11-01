@@ -175,8 +175,8 @@ export default function BoxFurnishingCategoryChart({
             >
               <span>{translateStatus(tier.status)}</span>
               <span style={{ fontSize: '11px', color: 'var(--muted, #64748b)', fontWeight: 500 }}>
-                {isEn ? 'Trọ:' : 'Trọ:'} {tier.room ? `${tier.room.count} tin (Med ${tier.room.median}k)` : '0'} ·{' '}
-                {isEn ? 'Apt:' : 'Căn hộ:'} {tier.apt ? `${tier.apt.count} tin (Med ${tier.apt.median}k)` : '0'}
+                {isEn ? 'Room:' : 'Trọ:'} {tier.room ? `${tier.room.count} ${isEn ? 'listings' : 'tin'} (Med ${tier.room.median}k)` : '0'} ·{' '}
+                {isEn ? 'Apt:' : 'Căn hộ:'} {tier.apt ? `${tier.apt.count} ${isEn ? 'listings' : 'tin'} (Med ${tier.apt.median}k)` : '0'}
               </span>
             </div>
 

@@ -76,7 +76,7 @@ export default function HistPriceByCategoryChart({ data, lang = 'vi' }: HistPric
             <strong>{isEn ? 'Rental Room' : 'Phòng trọ'}</strong>
             <span style={{ color: 'var(--muted, #64748b)' }}>(n = {room.count.toLocaleString()})</span>
             <span style={{ marginLeft: '4px', fontSize: '11px', color: room.color }}>
-              Median: <strong>{room.median}tr</strong> | Mean: <strong>{room.mean}tr</strong>
+              Median: <strong>{room.median}{isEn ? 'M' : 'tr'}</strong> | Mean: <strong>{room.mean}{isEn ? 'M' : 'tr'}</strong>
             </span>
           </div>
 
@@ -96,7 +96,7 @@ export default function HistPriceByCategoryChart({ data, lang = 'vi' }: HistPric
             <strong>{isEn ? 'Apartment' : 'Căn hộ/Chung cư'}</strong>
             <span style={{ color: 'var(--muted, #64748b)' }}>(n = {apt.count.toLocaleString()})</span>
             <span style={{ marginLeft: '4px', fontSize: '11px', color: apt.color }}>
-              Median: <strong>{apt.median}tr</strong> | Mean: <strong>{apt.mean}tr</strong>
+              Median: <strong>{apt.median}{isEn ? 'M' : 'tr'}</strong> | Mean: <strong>{apt.mean}{isEn ? 'M' : 'tr'}</strong>
             </span>
           </div>
         </div>
@@ -173,7 +173,7 @@ export default function HistPriceByCategoryChart({ data, lang = 'vi' }: HistPric
               stroke={room.color}
               strokeWidth={2.5}
               label={{
-                value: `Trọ Med ${room.median}M`,
+                value: isEn ? `Room Med ${room.median}M` : `Trọ Med ${room.median}tr`,
                 position: 'top',
                 fill: room.color,
                 fontSize: 10,
@@ -186,7 +186,7 @@ export default function HistPriceByCategoryChart({ data, lang = 'vi' }: HistPric
               strokeWidth={2}
               strokeDasharray="4 4"
               label={{
-                value: `Trọ Mean ${room.mean}M`,
+                value: isEn ? `Room Mean ${room.mean}M` : `Trọ Mean ${room.mean}tr`,
                 position: 'insideTopLeft',
                 fill: room.color,
                 fontSize: 9
@@ -199,7 +199,7 @@ export default function HistPriceByCategoryChart({ data, lang = 'vi' }: HistPric
               stroke={apt.color}
               strokeWidth={2.5}
               label={{
-                value: `Căn hộ Med ${apt.median}M`,
+                value: isEn ? `Apt Med ${apt.median}M` : `Căn hộ Med ${apt.median}tr`,
                 position: 'top',
                 fill: apt.color,
                 fontSize: 10,
@@ -212,7 +212,7 @@ export default function HistPriceByCategoryChart({ data, lang = 'vi' }: HistPric
               strokeWidth={2}
               strokeDasharray="4 4"
               label={{
-                value: `Căn hộ Mean ${apt.mean}M`,
+                value: isEn ? `Apt Mean ${apt.mean}M` : `Căn hộ Mean ${apt.mean}tr`,
                 position: 'insideTopRight',
                 fill: apt.color,
                 fontSize: 9

@@ -104,7 +104,9 @@ export default function SpearmanCorrelationHeatmap({
               border: '1px solid #cbd5e1'
             }}
           />
-          <span style={{ fontSize: '11px', color: 'var(--muted, #64748b)' }}>-1.00 (Nghịch) → 0.00 → +1.00 (Thuận)</span>
+          <span style={{ fontSize: '11px', color: 'var(--muted, #64748b)' }}>
+            {isEn ? '-1.00 (Inverse) → 0.00 → +1.00 (Direct)' : '-1.00 (Nghịch) → 0.00 → +1.00 (Thuận)'}
+          </span>
         </div>
 
         <div style={{ fontSize: '11px', color: 'var(--muted, #64748b)' }}>
