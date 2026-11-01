@@ -107,8 +107,8 @@ export default function HistPriceByCategoryChart({ data, lang = 'vi' }: HistPric
         </div>
       </div>
 
-      <div style={{ flex: 1, minHeight: '340px', width: '100%' }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <div style={{ minHeight: '340px', width: '100%' }}>
+        <ResponsiveContainer width="100%" height={340}>
           <ComposedChart data={bins} margin={{ top: 16, right: 24, bottom: 20, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line, #e2e8f0)" />
             <XAxis

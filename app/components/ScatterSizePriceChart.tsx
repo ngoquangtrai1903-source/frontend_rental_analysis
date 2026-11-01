@@ -113,8 +113,8 @@ export default function ScatterSizePriceChart({ data, lang = 'vi' }: ScatterSize
         </div>
       </div>
 
-      <div style={{ flex: 1, minHeight: '340px', width: '100%' }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <div style={{ minHeight: '340px', width: '100%' }}>
+        <ResponsiveContainer width="100%" height={340}>
           <ScatterChart margin={{ top: 10, right: 20, bottom: 20, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--line, #e2e8f0)" />
             <XAxis

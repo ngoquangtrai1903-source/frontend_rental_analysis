@@ -79,8 +79,8 @@ export default function ScatterLocationGridChart({
         </div>
 
         {/* Chart Frame */}
-        <div style={{ width: '100%', height: '220px' }}>
-          <ResponsiveContainer width="100%" height="100%">
+        <div style={{ width: '100%', minHeight: '220px' }}>
+          <ResponsiveContainer width="100%" height={220}>
             <ScatterChart margin={{ top: 8, right: 12, bottom: 12, left: -10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--line, #e2e8f0)" />
               <XAxis

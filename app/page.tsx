@@ -214,6 +214,16 @@ export default function DashboardPage() {
 
   useEffect(() => {
     try {
+      const params = new URLSearchParams(window.location.search)
+      const navParam = params.get('nav')
+      if (navParam === 'advanced' || navParam === 'Phân tích nâng cao') {
+        setActiveNav('Phân tích nâng cao')
+      }
+    } catch {
+      // Ignore URL parsing errors
+    }
+
+    try {
       const saved = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || 'null')
       if (saved && typeof saved === 'object') {
         if (typeof saved.darkMode === 'boolean') setDarkMode(saved.darkMode)
