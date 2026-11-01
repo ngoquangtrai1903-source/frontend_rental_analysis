@@ -202,63 +202,184 @@ export async function POST(req: NextRequest) {
   try {
     const body: ExplainChartRequest = await req.json()
     const { chartId, chartTitle, summaryData, lang = 'vi' } = body
+    const isEn = lang === 'en'
+
+    const systemPrompt = isEn
+      ? `You are a Senior Real Estate Econometrician at RentIQ Da Nang. Analyze the provided chart statistics and produce a concise, high-level econometric interpretation.
+Format your response clearly into three sections:
+1. **Overview**: (1-2 sentences summarizing the overarching macro structural pattern)
+2. **Key Findings**: (3 bullet points with specific figures/data from the summary)
+3. **Strategic Recommendation**: (1 actionable insight for investors, tenants, or developers)
+Keep the tone objective, precise, and professional.`
+      : `Bạn là Giám đốc Nghiên cứu Kinh tế lượng Bất động sản tại RentIQ Đà Nẵng. Hãy phân tích các số liệu thống kê biểu đồ được cung cấp và đưa ra bản giải thích kinh tế lượng súc tích, chuyên sâu.
+Trình bày rõ ràng theo 3 phần:
+1. **Tổng quan**: (1-2 câu tóm lược cấu trúc vĩ mô hoặc quy luật chính)
+2. **Các phát hiện nổi bật**: (3 gạch đầu dòng nêu rõ các số liệu/con số cụ thể từ dữ liệu thống kê)
+3. **Khuyến nghị chiến lược**: (1 đề xuất hành động thực tiễn cho nhà đầu tư, người thuê hoặc chủ trọ)
+Văn phong chuẩn xác, logic, dựa trên dữ liệu thực tế.`
+
+    const userPrompt = isEn
+      ? `Chart: ${chartTitle} (ID: ${chartId})\nSummary Statistics & Econometric Metrics:\n${JSON.stringify(summaryData, null, 2)}`
+      : `Biểu đồ: ${chartTitle} (Mã: ${chartId})\nDữ liệu thống kê & Chỉ số kinh tế lượng:\n${JSON.stringify(summaryData, null, 2)}`
 
     // =========================================================================
-    // KHU VỰC KẾT NỐI API LLM NGOÀI (GEMINI / OPENAI / GROQ / OLLAMA / VERCEL AI)
-    // Người dùng có thể dễ dàng cấu hình hoặc thay thế API key ở phần này:
+    // 1. GOOGLE GEMINI API (GEMINI_API_KEY)
     // =========================================================================
-    const apiKey =
-      process.env.GEMINI_API_KEY ||
-      process.env.OPENAI_API_KEY ||
-      process.env.GROQ_API_KEY ||
-      process.env.LLM_API_KEY
-
-    // Nếu người dùng đã cấu hình API Key (ví dụ: Gemini hoặc Groq hoặc OpenAI):
-    if (apiKey) {
+    if (process.env.GEMINI_API_KEY) {
       try {
-        // Ví dụ: Gọi Groq hoặc Gemini hoặc OpenAI
-        if (process.env.GROQ_API_KEY) {
-          const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${process.env.GROQ_API_KEY}`
-            },
-            body: JSON.stringify({
-              model: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
-              messages: [
-                {
-                  role: 'system',
-                  content: `Bạn là Giám đốc Nghiên cứu Kinh tế lượng BĐS tại RentIQ Đà Nẵng. Hãy đọc số liệu biểu đồ sau và giải thích súc tích bằng tiếng Việt (hoặc tiếng Anh nếu lang='en'). Gồm 3 phần: Tổng quan, Các phát hiện nổi bật (bullet points), và Khuyến nghị hành động.`
-                },
-                {
-                  role: 'user',
-                  content: `Biểu đồ: ${chartTitle} (ID: ${chartId})\nDữ liệu thống kê:\n${JSON.stringify(summaryData, null, 2)}`
-                }
-              ],
+        const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: 'user',
+                parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }]
+              }
+            ],
+            generationConfig: {
               temperature: 0.3,
-              max_tokens: 600
-            })
-          })
-
-          if (response.ok) {
-            const data = await response.json()
-            const content = data.choices?.[0]?.message?.content
-            if (content) {
-              return NextResponse.json({
-                provider: 'Groq (LLM Live)',
-                rawContent: content,
-                isLive: true
-              })
+              maxOutputTokens: 800
             }
+          })
+        })
+
+        if (res.ok) {
+          const geminiData = await res.json()
+          const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text
+          if (text) {
+            return NextResponse.json({
+              provider: `Google Gemini (${model})`,
+              rawContent: text,
+              isLive: true
+            })
           }
         }
-      } catch (externalErr) {
-        console.warn('External LLM call failed, falling back to local analyst engine:', externalErr)
+      } catch (geminiErr) {
+        console.warn('Gemini API call failed, trying next provider:', geminiErr)
       }
     }
 
-    // Nếu chưa cấu hình API ngoài (API làm sau theo yêu cầu), trả về phân tích dữ liệu chuyên nghiệp:
+    // =========================================================================
+    // 2. GROQ API (GROQ_API_KEY - Siêu nhanh, miễn phí)
+    // =========================================================================
+    if (process.env.GROQ_API_KEY) {
+      try {
+        const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile'
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.GROQ_API_KEY}`
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt }
+            ],
+            temperature: 0.3,
+            max_tokens: 800
+          })
+        })
+
+        if (res.ok) {
+          const groqData = await res.json()
+          const content = groqData.choices?.[0]?.message?.content
+          if (content) {
+            return NextResponse.json({
+              provider: `Groq (${model})`,
+              rawContent: content,
+              isLive: true
+            })
+          }
+        }
+      } catch (groqErr) {
+        console.warn('Groq API call failed, trying next provider:', groqErr)
+      }
+    }
+
+    // =========================================================================
+    // 3. OPENAI API (OPENAI_API_KEY)
+    // =========================================================================
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt }
+            ],
+            temperature: 0.3,
+            max_tokens: 800
+          })
+        })
+
+        if (res.ok) {
+          const openaiData = await res.json()
+          const content = openaiData.choices?.[0]?.message?.content
+          if (content) {
+            return NextResponse.json({
+              provider: `OpenAI (${model})`,
+              rawContent: content,
+              isLive: true
+            })
+          }
+        }
+      } catch (openaiErr) {
+        console.warn('OpenAI API call failed:', openaiErr)
+      }
+    }
+
+    // =========================================================================
+    // 4. OLLAMA / LOCAL LLM (OLLAMA_BASE_URL - Chạy offline miễn phí)
+    // =========================================================================
+    if (process.env.OLLAMA_BASE_URL) {
+      try {
+        const baseUrl = process.env.OLLAMA_BASE_URL.replace(/\/$/, '')
+        const model = process.env.OLLAMA_MODEL || 'llama3.2'
+        const res = await fetch(`${baseUrl}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt }
+            ],
+            stream: false
+          })
+        })
+
+        if (res.ok) {
+          const ollamaData = await res.json()
+          const content = ollamaData.message?.content
+          if (content) {
+            return NextResponse.json({
+              provider: `Ollama Local (${model})`,
+              rawContent: content,
+              isLive: true
+            })
+          }
+        }
+      } catch (ollamaErr) {
+        console.warn('Ollama call failed:', ollamaErr)
+      }
+    }
+
+    // =========================================================================
+    // 5. LOCAL ANALYTIC ENGINE (FALLBACK TỰ ĐỘNG KHI CHƯA ĐIỀN API KEY)
+    // Tính toán số liệu thống kê chính xác trực tiếp từ Supabase Gold
+    // =========================================================================
     const fallback = generateFallbackExplanation(chartId, chartTitle, summaryData, lang)
 
     return NextResponse.json({
