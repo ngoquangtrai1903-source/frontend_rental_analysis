@@ -49,24 +49,13 @@ export default function HistPriceByCategoryChart({ data, lang = 'vi' }: HistPric
     if (!b) return null
 
     return (
-      <div
-        style={{
-          background: '#ffffff',
-          border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          padding: '10px 14px',
-          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-          fontSize: '12px',
-          fontFamily: "'Inter', sans-serif",
-          minWidth: '190px'
-        }}
-      >
-        <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '6px', borderBottom: '1px solid #f1f5f9', paddingBottom: '4px' }}>
+      <div className="chart-custom-tooltip" style={{ minWidth: '190px' }}>
+        <div style={{ fontWeight: 700, color: 'var(--ink, #0f172a)', marginBottom: '6px', borderBottom: '1px solid var(--line, #f1f5f9)', paddingBottom: '4px' }}>
           {isEn ? 'Price Range:' : 'Khoảng giá:'} {b.binStart.toFixed(1)} – {b.binEnd.toFixed(1)} {isEn ? 'M VND/mo' : 'triệu/tháng'}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#64748b' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--muted, #64748b)' }}>
               <span style={{ width: '8px', height: '8px', borderRadius: '2px', background: room.color }} />
               {isEn ? 'Rental Room:' : 'Phòng trọ:'}
             </span>
@@ -75,7 +64,7 @@ export default function HistPriceByCategoryChart({ data, lang = 'vi' }: HistPric
             </strong>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#64748b' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--muted, #64748b)' }}>
               <span style={{ width: '8px', height: '8px', borderRadius: '2px', background: apt.color }} />
               {isEn ? 'Apartment:' : 'Căn hộ:'}
             </span>
@@ -147,8 +136,8 @@ export default function HistPriceByCategoryChart({ data, lang = 'vi' }: HistPric
         </div>
 
         <div style={{ fontSize: '11px', color: 'var(--muted, #64748b)' }}>
-          <span style={{ borderBottom: '2px solid #64748b', marginRight: '6px' }}>—</span> {isEn ? 'Solid = Median' : 'Đường liền = Median'}
-          <span style={{ borderBottom: '2px dashed #64748b', margin: '0 6px 0 10px' }}>---</span> {isEn ? 'Dashed = Mean' : 'Đường đứt = Mean'}
+          <span style={{ borderBottom: '2px solid var(--muted, #64748b)', marginRight: '6px' }}>—</span> {isEn ? 'Solid = Median' : 'Đường liền = Median'}
+          <span style={{ borderBottom: '2px dashed var(--muted, #64748b)', margin: '0 6px 0 10px' }}>---</span> {isEn ? 'Dashed = Mean' : 'Đường đứt = Mean'}
         </div>
       </div>
 

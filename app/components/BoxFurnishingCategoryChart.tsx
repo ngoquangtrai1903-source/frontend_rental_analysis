@@ -81,13 +81,13 @@ export default function BoxFurnishingCategoryChart({
             width: `${Math.max(0, maxPct - minPct)}%`,
             top: '50%',
             height: '2px',
-            background: '#64748b',
+            background: 'var(--muted, #64748b)',
             transform: 'translateY(-50%)'
           }}
         />
         {/* Min / Max caps */}
-        <div style={{ position: 'absolute', left: `${minPct}%`, top: '25%', height: '50%', width: '2px', background: '#64748b' }} />
-        <div style={{ position: 'absolute', left: `${maxPct}%`, top: '25%', height: '50%', width: '2px', background: '#64748b' }} />
+        <div style={{ position: 'absolute', left: `${minPct}%`, top: '25%', height: '50%', width: '2px', background: 'var(--muted, #64748b)' }} />
+        <div style={{ position: 'absolute', left: `${maxPct}%`, top: '25%', height: '50%', width: '2px', background: 'var(--muted, #64748b)' }} />
 
         {/* Box */}
         <div
@@ -111,7 +111,7 @@ export default function BoxFurnishingCategoryChart({
             top: '5%',
             height: '90%',
             width: '2px',
-            background: '#0f172a',
+            background: 'var(--ink, #0f172a)',
             zIndex: 2
           }}
         />
@@ -228,20 +228,7 @@ export default function BoxFurnishingCategoryChart({
       </div>
 
       {/* Hover Detail Card - Fixed Height Info Bar (0px Layout Shift) */}
-      <div
-        style={{
-          marginTop: '12px',
-          padding: '10px 14px',
-          borderRadius: '8px',
-          background: hoveredItem ? 'var(--surface-subtle, #f8fafc)' : 'rgba(241, 245, 249, 0.6)',
-          border: hoveredItem ? '1px solid #bfdbfe' : '1px dashed #cbd5e1',
-          fontSize: '12px',
-          minHeight: '44px',
-          display: 'flex',
-          alignItems: 'center',
-          transition: 'all 0.15s ease'
-        }}
-      >
+      <div className={`chart-info-bar ${hoveredItem ? 'active' : ''}`}>
         {hoveredItem ? (
           <div
             style={{
@@ -254,23 +241,23 @@ export default function BoxFurnishingCategoryChart({
             }}
           >
             <div>
-              <strong>{translateStatus(hoveredItem.status)}</strong> —{' '}
+              <strong style={{ color: 'var(--ink)' }}>{translateStatus(hoveredItem.status)}</strong> —{' '}
               <span style={{ color: hoveredItem.category.includes('Phòng') || hoveredItem.category.includes('Room') ? '#E07B39' : '#2E6F9E', fontWeight: 600 }}>
                 {hoveredItem.category}
               </span>{' '}
-              ({hoveredItem.stats.count} {isEn ? 'listings' : 'tin'}):
+              <span style={{ color: 'var(--muted)' }}>({hoveredItem.stats.count} {isEn ? 'listings' : 'tin'}):</span>
             </div>
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <span>Min: <strong>{hoveredItem.stats.min}k</strong></span>
-              <span>Q1: <strong>{hoveredItem.stats.q1}k</strong></span>
-              <span>Median: <strong>{hoveredItem.stats.median}k</strong></span>
-              <span>Q3: <strong>{hoveredItem.stats.q3}k</strong></span>
-              <span>Max: <strong>{hoveredItem.stats.max}k</strong></span>
-              <span>Mean: <strong>{hoveredItem.stats.mean}k</strong></span>
+              <span>Min: <strong style={{ color: 'var(--ink)' }}>{hoveredItem.stats.min}k</strong></span>
+              <span>Q1: <strong style={{ color: 'var(--ink)' }}>{hoveredItem.stats.q1}k</strong></span>
+              <span>Median: <strong style={{ color: 'var(--blue, #2E6F9E)' }}>{hoveredItem.stats.median}k</strong></span>
+              <span>Q3: <strong style={{ color: 'var(--ink)' }}>{hoveredItem.stats.q3}k</strong></span>
+              <span>Max: <strong style={{ color: 'var(--ink)' }}>{hoveredItem.stats.max}k</strong></span>
+              <span>Mean: <strong style={{ color: 'var(--ink)' }}>{hoveredItem.stats.mean}k</strong></span>
             </div>
           </div>
         ) : (
-          <div style={{ color: '#64748b', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ color: 'var(--muted, #64748b)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span>💡</span>
             <span>
               {isEn

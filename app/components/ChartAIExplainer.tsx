@@ -152,12 +152,10 @@ export default function ChartAIExplainer({
 
       {isOpen && (
         <div
+          className="chart-ai-explainer-card"
           style={{
-            background: 'linear-gradient(to bottom, #f8faff 0%, #ffffff 100%)',
-            border: '1px solid #c7d2fe',
             borderRadius: '10px',
             padding: '14px 16px',
-            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.05)',
             fontSize: '13px',
             lineHeight: 1.6,
             color: 'var(--ink, #1e293b)'
@@ -165,6 +163,7 @@ export default function ChartAIExplainer({
         >
           {/* Header Row */}
           <div
+            className="ai-header"
             style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -191,10 +190,11 @@ export default function ChartAIExplainer({
               >
                 <Bot size={14} />
               </div>
-              <strong style={{ color: '#3730a3', fontSize: '13px' }}>
+              <strong className="ai-title" style={{ color: '#3730a3', fontSize: '13px' }}>
                 {isEn ? 'AI Market Insights' : 'Nhận định thị trường từ AI'}
               </strong>
               <span
+                className={isLive ? 'ai-pill-live' : 'ai-pill-ready'}
                 style={{
                   fontSize: '10px',
                   fontWeight: 600,
@@ -223,6 +223,7 @@ export default function ChartAIExplainer({
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <button
                 type="button"
+                className="ai-action-btn"
                 onClick={handleCopy}
                 disabled={loading}
                 title={isEn ? 'Copy insight' : 'Sao chép nhận xét'}
@@ -245,7 +246,8 @@ export default function ChartAIExplainer({
 
               <button
                 type="button"
-                onClick={handleFetchInsight}
+                className="ai-action-btn"
+                onClick={() => void handleFetchInsight()}
                 disabled={loading}
                 title={isEn ? 'Re-generate' : 'Phân tích lại'}
                 style={{
@@ -267,6 +269,7 @@ export default function ChartAIExplainer({
 
               <button
                 type="button"
+                className="ai-action-btn"
                 onClick={() => setIsOpen(false)}
                 title={isEn ? 'Collapse' : 'Thu gọn'}
                 style={{
@@ -354,7 +357,7 @@ export default function ChartAIExplainer({
           {!loading && explanation && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {explanation.overview && (
-                <div style={{ fontWeight: 600, color: '#334155', fontSize: '12.5px' }}>
+                <div style={{ fontWeight: 600, color: 'var(--ink, #334155)', fontSize: '12.5px' }}>
                   {explanation.overview}
                 </div>
               )}
@@ -365,10 +368,10 @@ export default function ChartAIExplainer({
                     // Quick parse bold **text** to HTML
                     const parts = ins.split(/(\*\*.*?\*\*)/g)
                     return (
-                      <li key={idx} style={{ fontSize: '12px', color: '#334155' }}>
+                      <li key={idx} style={{ fontSize: '12px', color: 'var(--ink, #334155)' }}>
                         {parts.map((p, pIdx) => {
                           if (p.startsWith('**') && p.endsWith('**')) {
-                            return <strong key={pIdx} style={{ color: '#0f172a' }}>{p.slice(2, -2)}</strong>
+                            return <strong key={pIdx} style={{ color: 'var(--ink, #0f172a)' }}>{p.slice(2, -2)}</strong>
                           }
                           return p
                         })}
@@ -380,6 +383,7 @@ export default function ChartAIExplainer({
 
               {explanation.recommendation && (
                 <div
+                  className="ai-takeaway"
                   style={{
                     marginTop: '6px',
                     padding: '8px 12px',

@@ -146,7 +146,7 @@ export default function WardPpm2BoxPlotChart({
                   gap: '12px',
                   padding: '5px 8px',
                   borderRadius: '6px',
-                  background: isHovered ? '#eff6ff' : 'transparent',
+                  background: isHovered ? 'var(--surface-subtle, #eff6ff)' : 'transparent',
                   boxShadow: isHovered ? '0 1px 4px rgba(37, 99, 235, 0.08)' : 'none',
                   transition: 'all 0.15s ease',
                   cursor: 'pointer'
@@ -187,7 +187,7 @@ export default function WardPpm2BoxPlotChart({
                       width: `${Math.max(0, rightWhiskerPct - leftWhiskerPct)}%`,
                       top: '50%',
                       height: '2px',
-                      background: '#475569',
+                      background: 'var(--muted, #475569)',
                       transform: 'translateY(-50%)'
                     }}
                   />
@@ -199,7 +199,7 @@ export default function WardPpm2BoxPlotChart({
                       top: '25%',
                       height: '50%',
                       width: '2px',
-                      background: '#475569'
+                      background: 'var(--muted, #475569)'
                     }}
                   />
                   {/* Max Cap */}
@@ -210,7 +210,7 @@ export default function WardPpm2BoxPlotChart({
                       top: '25%',
                       height: '50%',
                       width: '2px',
-                      background: '#475569'
+                      background: 'var(--muted, #475569)'
                     }}
                   />
 
@@ -238,7 +238,7 @@ export default function WardPpm2BoxPlotChart({
                       top: '8%',
                       height: '84%',
                       width: '2.5px',
-                      background: '#0f172a',
+                      background: 'var(--ink, #0f172a)',
                       zIndex: 2
                     }}
                   />
@@ -288,39 +288,23 @@ export default function WardPpm2BoxPlotChart({
       </div>
 
       {/* Hover Card Detail - Stable Height to Prevent Layout Shift */}
-      <div
-        style={{
-          marginTop: '12px',
-          minHeight: '44px',
-          padding: '10px 14px',
-          borderRadius: '8px',
-          background: hoveredWard ? '#f0f7ff' : 'var(--surface-subtle, #f8fafc)',
-          border: hoveredWard ? '1px solid #93c5fd' : '1px solid var(--line, #e2e8f0)',
-          fontSize: '12px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '8px',
-          transition: 'all 0.15s ease'
-        }}
-      >
+      <div className={`chart-info-bar ${hoveredWard ? 'active' : ''}`}>
         {hoveredWard ? (
-          <>
+          <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
             <div>
-              <strong style={{ color: '#1e3a8a', fontSize: '13px' }}>{hoveredWard.wardName}</strong>{' '}
-              <span style={{ color: '#64748b' }}>({hoveredWard.count} {isEn ? 'listings' : 'tin đăng'})</span>:
+              <strong style={{ color: 'var(--ink, #1e3a8a)', fontSize: '13px' }}>{hoveredWard.wardName}</strong>{' '}
+              <span style={{ color: 'var(--muted, #64748b)' }}>({hoveredWard.count} {isEn ? 'listings' : 'tin đăng'})</span>:
             </div>
             <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', fontFamily: "'Inter', sans-serif" }}>
-              <span>Min: <strong>{hoveredWard.min}k</strong></span>
-              <span>Q1: <strong>{hoveredWard.q1}k</strong></span>
-              <span>Median: <strong style={{ color: '#1d4ed8', fontSize: '13px' }}>{hoveredWard.median}k</strong></span>
-              <span>Q3: <strong>{hoveredWard.q3}k</strong></span>
-              <span>Max: <strong>{hoveredWard.max}k</strong></span>
+              <span>Min: <strong style={{ color: 'var(--ink)' }}>{hoveredWard.min}k</strong></span>
+              <span>Q1: <strong style={{ color: 'var(--ink)' }}>{hoveredWard.q1}k</strong></span>
+              <span>Median: <strong style={{ color: 'var(--blue, #1d4ed8)', fontSize: '13px' }}>{hoveredWard.median}k</strong></span>
+              <span>Q3: <strong style={{ color: 'var(--ink)' }}>{hoveredWard.q3}k</strong></span>
+              <span>Max: <strong style={{ color: 'var(--ink)' }}>{hoveredWard.max}k</strong></span>
             </div>
-          </>
+          </div>
         ) : (
-          <div style={{ color: '#94a3b8', fontSize: '11.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ color: 'var(--muted, #94a3b8)', fontSize: '11.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span>💡</span>
             <span>
               {isEn

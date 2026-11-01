@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 interface ColumnMeta {
   key: string
@@ -20,9 +20,33 @@ interface SpearmanHeatmapProps {
  *  0: #ffffff (White)
  * +1: #2166ac (Deep Blue)
  */
-function getRdBuColor(val: number): { bg: string; text: string } {
-  if (isNaN(val)) return { bg: '#f1f5f9', text: '#94a3b8' }
+function getRdBuColor(val: number, isDark = false): { bg: string; text: string } {
+  if (isNaN(val)) return { bg: isDark ? '#1e293b' : '#f1f5f9', text: '#94a3b8' }
   const clamped = Math.max(-1, Math.min(1, val))
+
+  if (isDark) {
+    if (clamped >= 0) {
+      // Dark Base (24, 34, 53) to Vibrant Blue (59, 130, 246)
+      const t = clamped
+      const r = Math.round(24 + t * (59 - 24))
+      const g = Math.round(34 + t * (130 - 34))
+      const b = Math.round(53 + t * (246 - 53))
+      return {
+        bg: `rgb(${r}, ${g}, ${b})`,
+        text: t > 0.35 ? '#ffffff' : '#cbd5e1'
+      }
+    } else {
+      // Dark Base (24, 34, 53) to Vibrant Coral Red (220, 38, 38)
+      const t = Math.abs(clamped)
+      const r = Math.round(24 + t * (220 - 24))
+      const g = Math.round(34 + t * (38 - 34))
+      const b = Math.round(53 + t * (38 - 53))
+      return {
+        bg: `rgb(${r}, ${g}, ${b})`,
+        text: t > 0.35 ? '#ffffff' : '#cbd5e1'
+      }
+    }
+  }
 
   if (clamped >= 0) {
     // White (255, 255, 255) to Blue (33, 102, 172)
@@ -53,11 +77,24 @@ export default function SpearmanCorrelationHeatmap({
   lang = 'vi'
 }: SpearmanHeatmapProps) {
   const isEn = lang === 'en'
+  const [isDark, setIsDark] = useState(false)
   const [hoveredCell, setHoveredCell] = useState<{
     rowIdx: number
     colIdx: number
     val: number
   } | null>(null)
+
+  useEffect(() => {
+    const checkDark = () => {
+      if (typeof document !== 'undefined') {
+        setIsDark(document.body.classList.contains('dark-mode'))
+      }
+    }
+    checkDark()
+    const observer = new MutationObserver(checkDark)
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
 
   if (!matrix || matrix.length === 0) {
     return (
@@ -125,6 +162,7 @@ export default function SpearmanCorrelationHeatmap({
         }}
       >
         <table
+          className="matrix-table"
           style={{
             borderCollapse: 'collapse',
             fontSize: '10px',
@@ -142,8 +180,8 @@ export default function SpearmanCorrelationHeatmap({
                   zIndex: 2,
                   background: 'var(--surface-subtle, #f8fafc)',
                   padding: '8px',
-                  borderBottom: '1px solid #cbd5e1',
-                  borderRight: '1px solid #cbd5e1',
+                  borderBottom: '1px solid var(--line, #cbd5e1)',
+                  borderRight: '1px solid var(--line, #cbd5e1)',
                   textAlign: 'left',
                   fontSize: '10px',
                   color: 'var(--muted, #64748b)'
@@ -156,11 +194,11 @@ export default function SpearmanCorrelationHeatmap({
                   key={c.key}
                   style={{
                     padding: '6px 2px',
-                    borderBottom: '1px solid #cbd5e1',
-                    borderRight: '1px solid #f1f5f9',
+                    borderBottom: '1px solid var(--line, #cbd5e1)',
+                    borderRight: '1px solid var(--line, #f1f5f9)',
                     textAlign: 'center',
-                    background: hoveredCell?.colIdx === i ? '#e0f2fe' : 'var(--surface-subtle, #f8fafc)',
-                    color: hoveredCell?.colIdx === i ? '#0369a1' : 'var(--ink, #1e293b)',
+                    background: hoveredCell?.colIdx === i ? (isDark ? '#2a3d5e' : '#e0f2fe') : 'var(--surface-subtle, #f8fafc)',
+                    color: hoveredCell?.colIdx === i ? (isDark ? '#93c5fd' : '#0369a1') : 'var(--ink, #1e293b)',
                     fontWeight: 700,
                     writingMode: 'vertical-rl',
                     transform: 'rotate(180deg)',
@@ -179,16 +217,17 @@ export default function SpearmanCorrelationHeatmap({
               <tr key={rowCol.key}>
                 {/* Row Header */}
                 <td
+                  className="matrix-row-header"
                   style={{
                     position: 'sticky',
                     left: 0,
                     zIndex: 2,
-                    background: hoveredCell?.rowIdx === rIdx ? '#e0f2fe' : 'var(--surface-subtle, #f8fafc)',
-                    color: hoveredCell?.rowIdx === rIdx ? '#0369a1' : 'var(--ink, #1e293b)',
+                    background: hoveredCell?.rowIdx === rIdx ? (isDark ? '#2a3d5e' : '#e0f2fe') : 'var(--surface-subtle, #f8fafc)',
+                    color: hoveredCell?.rowIdx === rIdx ? (isDark ? '#93c5fd' : '#0369a1') : 'var(--ink, #1e293b)',
                     padding: '5px 8px',
                     fontWeight: 600,
-                    borderBottom: '1px solid #f1f5f9',
-                    borderRight: '1px solid #cbd5e1',
+                    borderBottom: '1px solid var(--line, #f1f5f9)',
+                    borderRight: '1px solid var(--line, #cbd5e1)',
                     whiteSpace: 'nowrap',
                     fontSize: '11px'
                   }}
@@ -199,7 +238,7 @@ export default function SpearmanCorrelationHeatmap({
                 {/* Cells */}
                 {columns.map((colCol, cIdx) => {
                   const val = matrix[rIdx]?.[cIdx] ?? 0
-                  const color = getRdBuColor(val)
+                  const color = getRdBuColor(val, isDark)
                   const isHovered = hoveredCell?.rowIdx === rIdx && hoveredCell?.colIdx === cIdx
                   const isCross = hoveredCell?.rowIdx === rIdx || hoveredCell?.colIdx === cIdx
 
@@ -214,9 +253,9 @@ export default function SpearmanCorrelationHeatmap({
                         background: color.bg,
                         color: color.text,
                         fontWeight: rIdx === cIdx ? 800 : Math.abs(val) >= 0.4 ? 700 : 500,
-                        borderBottom: '1px solid rgba(0,0,0,0.05)',
-                        borderRight: '1px solid rgba(0,0,0,0.05)',
-                        outline: isHovered ? '2px solid #0f172a' : isCross ? '1px dashed #94a3b8' : 'none',
+                        borderBottom: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.05)',
+                        borderRight: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.05)',
+                        outline: isHovered ? (isDark ? '2px solid #38bdf8' : '2px solid #0f172a') : isCross ? '1px dashed var(--muted, #94a3b8)' : 'none',
                         zIndex: isHovered ? 1 : 0,
                         cursor: 'pointer',
                         transition: 'outline 0.05s ease'
@@ -234,20 +273,7 @@ export default function SpearmanCorrelationHeatmap({
       </div>
 
       {/* Hover Info Banner - Fixed Height Bar (0px Layout Shift) */}
-      <div
-        style={{
-          marginTop: '12px',
-          padding: '10px 14px',
-          borderRadius: '8px',
-          background: hoveredCell ? 'var(--surface-subtle, #f8fafc)' : 'rgba(241, 245, 249, 0.6)',
-          border: hoveredCell ? '1px solid #bfdbfe' : '1px dashed #cbd5e1',
-          fontSize: '12px',
-          minHeight: '44px',
-          display: 'flex',
-          alignItems: 'center',
-          transition: 'all 0.15s ease'
-        }}
-      >
+      <div className={`chart-info-bar ${hoveredCell ? 'active' : ''}`}>
         {hoveredCell ? (
           <div
             style={{
@@ -260,18 +286,18 @@ export default function SpearmanCorrelationHeatmap({
             }}
           >
             <div>
-              <strong>
+              <strong style={{ color: 'var(--ink)' }}>
                 {isEn ? columns[hoveredCell.rowIdx].labelEn : columns[hoveredCell.rowIdx].label}
               </strong>{' '}
               ×{' '}
-              <strong>
+              <strong style={{ color: 'var(--ink)' }}>
                 {isEn ? columns[hoveredCell.colIdx].labelEn : columns[hoveredCell.colIdx].label}
               </strong>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span>
                 Spearman ρ ={' '}
-                <strong style={{ fontSize: '14px', color: hoveredCell.val >= 0 ? '#1d4ed8' : '#b91c1c' }}>
+                <strong style={{ fontSize: '14px', color: hoveredCell.val >= 0 ? '#38bdf8' : '#f87171' }}>
                   {hoveredCell.val.toFixed(2)}
                 </strong>
               </span>
@@ -279,8 +305,8 @@ export default function SpearmanCorrelationHeatmap({
                 style={{
                   padding: '2px 8px',
                   borderRadius: '4px',
-                  background: Math.abs(hoveredCell.val) >= 0.4 ? '#e0e7ff' : '#f1f5f9',
-                  color: Math.abs(hoveredCell.val) >= 0.4 ? '#4338ca' : '#475569',
+                  background: Math.abs(hoveredCell.val) >= 0.4 ? (isDark ? 'rgba(99, 102, 241, 0.25)' : '#e0e7ff') : (isDark ? '#202e46' : '#f1f5f9'),
+                  color: Math.abs(hoveredCell.val) >= 0.4 ? (isDark ? '#a5b4fc' : '#4338ca') : (isDark ? '#94a3b8' : '#475569'),
                   fontWeight: 600,
                   fontSize: '11px'
                 }}
@@ -290,7 +316,7 @@ export default function SpearmanCorrelationHeatmap({
             </div>
           </div>
         ) : (
-          <div style={{ color: '#64748b', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ color: 'var(--muted, #64748b)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span>💡</span>
             <span>
               {isEn

@@ -2828,3 +2828,213 @@
   color: #e7edf8 !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
 }
+
+/* ==========================================================================
+   ADVANCED ANALYTICS & RECHARTS CHARTS DARK MODE SUPPORT
+   ========================================================================== */
+
+/* Recharts Global Dark Mode */
+.dark-mode .recharts-cartesian-grid line,
+.dark-mode .recharts-cartesian-grid-horizontal line,
+.dark-mode .recharts-cartesian-grid-vertical line {
+  stroke: #253349 !important;
+}
+
+.dark-mode .recharts-cartesian-axis-line {
+  stroke: #33415d !important;
+}
+
+.dark-mode .recharts-text,
+.dark-mode .recharts-cartesian-axis-tick-value {
+  fill: #a8b4ca !important;
+}
+
+.dark-mode .recharts-default-tooltip {
+  background-color: #182235 !important;
+  border-color: #33415d !important;
+  color: #e7edf8 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark-mode .recharts-tooltip-item {
+  color: #e7edf8 !important;
+}
+
+.dark-mode .recharts-tooltip-label {
+  color: #cbd5e1 !important;
+}
+
+.dark-mode .recharts-legend-item-text {
+  color: #a8b4ca !important;
+}
+
+/* Custom Chart Tooltips */
+.chart-custom-tooltip {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 8px;
+  padding: 10px 14px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  color: var(--ink, #0f172a);
+}
+
+.dark-mode .chart-custom-tooltip {
+  background: #182235 !important;
+  border-color: #33415d !important;
+  color: #e7edf8 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Stable Chart Info Bar */
+.chart-info-bar {
+  margin-top: 12px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  transition: all 0.15s ease;
+  background: rgba(241, 245, 249, 0.6);
+  border: 1px dashed var(--line, #cbd5e1);
+  color: var(--muted, #64748b);
+}
+
+.chart-info-bar.active {
+  background: var(--surface-subtle, #f8fafc);
+  border: 1px solid #bfdbfe;
+  color: var(--ink, #0f172a);
+}
+
+.dark-mode .chart-info-bar {
+  background: rgba(17, 24, 39, 0.6) !important;
+  border-color: #33415d !important;
+  color: #94a3b8 !important;
+}
+
+.dark-mode .chart-info-bar.active {
+  background: #202e46 !important;
+  border-color: #3b82f6 !important;
+  color: #e7edf8 !important;
+}
+
+/* Location R correlation badge */
+.location-r-badge {
+  font-size: 12px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: 'Manrope', sans-serif;
+}
+
+.location-r-badge.high {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.location-r-badge.normal {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.dark-mode .location-r-badge.high {
+  background: rgba(220, 38, 38, 0.25) !important;
+  color: #fca5a5 !important;
+  border: 1px solid rgba(220, 38, 38, 0.35) !important;
+}
+
+.dark-mode .location-r-badge.normal {
+  background: #202e46 !important;
+  color: #94a3b8 !important;
+  border: 1px solid #33415d !important;
+}
+
+/* Spearman Correlation Matrix Table */
+.dark-mode .matrix-table {
+  border-color: #33415d !important;
+}
+
+.dark-mode .matrix-table th {
+  background: #202e46 !important;
+  color: #cbd5e1 !important;
+  border-color: #33415d !important;
+}
+
+.dark-mode .matrix-table td {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark-mode .matrix-table td.matrix-row-header {
+  background: #202e46 !important;
+  color: #cbd5e1 !important;
+  border-color: #33415d !important;
+}
+
+/* AI Explainer Card Dark Mode */
+.chart-ai-explainer-card {
+  background: linear-gradient(to bottom, #f8faff 0%, #ffffff 100%);
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.05);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink, #1e293b);
+}
+
+.dark-mode .chart-ai-explainer-card {
+  background: linear-gradient(to bottom, #1e293b 0%, #151f32 100%) !important;
+  border-color: #33415d !important;
+  color: #e2e8f0 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+}
+
+.dark-mode .chart-ai-explainer-card .ai-header {
+  border-bottom-color: #33415d !important;
+}
+
+.dark-mode .chart-ai-explainer-card .ai-title {
+  color: #a5b4fc !important;
+}
+
+.dark-mode .chart-ai-explainer-card .ai-pill-ready {
+  background: #202e46 !important;
+  color: #94a3b8 !important;
+  border-color: #33415d !important;
+}
+
+.dark-mode .chart-ai-explainer-card .ai-pill-live {
+  background: rgba(22, 163, 74, 0.2) !important;
+  color: #4ade80 !important;
+  border-color: rgba(74, 222, 128, 0.3) !important;
+}
+
+.dark-mode .chart-ai-explainer-card .ai-action-btn {
+  border-color: #33415d !important;
+  color: #cbd5e1 !important;
+  background: #182235 !important;
+}
+
+.dark-mode .chart-ai-explainer-card .ai-action-btn:hover {
+  background: #24344d !important;
+  border-color: #6366f1 !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .chart-ai-explainer-card .ai-takeaway {
+  background: rgba(99, 102, 241, 0.12) !important;
+  border-left-color: #818cf8 !important;
+  color: #c7d2fe !important;
+}
+
+.dark-mode .chart-ai-explainer-card p,
+.dark-mode .chart-ai-explainer-card li {
+  color: #cbd5e1 !important;
+}
+
+.dark-mode .chart-ai-explainer-card strong {
+  color: #f8fafc !important;
+}
+

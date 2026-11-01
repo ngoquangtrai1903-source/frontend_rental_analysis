@@ -48,22 +48,12 @@ export default function ScatterLocationGridChart({
       const isTrendline = name.includes('Trendline') || name.includes('Hồi quy')
       if (isTrendline) {
         return (
-          <div
-            style={{
-              background: '#ffffff',
-              border: '1px solid #e2e8f0',
-              borderRadius: '6px',
-              padding: '6px 10px',
-              boxShadow: '0 6px 15px rgba(0,0,0,0.08)',
-              fontSize: '11px',
-              fontFamily: "'Inter', sans-serif"
-            }}
-          >
-            <div style={{ fontWeight: 600, color: '#0f172a', marginBottom: '2px' }}>
+          <div className="chart-custom-tooltip" style={{ padding: '6px 10px', fontSize: '11px' }}>
+            <div style={{ fontWeight: 600, color: 'var(--ink, #0f172a)', marginBottom: '2px' }}>
               {isEn ? 'Linear Regression' : 'Đường hồi quy'}
             </div>
-            <div style={{ color: '#475569' }}>
-              {isEn ? item.titleEn || item.title : item.title}: <strong>{Number(pt.x).toFixed(1)} km</strong> → <strong>{Number(pt.regVal).toFixed(0)} {isEn ? 'k/m²' : 'nghìn/m²'}</strong>
+            <div style={{ color: 'var(--muted, #475569)' }}>
+              {isEn ? item.titleEn || item.title : item.title}: <strong style={{ color: 'var(--ink)' }}>{Number(pt.x).toFixed(1)} km</strong> → <strong style={{ color: 'var(--ink)' }}>{Number(pt.regVal).toFixed(0)} {isEn ? 'k/m²' : 'nghìn/m²'}</strong>
             </div>
           </div>
         )
@@ -74,29 +64,18 @@ export default function ScatterLocationGridChart({
       const catTitle = isRoom ? (isEn ? 'Rental Room' : 'Phòng trọ') : (isEn ? 'Apartment' : 'Căn hộ/Chung cư')
 
       return (
-        <div
-          style={{
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            padding: '8px 12px',
-            boxShadow: '0 8px 20px rgba(0,0,0,0.08)',
-            fontSize: '11.5px',
-            fontFamily: "'Inter', sans-serif",
-            minWidth: '155px'
-          }}
-        >
-          <div style={{ fontWeight: 700, color, marginBottom: '4px', borderBottom: '1px solid #f1f5f9', paddingBottom: '3px' }}>
+        <div className="chart-custom-tooltip" style={{ padding: '8px 12px', fontSize: '11.5px', minWidth: '155px' }}>
+          <div style={{ fontWeight: 700, color, marginBottom: '4px', borderBottom: '1px solid var(--line, #f1f5f9)', paddingBottom: '3px' }}>
             {catTitle}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
-              <span style={{ color: '#64748b' }}>{isEn ? item.titleEn || item.title : item.title}:</span>
-              <strong style={{ color: '#0f172a' }}>{Number(pt.x).toFixed(1)} km</strong>
+              <span style={{ color: 'var(--muted, #64748b)' }}>{isEn ? item.titleEn || item.title : item.title}:</span>
+              <strong style={{ color: 'var(--ink, #0f172a)' }}>{Number(pt.x).toFixed(1)} km</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
-              <span style={{ color: '#64748b' }}>{isEn ? 'Unit Rent:' : 'Đơn giá:'}</span>
-              <strong style={{ color: '#0f172a' }}>{Number(pt.y).toFixed(1)} {isEn ? 'k VND/m²' : 'nghìn/m²'}</strong>
+              <span style={{ color: 'var(--muted, #64748b)' }}>{isEn ? 'Unit Rent:' : 'Đơn giá:'}</span>
+              <strong style={{ color: 'var(--ink, #0f172a)' }}>{Number(pt.y).toFixed(1)} {isEn ? 'k VND/m²' : 'nghìn/m²'}</strong>
             </div>
           </div>
         </div>
@@ -127,17 +106,7 @@ export default function ScatterLocationGridChart({
           <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink, #1e293b)' }}>
             {isEn ? item.titleEn : item.title}
           </span>
-          <span
-            style={{
-              fontSize: '12px',
-              fontWeight: 800,
-              padding: '2px 8px',
-              borderRadius: '4px',
-              background: Math.abs(item.r) >= 0.25 ? '#fee2e2' : '#f1f5f9',
-              color: Math.abs(item.r) >= 0.25 ? '#dc2626' : '#475569',
-              fontFamily: 'Manrope, sans-serif'
-            }}
-          >
+          <span className={`location-r-badge ${Math.abs(item.r) >= 0.25 ? 'high' : 'normal'}`}>
             r = {item.r.toFixed(2)}
           </span>
         </div>

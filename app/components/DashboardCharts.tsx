@@ -69,18 +69,18 @@ export default function DashboardCharts({ trend, distribution, total, lang = 'vi
           {trend.length > 0 && total > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trend} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e8edf5" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--line, #e8edf5)" />
                 <XAxis
                   dataKey="period"
                   interval={trendTickInterval}
-                  tick={{ fontSize: 10 }}
+                  tick={{ fontSize: 10, fill: 'var(--chart-text-secondary, #64748b)' }}
                   tickFormatter={(period: string) => {
                     const [year, month] = period.split('-')
                     return year && month ? `${month}/${year.slice(-2)}` : period
                   }}
                 />
-                <YAxis yAxisId="left" tick={{ fontSize: 10 }} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} />
+                <YAxis yAxisId="left" tick={{ fontSize: 10, fill: 'var(--chart-text-secondary, #64748b)' }} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fill: 'var(--chart-text-secondary, #64748b)' }} />
                 <Tooltip
                   formatter={(value: any, name: any) => [
                     typeof value === 'number' ? value.toLocaleString(isEn ? 'en-US' : 'vi-VN') : value,
@@ -88,13 +88,15 @@ export default function DashboardCharts({ trend, distribution, total, lang = 'vi
                   ]}
                   labelFormatter={(label) => `${isEn ? 'Period:' : 'Thời gian:'} ${label}`}
                   contentStyle={{
-                    background: '#ffffff',
-                    border: '1px solid #e2e8f0',
+                    background: 'var(--surface-card, #ffffff)',
+                    border: '1px solid var(--line, #e2e8f0)',
                     borderRadius: '8px',
                     padding: '8px 12px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                    fontSize: '12px'
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                    fontSize: '12px',
+                    color: 'var(--ink, #0f172a)'
                   }}
+                  itemStyle={{ color: 'var(--ink, #0f172a)' }}
                 />
                 <Line
                   yAxisId="left"
@@ -141,13 +143,15 @@ export default function DashboardCharts({ trend, distribution, total, lang = 'vi
                     <Tooltip
                       formatter={(value: any) => [`${value}%`, isEn ? 'Share' : 'Tỷ trọng']}
                       contentStyle={{
-                        background: '#ffffff',
-                        border: '1px solid #e2e8f0',
+                        background: 'var(--surface-card, #ffffff)',
+                        border: '1px solid var(--line, #e2e8f0)',
                         borderRadius: '8px',
                         padding: '8px 12px',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                        fontSize: '12px'
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                        fontSize: '12px',
+                        color: 'var(--ink, #0f172a)'
                       }}
+                      itemStyle={{ color: 'var(--ink, #0f172a)' }}
                     />
                     <Pie
                       data={pie}

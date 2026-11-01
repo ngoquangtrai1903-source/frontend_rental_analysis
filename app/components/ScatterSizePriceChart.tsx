@@ -62,23 +62,13 @@ export default function ScatterSizePriceChart({ data, lang = 'vi' }: ScatterSize
     if (isRoomTrend || isAptTrend) {
       const isRoom = isRoomTrend
       return (
-        <div
-          style={{
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            padding: '8px 12px',
-            boxShadow: '0 8px 20px rgba(0,0,0,0.08)',
-            fontSize: '11.5px',
-            fontFamily: "'Inter', sans-serif"
-          }}
-        >
+        <div className="chart-custom-tooltip" style={{ padding: '8px 12px', fontSize: '11.5px' }}>
           <div style={{ fontWeight: 700, color: isRoom ? room.color : apt.color, marginBottom: '2px' }}>
             {name}
           </div>
-          <div style={{ color: '#475569' }}>
+          <div style={{ color: 'var(--muted, #475569)' }}>
             {isEn ? 'Regression model:' : 'Hồi quy tuyến tính:'}{' '}
-            <strong>{isRoom ? `y = ${room.slope.toFixed(2)}x + ${room.intercept.toFixed(1)}` : `y = ${apt.slope.toFixed(2)}x + ${apt.intercept.toFixed(1)}`}</strong>
+            <strong style={{ color: 'var(--ink, #0f172a)' }}>{isRoom ? `y = ${room.slope.toFixed(2)}x + ${room.intercept.toFixed(1)}` : `y = ${apt.slope.toFixed(2)}x + ${apt.intercept.toFixed(1)}`}</strong>
           </div>
         </div>
       )
@@ -90,18 +80,7 @@ export default function ScatterSizePriceChart({ data, lang = 'vi' }: ScatterSize
     const unitPrice = pt.x > 0 ? ((pt.y * 1000) / pt.x).toFixed(1) : '—'
 
     return (
-      <div
-        style={{
-          background: '#ffffff',
-          border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          padding: '10px 14px',
-          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
-          fontSize: '12px',
-          fontFamily: "'Inter', sans-serif",
-          minWidth: '180px'
-        }}
-      >
+      <div className="chart-custom-tooltip" style={{ minWidth: '180px' }}>
         <div
           style={{
             display: 'flex',
@@ -109,29 +88,29 @@ export default function ScatterSizePriceChart({ data, lang = 'vi' }: ScatterSize
             justifyContent: 'space-between',
             gap: '8px',
             marginBottom: '6px',
-            borderBottom: '1px solid #f1f5f9',
+            borderBottom: '1px solid var(--line, #f1f5f9)',
             paddingBottom: '4px'
           }}
         >
           <strong style={{ color }}>{categoryTitle}</strong>
           {pt.ward && (
-            <span style={{ fontSize: '11px', color: '#64748b', background: '#f1f5f9', padding: '1px 6px', borderRadius: '4px', fontWeight: 500 }}>
+            <span style={{ fontSize: '11px', color: 'var(--muted, #64748b)', background: 'var(--surface-subtle, #f1f5f9)', padding: '1px 6px', borderRadius: '4px', fontWeight: 500 }}>
               {pt.ward}
             </span>
           )}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
-            <span style={{ color: '#64748b' }}>{isEn ? 'Rent Price:' : 'Giá thuê:'}</span>
-            <strong style={{ color: '#0f172a' }}>{pt.y} {isEn ? 'M VND/mo' : 'triệu/tháng'}</strong>
+            <span style={{ color: 'var(--muted, #64748b)' }}>{isEn ? 'Rent Price:' : 'Giá thuê:'}</span>
+            <strong style={{ color: 'var(--ink, #0f172a)' }}>{pt.y} {isEn ? 'M VND/mo' : 'triệu/tháng'}</strong>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
-            <span style={{ color: '#64748b' }}>{isEn ? 'Area:' : 'Diện tích:'}</span>
-            <strong style={{ color: '#0f172a' }}>{pt.x} m²</strong>
+            <span style={{ color: 'var(--muted, #64748b)' }}>{isEn ? 'Area:' : 'Diện tích:'}</span>
+            <strong style={{ color: 'var(--ink, #0f172a)' }}>{pt.x} m²</strong>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', borderTop: '1px dashed #f1f5f9', paddingTop: '3px' }}>
-            <span style={{ color: '#94a3b8', fontSize: '11px' }}>{isEn ? 'Unit Price:' : 'Đơn giá:'}</span>
-            <span style={{ color: '#475569', fontSize: '11px', fontWeight: 600 }}>{unitPrice} {isEn ? 'k VND/m²' : 'nghìn/m²'}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', borderTop: '1px dashed var(--line, #f1f5f9)', paddingTop: '3px' }}>
+            <span style={{ color: 'var(--muted, #94a3b8)', fontSize: '11px' }}>{isEn ? 'Unit Price:' : 'Đơn giá:'}</span>
+            <span style={{ color: 'var(--ink, #475569)', fontSize: '11px', fontWeight: 600 }}>{unitPrice} {isEn ? 'k VND/m²' : 'nghìn/m²'}</span>
           </div>
         </div>
       </div>
