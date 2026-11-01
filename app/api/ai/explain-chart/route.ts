@@ -60,9 +60,9 @@ function generateFallbackExplanation(
         return {
           overview: `The distribution highlights a clear structural bimodal divergence between rental rooms and apartments in Da Nang.`,
           insights: [
-            `**Rental Rooms (Phòng trọ)**: Strongly concentrated in the 2.0 – 3.5M VND range with Median at **${room.median}M** and Mean at **${room.mean}M** (sample size: ${room.count.toLocaleString()}). The distribution is tightly peaked, indicating inelastic budget demand.`,
-            `**Apartments (Căn hộ/Chung cư)**: Substantially higher with Median at **${apt.median}M** and Mean at **${apt.mean}M** (sample size: ${apt.count.toLocaleString()}). The right tail extends up to 35–45M, reflecting premium luxury & expat serviced units.`,
-            `**Right-skewness**: Both distributions exhibit positive skew (Mean > Median), pushed upward by high-end studio & penthouse outliers.`
+            `**Rental Rooms**: Strongly concentrated in the 2.0 – 3.5M VND range with Median at **${room.median}M** and Mean at **${room.mean}M** (sample size: ${room.count.toLocaleString()}). The distribution is tightly peaked, indicating steady budget-conscious tenant demand.`,
+            `**Apartments**: Substantially higher with Median at **${apt.median}M** and Mean at **${apt.mean}M** (sample size: ${apt.count.toLocaleString()}). The right tail extends up to 35–45M, reflecting luxury & expat serviced units.`,
+            `**Right-skewness**: Both categories exhibit positive skew (Mean > Median), driven upward by high-end studio & penthouse units.`
           ],
           recommendation: `Investors targeting maximum occupancy should optimize rooms in the 2.5–3.2M sweet spot, while apartment developers should equip turnkey amenities to capture the 8–14M expat segment.`
         }
@@ -167,12 +167,12 @@ function generateFallbackExplanation(
 
       if (isEn) {
         return {
-          overview: `Spatial econometrics reveals that CBD center and beach proximity are the twin primary geographical drivers of rental rates in Da Nang.`,
+          overview: `Location analysis reveals that CBD downtown and beach proximity are the twin primary geographical drivers of rental rates in Da Nang.`,
           insights: [
-            `**CBD Proximity (r = ${cbd.toFixed(2)})**: Strong negative decay. Every kilometer further from downtown CBD reduces expected unit rent noticeably.`,
-            `**Beach Proximity (r = ${beach.toFixed(2)})**: Equally potent negative decay. The coastal tourism strip commands the highest rental willingness-to-pay.`,
-            `**Airport Neutrality (r = ${airport.toFixed(2)})**: Negligible correlation. Proximity to Da Nang International Airport creates no notable price premium.`,
-            `**University Proximity (r = ${uni.toFixed(2)})**: Weak negative correlation. University hubs anchor stable demand volume rather than premium pricing.`
+            `**CBD Proximity (r = ${cbd.toFixed(2)})**: Noticeable inverse relationship. Each kilometer further from downtown CBD reduces expected unit rent.`,
+            `**Beach Proximity (r = ${beach.toFixed(2)})**: Equal geographical pull. The coastal corridor commands the highest tenant willingness-to-pay.`,
+            `**Airport Neutrality (r = ${airport.toFixed(2)})**: Negligible correlation. Distance to Da Nang International Airport creates no notable price distortion.`,
+            `**University Hubs (r = ${uni.toFixed(2)})**: Moderate localized correlation. University areas anchor stable occupancy rather than luxury rates.`
           ],
           recommendation: `Asset acquisitions should prioritize locations within 2.5 km of either the CBD core or Mỹ Khê coastline to maximize capital appreciation and rental yield.`
         }
@@ -193,20 +193,20 @@ function generateFallbackExplanation(
       // Ma trận tương quan Spearman
       if (isEn) {
         return {
-          overview: `The 18×18 Spearman rank correlation matrix illustrates how unit pricing interacts across financial, physical, spatial, and amenity dimensions.`,
+          overview: `The 18×18 correlation matrix illustrates how unit pricing interacts across financial, space scale, geographical distance, and amenities.`,
           insights: [
             `**Key Positive Drivers**: Total rent correlates most strongly with **Property Size (ρ = +0.79)** and **Unit Price/m² (ρ = +0.80)**.`,
-            `**High-Impact Amenities**: Features with notable positive correlation include **Elevator (Thang máy)**, **Private Bathroom (WC riêng)**, and **Balcony (Ban công)**, elevating both perceived value and tenant stickiness.`,
-            `**Spatial Resistance**: Distance to beach (ρ = -0.29) and CBD (ρ = -0.28) display persistent negative coefficients against rental price.`
+            `**High-Impact Amenities**: Features with notable positive correlation include **Elevators**, **Private Bathrooms**, and **Balconies**, elevating perceived property value and tenant retention.`,
+            `**Geographical Distance**: Distance to beach (ρ = -0.29) and CBD (ρ = -0.28) display persistent negative coefficients against rental price.`
           ],
           recommendation: `When retrofitting properties, prioritizing private bathrooms, balconies, and high-speed Wi-Fi yields the highest statistical return across the Da Nang market.`
         }
       }
       return {
-        overview: `Ma trận tương quan phi tham số Spearman 18×18 bóc tách toàn diện mối quan hệ qua lại giữa giá thuê, đặc điểm phòng, vị trí và tiện ích.`,
+        overview: `Ma trận tương quan 18×18 bóc tách toàn diện mối quan hệ qua lại giữa giá thuê, đặc điểm phòng, vị trí và các tiện ích thực tế.`,
         insights: [
           `**Nhân tố tác động thuận mạnh nhất**: Tổng giá thuê có tương quan chặt chẽ nhất với **Diện tích (ρ = +0.79)** và **Đơn giá/m² (ρ = +0.80)**.`,
-          `**Tiện ích tạo chênh lệch giá cao nhất**: Trong 9 tiện ích, **Thang máy (has_elevator)**, **WC riêng (private_bathroom)** và **Ban công (has_balcony)** có tương quan dương cao nhất với đơn giá cho thuê.`,
+          `**Tiện ích tạo chênh lệch giá cao nhất**: Trong 9 tiện ích, **Thang máy**, **WC riêng** và **Ban công** có tương quan dương cao nhất với đơn giá cho thuê.`,
           `**Mối cản trở khoảng cách**: Khoảng cách đến biển (ρ = -0.29) và CBD (ρ = -0.28) tiếp tục khẳng định lực cản địa lý đối với mặt bằng giá phòng trọ.`
         ],
         recommendation: `Khi cải tạo hoặc xây dựng nhà trọ, việc bắt buộc phải có WC riêng và bố trí cửa sổ/ban công thoáng khí là chiến lược tối ưu nhất để định giá phòng ở mức cao.`
@@ -216,8 +216,8 @@ function generateFallbackExplanation(
     default:
       return {
         overview: isEn
-          ? `Analysis of econometric indicators for ${chartTitle}.`
-          : `Phân tích các chỉ số thống kê kinh tế lượng cho biểu đồ ${chartTitle}.`,
+          ? `Market insights and key trends for ${chartTitle}.`
+          : `Tổng quan và chỉ số phân tích thị trường cho biểu đồ ${chartTitle}.`,
         insights: [
           isEn
             ? `Data aggregated from cleaned Gold layer records in Supabase.`
@@ -237,22 +237,26 @@ export async function POST(req: NextRequest) {
     const isEn = lang === 'en'
 
     const systemPrompt = isEn
-      ? `You are a Senior Real Estate Econometrician at RentIQ Da Nang. Analyze the provided chart statistics and produce a concise, high-level econometric interpretation.
-Format your response clearly into three sections:
-1. **Overview**: (1-2 sentences summarizing the overarching macro structural pattern)
-2. **Key Findings**: (3 bullet points with specific figures/data from the summary)
-3. **Strategic Recommendation**: (1 actionable insight for investors, tenants, or developers)
-Keep the tone objective, precise, and professional.`
-      : `Bạn là Giám đốc Nghiên cứu Kinh tế lượng Bất động sản tại RentIQ Đà Nẵng. Hãy phân tích các số liệu thống kê biểu đồ được cung cấp và đưa ra bản giải thích kinh tế lượng súc tích, chuyên sâu.
+      ? `You are a Senior Real Estate Market Analyst at RentIQ Da Nang. Analyze the provided chart statistics and produce a natural, practical, and human-friendly market commentary in English.
+Avoid academic jargon like "econometrics" or "econometrician". Use clear, accessible, conversational yet professional business language that ordinary renters and property investors can easily understand.
+Do not start with robotic greetings or filler phrases like "Sure! As an analyst..." or "Certainly!". Dive straight into the analysis.
+Format your response into three clear sections:
+1. **Market Overview**: (1-2 sentences summarizing the main market pattern)
+2. **Key Takeaways**: (3 concise bullet points citing key numbers from the data)
+3. **Practical Advice**: (1-2 actionable tips for tenants or property owners/investors)
+Strictly answer in English.`
+      : `Bạn là Chuyên gia Phân tích Thị trường Bất động sản tại RentIQ Đà Nẵng. Hãy đưa ra nhận định thị trường tự nhiên, gần gũi, thực tế và dễ hiểu cho người tìm thuê và chủ nhà/nhà đầu tư.
+Tuyệt đối tránh các thuật ngữ quá học thuật, khô cứng như "kinh tế lượng", "kinh tế lượng BĐS", "mô hình hóa phi tham số". Hãy dùng ngôn ngữ phân tích BĐS thực tế, dễ hiểu.
+Không mở đầu bằng lời chào rập khuôn (như "Tuyệt vời! Với vai trò là...", "Dưới đây là..."). Hãy đi thẳng vào nội dung nhận định.
 Trình bày rõ ràng theo 3 phần:
-1. **Tổng quan**: (1-2 câu tóm lược cấu trúc vĩ mô hoặc quy luật chính)
-2. **Các phát hiện nổi bật**: (3 gạch đầu dòng nêu rõ các số liệu/con số cụ thể từ dữ liệu thống kê)
-3. **Khuyến nghị chiến lược**: (1 đề xuất hành động thực tiễn cho nhà đầu tư, người thuê hoặc chủ trọ)
-Văn phong chuẩn xác, logic, dựa trên dữ liệu thực tế.`
+1. **Tổng quan thị trường**: (1-2 câu tóm lược diễn biến chính)
+2. **Điểm đáng chú ý**: (3 gạch đầu dòng nêu bật số liệu thực tế)
+3. **Lời khuyên thực tế**: (1-2 gợi ý hữu ích cho người thuê phòng hoặc chủ nhà)
+Trả lời bằng tiếng Việt.`
 
     const userPrompt = isEn
-      ? `Chart: ${chartTitle} (ID: ${chartId})\nSummary Statistics & Econometric Metrics:\n${JSON.stringify(summaryData, null, 2)}`
-      : `Biểu đồ: ${chartTitle} (Mã: ${chartId})\nDữ liệu thống kê & Chỉ số kinh tế lượng:\n${JSON.stringify(summaryData, null, 2)}`
+      ? `Chart: ${chartTitle} (ID: ${chartId})\nData Summary:\n${JSON.stringify(summaryData, null, 2)}\nPlease answer strictly in English.`
+      : `Biểu đồ: ${chartTitle} (Mã: ${chartId})\nDữ liệu thống kê:\n${JSON.stringify(summaryData, null, 2)}\nVui lòng trả lời bằng tiếng Việt.`
 
     // =========================================================================
     // 0. OPENROUTER API (OPENROUTER_API_KEY - google/gemini-2.5-flash-lite, etc.)
@@ -464,7 +468,7 @@ Văn phong chuẩn xác, logic, dựa trên dữ liệu thực tế.`
     const fallback = generateFallbackExplanation(chartId, chartTitle, summaryData, lang)
 
     return NextResponse.json({
-      provider: 'RentIQ Econometric Engine (Local Analytics)',
+      provider: isEn ? 'RentIQ Market Analytics (Local Engine)' : 'Phân tích thị trường RentIQ (Cục bộ)',
       isLive: false,
       data: fallback
     })

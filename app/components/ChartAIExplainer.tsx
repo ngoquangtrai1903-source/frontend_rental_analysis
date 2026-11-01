@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Sparkles, Loader2, Copy, Check, RotateCcw, ChevronDown, ChevronUp, Bot } from 'lucide-react'
 
 interface ChartAIExplainerProps {
@@ -30,6 +30,17 @@ export default function ChartAIExplainer({
   const [isLive, setIsLive] = useState(false)
   const [provider, setProvider] = useState<string>('')
   const [copied, setCopied] = useState(false)
+
+  // Re-fetch in new language if already open when language toggles
+  const prevLangRef = useRef(lang)
+  useEffect(() => {
+    if (prevLangRef.current !== lang) {
+      prevLangRef.current = lang
+      if (isOpen) {
+        void handleFetchInsight()
+      }
+    }
+  }, [lang, isOpen])
 
   const handleFetchInsight = async () => {
     setLoading(true)
@@ -170,7 +181,7 @@ export default function ChartAIExplainer({
                 <Bot size={14} />
               </div>
               <strong style={{ color: '#3730a3', fontSize: '13px' }}>
-                {isEn ? 'AI Econometric Insight' : 'Phân tích kinh tế lượng từ AI'}
+                {isEn ? 'AI Market Insights' : 'Nhận định thị trường từ AI'}
               </strong>
               <span
                 style={{
@@ -268,8 +279,8 @@ export default function ChartAIExplainer({
               <Loader2 size={18} className="spin" style={{ margin: '0 auto 6px' }} />
               <div style={{ fontSize: '12px' }}>
                 {isEn
-                  ? 'AI model is synthesizing econometric statistics from current chart…'
-                  : 'AI đang tổng hợp các chỉ số thống kê kinh tế lượng từ biểu đồ…'}
+                  ? 'AI is analyzing rental market trends from this chart…'
+                  : 'AI đang phân tích xu hướng thị trường từ biểu đồ…'}
               </div>
             </div>
           )}

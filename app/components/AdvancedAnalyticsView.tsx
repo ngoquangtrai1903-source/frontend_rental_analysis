@@ -68,7 +68,7 @@ export default function AdvancedAnalyticsView({
         </div>
         <div>
           <span className="eyebrow">
-            {isEn ? 'STATISTICAL MODELING & ECONOMETRIC ANALYSIS' : 'MÔ HÌNH THỐNG KÊ & KINH TẾ LƯỢNG BĐS'}
+            {isEn ? 'STATISTICAL MODELING & MARKET TRENDS' : 'MÔ HÌNH THỐNG KÊ & XU HƯỚNG THỊ TRƯỜNG'}
           </span>
           <h2>
             {isEn
@@ -77,8 +77,8 @@ export default function AdvancedAnalyticsView({
           </h2>
           <p>
             {isEn
-              ? 'Real-time econometric analysis from Supabase Gold Data Warehouse with AI insights.'
-              : 'Trực quan hóa thời gian thực các biểu đồ nghiên cứu từ kho dữ liệu Supabase Gold, tích hợp cố vấn phân tích AI.'}
+              ? 'Real-time rental market trends from Supabase Gold Data Warehouse with AI insights.'
+              : 'Trực quan hóa thời gian thực các xu hướng thị trường từ kho dữ liệu Supabase Gold, tích hợp trợ lý phân tích thông minh.'}
           </p>
         </div>
         <span className="analysis-status">
@@ -200,8 +200,8 @@ export default function AdvancedAnalyticsView({
           <div className="pulse-spinner" style={{ width: '28px', height: '28px', marginBottom: '12px' }} />
           <span>
             {isEn
-              ? 'Querying Supabase Gold data warehouse & computing econometric statistics…'
-              : 'Đang truy vấn kho dữ liệu Supabase Gold & tính toán thống kê kinh tế lượng…'}
+              ? 'Querying Supabase Gold data warehouse & computing market analytics…'
+              : 'Đang truy vấn kho dữ liệu Supabase Gold & tổng hợp chỉ số phân tích…'}
           </span>
         </div>
       )}
