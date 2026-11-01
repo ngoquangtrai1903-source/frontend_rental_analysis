@@ -338,7 +338,7 @@ export default function RentalMapbox({
                   boxShadow: '0 2px 8px #0f172a40',
                   color: theme.color,
                   cursor: 'pointer',
-                  font: '700 11px DM Sans, sans-serif',
+                  font: '700 11px Inter, sans-serif',
                   padding: '3px 8px',
                   whiteSpace: 'nowrap'
                 }}

@@ -167,7 +167,7 @@ export default function AmenitiesView({ filterQueryString = '', lang = 'vi' }: A
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '6px' }}>
               <div>
                 <span style={{ fontSize: '10px', color: 'var(--muted)' }}>{isEn ? 'With amenity' : 'Có tiện ích'}</span>
-                <div style={{ font: '800 18px Manrope', color: 'var(--blue)' }}>
+                <div style={{ font: "800 18px 'Manrope', sans-serif", color: 'var(--blue)' }}>
                   {item.avgPriceWithMillion} {isEn ? 'M' : 'tr'}
                 </div>
                 <small style={{ fontSize: '10px', color: 'var(--muted)' }}>
@@ -177,7 +177,7 @@ export default function AmenitiesView({ filterQueryString = '', lang = 'vi' }: A
 
               <div style={{ textAlign: 'right' }}>
                 <span style={{ fontSize: '10px', color: 'var(--muted)' }}>{isEn ? 'Without' : 'Không có'}</span>
-                <div style={{ font: '700 15px Manrope', color: 'var(--muted)' }}>
+                <div style={{ font: "700 15px 'Manrope', sans-serif", color: 'var(--muted)' }}>
                   {item.avgPriceWithoutMillion} {isEn ? 'M' : 'tr'}
                 </div>
                 <small style={{ fontSize: '10px', color: 'var(--muted)' }}>
@@ -291,7 +291,7 @@ export default function AmenitiesView({ filterQueryString = '', lang = 'vi' }: A
             <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>
               {isEn ? 'RECOMMENDED ESTIMATED RENT' : 'GIÁ THUÊ ƯỚC TÍNH KHUYẾN NGHỊ'}
             </span>
-            <div style={{ font: '800 32px Manrope', color: 'var(--blue)', margin: '8px 0' }}>
+            <div style={{ font: "800 32px 'Manrope', sans-serif", color: 'var(--blue)', margin: '8px 0' }}>
               {simulatedPrice.toFixed(1)} {isEn ? 'M VND / mo' : 'tr / tháng'}
             </div>
             <p style={{ margin: 0, fontSize: '11px', color: 'var(--muted)', lineHeight: 1.5 }}>

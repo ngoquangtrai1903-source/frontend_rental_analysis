@@ -100,7 +100,7 @@ export default function AdvancedAnalyticsView({
             <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>
               {isEn ? 'Cleaned Sample Size' : 'Quy mô mẫu sau làm sạch'}
             </span>
-            <div style={{ font: '800 20px Manrope', color: 'var(--ink)', marginTop: '4px' }}>
+            <div style={{ font: "800 20px 'Manrope', sans-serif", color: 'var(--ink)', marginTop: '4px' }}>
               {data.summary.totalCleaned.toLocaleString()}{' '}
               <small style={{ fontSize: '12px', fontWeight: 500, color: 'var(--muted)' }}>
                 / {data.summary.totalRaw.toLocaleString()}
@@ -112,7 +112,7 @@ export default function AdvancedAnalyticsView({
             <span style={{ fontSize: '11px', color: '#E07B39', fontWeight: 600 }}>
               {isEn ? 'Rental Rooms' : 'Phòng trọ'}
             </span>
-            <div style={{ font: '800 20px Manrope', color: '#E07B39', marginTop: '4px' }}>
+            <div style={{ font: "800 20px 'Manrope', sans-serif", color: '#E07B39', marginTop: '4px' }}>
               {data.summary.roomCount.toLocaleString()}{' '}
               <small style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
                 (Med {data.histPrice.room.median}{isEn ? 'M' : 'tr'})
@@ -124,7 +124,7 @@ export default function AdvancedAnalyticsView({
             <span style={{ fontSize: '11px', color: '#2E6F9E', fontWeight: 600 }}>
               {isEn ? 'Apartments' : 'Căn hộ / Chung cư'}
             </span>
-            <div style={{ font: '800 20px Manrope', color: '#2E6F9E', marginTop: '4px' }}>
+            <div style={{ font: "800 20px 'Manrope', sans-serif", color: '#2E6F9E', marginTop: '4px' }}>
               {data.summary.aptCount.toLocaleString()}{' '}
               <small style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
                 (Med {data.histPrice.apt.median}{isEn ? 'M' : 'tr'})
@@ -136,7 +136,7 @@ export default function AdvancedAnalyticsView({
             <span style={{ fontSize: '11px', color: '#dc2626', fontWeight: 600 }}>
               {isEn ? 'Citywide Median Unit Price' : 'Median đơn giá toàn TP'}
             </span>
-            <div style={{ font: '800 20px Manrope', color: '#dc2626', marginTop: '4px' }}>
+            <div style={{ font: "800 20px 'Manrope', sans-serif", color: '#dc2626', marginTop: '4px' }}>
               {data.summary.cityMedianPpm2}{' '}
               <small style={{ fontSize: '12px', fontWeight: 500, color: 'var(--muted)' }}>
                 {isEn ? 'k VND/m²' : 'nghìn đ/m²'}
