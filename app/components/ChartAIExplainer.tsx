@@ -42,7 +42,18 @@ export default function ChartAIExplainer({
     }
   }, [lang, isOpen])
 
-  const handleFetchInsight = async () => {
+  // Re-fetch with new metrics when user applies filters while already open
+  const prevSummaryRef = useRef(summaryData)
+  useEffect(() => {
+    if (prevSummaryRef.current !== summaryData) {
+      prevSummaryRef.current = summaryData
+      if (isOpen) {
+        void handleFetchInsight(summaryData)
+      }
+    }
+  }, [summaryData, isOpen])
+
+  const handleFetchInsight = async (overrideData?: any) => {
     setLoading(true)
     setIsOpen(true)
     try {
@@ -52,7 +63,7 @@ export default function ChartAIExplainer({
         body: JSON.stringify({
           chartId,
           chartTitle,
-          summaryData,
+          summaryData: overrideData || summaryData,
           lang
         })
       })

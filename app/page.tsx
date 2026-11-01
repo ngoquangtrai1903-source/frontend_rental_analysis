@@ -916,21 +916,43 @@ export default function DashboardPage() {
                     params.set('sortBy', sortBy)
                     params.set('ascending', String(ascending))
                     const allRecords = await fetchAllRecords<RentalRecord>(params.toString())
+
+                    const datePart = startDate && endDate
+                      ? `${startDate}_${lang === 'en' ? 'to' : 'den'}_${endDate}`
+                      : startDate
+                      ? `${lang === 'en' ? 'from' : 'tu'}_${startDate}`
+                      : endDate
+                      ? `${lang === 'en' ? 'to' : 'den'}_${endDate}`
+                      : (lang === 'en' ? 'all_time' : 'tat_ca')
+                    const exportFileName = `rental_export_${datePart}.csv`
+
                     const csv = toCsv([
-                      [lang === 'en' ? 'Ward' : 'Khu vực', lang === 'en' ? 'Category' : 'Loại hình', lang === 'en' ? 'Price' : 'Giá', lang === 'en' ? 'Size' : 'Diện tích'],
-                      ...allRecords.map(r => [r.ward_name, r.category_name, r.price_vnd, r.size_m2])
+                      [
+                        lang === 'en' ? 'Posted Date' : 'Ngày đăng',
+                        lang === 'en' ? 'Ward' : 'Khu vực',
+                        lang === 'en' ? 'Category' : 'Loại hình',
+                        lang === 'en' ? 'Price (VND)' : 'Giá (VNĐ)',
+                        lang === 'en' ? 'Size (m²)' : 'Diện tích (m²)'
+                      ],
+                      ...allRecords.map(r => [
+                        r.posted_date ? r.posted_date.slice(0, 10) : '',
+                        r.ward_name,
+                        r.category_name,
+                        r.price_vnd,
+                        r.size_m2
+                      ])
                     ])
                     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
                     const a = document.createElement('a')
                     a.href = url
-                    a.download = 'rental_gold_export.csv'
+                    a.download = exportFileName
                     document.body.appendChild(a)
                     a.click()
                     a.remove()
                     window.setTimeout(() => URL.revokeObjectURL(url), 1000)
                     setExportMessage(lang === 'en'
-                      ? `Exported ${allRecords.length.toLocaleString('en-US')} listings according to filters at export time.`
-                      : `Đã xuất ${allRecords.length.toLocaleString('vi-VN')} tin theo bộ lọc lúc bấm xuất.`)
+                      ? `Exported ${allRecords.length.toLocaleString('en-US')} listings to "${exportFileName}".`
+                      : `Đã xuất ${allRecords.length.toLocaleString('vi-VN')} tin vào tệp "${exportFileName}".`)
                   } catch (error) {
                     setExportMessage(error instanceof Error ? error.message : (lang === 'en' ? 'Failed to export CSV. Please try again.' : 'Không thể xuất CSV. Vui lòng thử lại.'))
                   } finally {
