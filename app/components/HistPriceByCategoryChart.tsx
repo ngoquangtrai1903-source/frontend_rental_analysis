@@ -43,6 +43,51 @@ export default function HistPriceByCategoryChart({ data, lang = 'vi' }: HistPric
     )
   }
 
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (!active || !payload || !payload.length) return null
+    const b = payload[0]?.payload
+    if (!b) return null
+
+    return (
+      <div
+        style={{
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          padding: '10px 14px',
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+          fontSize: '12px',
+          fontFamily: "'Inter', sans-serif",
+          minWidth: '190px'
+        }}
+      >
+        <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '6px', borderBottom: '1px solid #f1f5f9', paddingBottom: '4px' }}>
+          {isEn ? 'Price Range:' : 'Khoảng giá:'} {b.binStart.toFixed(1)} – {b.binEnd.toFixed(1)} {isEn ? 'M VND/mo' : 'triệu/tháng'}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#64748b' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '2px', background: room.color }} />
+              {isEn ? 'Rental Room:' : 'Phòng trọ:'}
+            </span>
+            <strong style={{ color: room.color }}>
+              {b.roomCount.toLocaleString()} {isEn ? 'listings' : 'tin'}
+            </strong>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#64748b' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '2px', background: apt.color }} />
+              {isEn ? 'Apartment:' : 'Căn hộ:'}
+            </span>
+            <strong style={{ color: apt.color }}>
+              {b.aptCount.toLocaleString()} {isEn ? 'listings' : 'tin'}
+            </strong>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="analytics-chart-frame-container" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Legend & Stats Badges */}
@@ -124,27 +169,8 @@ export default function HistPriceByCategoryChart({ data, lang = 'vi' }: HistPric
               axisLine={false}
             />
             <Tooltip
-              formatter={(val: any, name: any) => [
-                `${Number(val).toLocaleString()} ${isEn ? 'listings' : 'tin'}`,
-                name === 'roomCount'
-                  ? isEn
-                    ? 'Rental Room'
-                    : 'Phòng trọ'
-                  : isEn
-                  ? 'Apartment'
-                  : 'Căn hộ/Chung cư'
-              ]}
-              labelFormatter={(label) =>
-                `${isEn ? 'Price range:' : 'Khoảng giá:'} ${label} – ${(Number(label) + 1).toFixed(1)} ${
-                  isEn ? 'M VND' : 'triệu VNĐ'
-                }`
-              }
-              contentStyle={{
-                background: 'var(--surface-card, #ffffff)',
-                borderColor: 'var(--line, #e2e8f0)',
-                borderRadius: '8px',
-                fontSize: '12px'
-              }}
+              cursor={{ fill: 'rgba(59, 130, 246, 0.06)' }}
+              content={<CustomTooltip />}
             />
 
             {/* Room Density / Count Bar */}

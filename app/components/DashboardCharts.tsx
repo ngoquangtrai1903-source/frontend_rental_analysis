@@ -87,6 +87,14 @@ export default function DashboardCharts({ trend, distribution, total, lang = 'vi
                     name
                   ]}
                   labelFormatter={(label) => `${isEn ? 'Period:' : 'Thời gian:'} ${label}`}
+                  contentStyle={{
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                    fontSize: '12px'
+                  }}
                 />
                 <Line
                   yAxisId="left"
@@ -132,6 +140,14 @@ export default function DashboardCharts({ trend, distribution, total, lang = 'vi
                   <PieChart>
                     <Tooltip
                       formatter={(value: any) => [`${value}%`, isEn ? 'Share' : 'Tỷ trọng']}
+                      contentStyle={{
+                        background: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        padding: '8px 12px',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                        fontSize: '12px'
+                      }}
                     />
                     <Pie
                       data={pie}

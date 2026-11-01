@@ -146,8 +146,9 @@ export default function WardPpm2BoxPlotChart({
                   gap: '12px',
                   padding: '5px 8px',
                   borderRadius: '6px',
-                  background: isHovered ? 'rgba(143, 184, 222, 0.15)' : 'transparent',
-                  transition: 'background 0.15s ease',
+                  background: isHovered ? '#eff6ff' : 'transparent',
+                  boxShadow: isHovered ? '0 1px 4px rgba(37, 99, 235, 0.08)' : 'none',
+                  transition: 'all 0.15s ease',
                   cursor: 'pointer'
                 }}
               >
@@ -286,35 +287,49 @@ export default function WardPpm2BoxPlotChart({
         </div>
       </div>
 
-      {/* Hover Card Detail */}
-      {hoveredWard && (
-        <div
-          style={{
-            marginTop: '10px',
-            padding: '10px 14px',
-            borderRadius: '6px',
-            background: 'var(--surface-subtle, #f8fafc)',
-            border: '1px solid #bfdbfe',
-            fontSize: '12px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '8px'
-          }}
-        >
-          <div>
-            <strong>{hoveredWard.wardName}</strong> ({hoveredWard.count} {isEn ? 'listings' : 'tin đăng'}):
+      {/* Hover Card Detail - Stable Height to Prevent Layout Shift */}
+      <div
+        style={{
+          marginTop: '12px',
+          minHeight: '44px',
+          padding: '10px 14px',
+          borderRadius: '8px',
+          background: hoveredWard ? '#f0f7ff' : 'var(--surface-subtle, #f8fafc)',
+          border: hoveredWard ? '1px solid #93c5fd' : '1px solid var(--line, #e2e8f0)',
+          fontSize: '12px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '8px',
+          transition: 'all 0.15s ease'
+        }}
+      >
+        {hoveredWard ? (
+          <>
+            <div>
+              <strong style={{ color: '#1e3a8a', fontSize: '13px' }}>{hoveredWard.wardName}</strong>{' '}
+              <span style={{ color: '#64748b' }}>({hoveredWard.count} {isEn ? 'listings' : 'tin đăng'})</span>:
+            </div>
+            <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', fontFamily: "'Inter', sans-serif" }}>
+              <span>Min: <strong>{hoveredWard.min}k</strong></span>
+              <span>Q1: <strong>{hoveredWard.q1}k</strong></span>
+              <span>Median: <strong style={{ color: '#1d4ed8', fontSize: '13px' }}>{hoveredWard.median}k</strong></span>
+              <span>Q3: <strong>{hoveredWard.q3}k</strong></span>
+              <span>Max: <strong>{hoveredWard.max}k</strong></span>
+            </div>
+          </>
+        ) : (
+          <div style={{ color: '#94a3b8', fontSize: '11.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>💡</span>
+            <span>
+              {isEn
+                ? 'Hover over any ward row above to inspect detailed box plot statistics (Min, Q1, Median, Q3, Max).'
+                : 'Rê chuột vào dòng từng phường để xem chi tiết các phân vị (Min, Q1, Trung vị, Q3, Max).'}
+            </span>
           </div>
-          <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
-            <span>Min: <strong>{hoveredWard.min}k</strong></span>
-            <span>Q1: <strong>{hoveredWard.q1}k</strong></span>
-            <span style={{ color: '#2e6f9e' }}>Median: <strong>{hoveredWard.median}k</strong></span>
-            <span>Q3: <strong>{hoveredWard.q3}k</strong></span>
-            <span>Max: <strong>{hoveredWard.max}k</strong></span>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

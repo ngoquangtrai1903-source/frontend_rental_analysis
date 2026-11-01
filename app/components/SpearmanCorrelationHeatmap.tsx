@@ -233,54 +233,73 @@ export default function SpearmanCorrelationHeatmap({
         </table>
       </div>
 
-      {/* Hover Info Banner */}
-      {hoveredCell && (
-        <div
-          style={{
-            marginTop: '12px',
-            padding: '10px 14px',
-            borderRadius: '6px',
-            background: 'var(--surface-subtle, #f8fafc)',
-            border: '1px solid #bfdbfe',
-            fontSize: '12px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '8px'
-          }}
-        >
-          <div>
-            <strong>
-              {isEn ? columns[hoveredCell.rowIdx].labelEn : columns[hoveredCell.rowIdx].label}
-            </strong>{' '}
-            ×{' '}
-            <strong>
-              {isEn ? columns[hoveredCell.colIdx].labelEn : columns[hoveredCell.colIdx].label}
-            </strong>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span>
-              Spearman ρ ={' '}
-              <strong style={{ fontSize: '14px', color: hoveredCell.val >= 0 ? '#1d4ed8' : '#b91c1c' }}>
-                {hoveredCell.val.toFixed(2)}
+      {/* Hover Info Banner - Fixed Height Bar (0px Layout Shift) */}
+      <div
+        style={{
+          marginTop: '12px',
+          padding: '10px 14px',
+          borderRadius: '8px',
+          background: hoveredCell ? 'var(--surface-subtle, #f8fafc)' : 'rgba(241, 245, 249, 0.6)',
+          border: hoveredCell ? '1px solid #bfdbfe' : '1px dashed #cbd5e1',
+          fontSize: '12px',
+          minHeight: '44px',
+          display: 'flex',
+          alignItems: 'center',
+          transition: 'all 0.15s ease'
+        }}
+      >
+        {hoveredCell ? (
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '8px'
+            }}
+          >
+            <div>
+              <strong>
+                {isEn ? columns[hoveredCell.rowIdx].labelEn : columns[hoveredCell.rowIdx].label}
+              </strong>{' '}
+              ×{' '}
+              <strong>
+                {isEn ? columns[hoveredCell.colIdx].labelEn : columns[hoveredCell.colIdx].label}
               </strong>
-            </span>
-            <span
-              style={{
-                padding: '2px 8px',
-                borderRadius: '4px',
-                background: Math.abs(hoveredCell.val) >= 0.4 ? '#e0e7ff' : '#f1f5f9',
-                color: Math.abs(hoveredCell.val) >= 0.4 ? '#4338ca' : '#475569',
-                fontWeight: 600,
-                fontSize: '11px'
-              }}
-            >
-              {getInterpretation(hoveredCell.val)}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span>
+                Spearman ρ ={' '}
+                <strong style={{ fontSize: '14px', color: hoveredCell.val >= 0 ? '#1d4ed8' : '#b91c1c' }}>
+                  {hoveredCell.val.toFixed(2)}
+                </strong>
+              </span>
+              <span
+                style={{
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  background: Math.abs(hoveredCell.val) >= 0.4 ? '#e0e7ff' : '#f1f5f9',
+                  color: Math.abs(hoveredCell.val) >= 0.4 ? '#4338ca' : '#475569',
+                  fontWeight: 600,
+                  fontSize: '11px'
+                }}
+              >
+                {getInterpretation(hoveredCell.val)}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div style={{ color: '#64748b', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>💡</span>
+            <span>
+              {isEn
+                ? 'Hover over any matrix cell to view Spearman rank correlation ρ and interpretation...'
+                : 'Rê chuột vào bất kỳ ô nào trên ma trận để xem hệ số tương quan Spearman ρ và mức độ ảnh hưởng...'}
             </span>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

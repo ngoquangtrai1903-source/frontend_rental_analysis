@@ -57,6 +57,7 @@ export default function BoxFurnishingCategoryChart({
     const q1Pct = (stats.q1 / maxAxis) * 100
     const q3Pct = (stats.q3 / maxAxis) * 100
     const medPct = (stats.median / maxAxis) * 100
+    const isHovered = hoveredItem?.status === status && hoveredItem?.category === catLabel
 
     return (
       <div
@@ -66,9 +67,10 @@ export default function BoxFurnishingCategoryChart({
           flex: 1,
           height: '24px',
           position: 'relative',
-          background: 'var(--surface-subtle, #f1f5f9)',
+          background: isHovered ? 'rgba(46, 111, 158, 0.12)' : 'var(--surface-subtle, #f1f5f9)',
           borderRadius: '4px',
-          cursor: 'pointer'
+          cursor: 'pointer',
+          transition: 'background 0.15s ease'
         }}
       >
         {/* Whisker */}
@@ -225,40 +227,59 @@ export default function BoxFurnishingCategoryChart({
         </div>
       </div>
 
-      {/* Hover Detail Card */}
-      {hoveredItem && (
-        <div
-          style={{
-            marginTop: '12px',
-            padding: '10px 14px',
-            borderRadius: '6px',
-            background: 'var(--surface-subtle, #f8fafc)',
-            border: '1px solid #bfdbfe',
-            fontSize: '12px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '8px'
-          }}
-        >
-          <div>
-            <strong>{translateStatus(hoveredItem.status)}</strong> —{' '}
-            <span style={{ color: hoveredItem.category.includes('Phòng') ? '#E07B39' : '#2E6F9E', fontWeight: 600 }}>
-              {hoveredItem.category}
-            </span>{' '}
-            ({hoveredItem.stats.count} {isEn ? 'listings' : 'tin'}):
+      {/* Hover Detail Card - Fixed Height Info Bar (0px Layout Shift) */}
+      <div
+        style={{
+          marginTop: '12px',
+          padding: '10px 14px',
+          borderRadius: '8px',
+          background: hoveredItem ? 'var(--surface-subtle, #f8fafc)' : 'rgba(241, 245, 249, 0.6)',
+          border: hoveredItem ? '1px solid #bfdbfe' : '1px dashed #cbd5e1',
+          fontSize: '12px',
+          minHeight: '44px',
+          display: 'flex',
+          alignItems: 'center',
+          transition: 'all 0.15s ease'
+        }}
+      >
+        {hoveredItem ? (
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '8px'
+            }}
+          >
+            <div>
+              <strong>{translateStatus(hoveredItem.status)}</strong> —{' '}
+              <span style={{ color: hoveredItem.category.includes('Phòng') || hoveredItem.category.includes('Room') ? '#E07B39' : '#2E6F9E', fontWeight: 600 }}>
+                {hoveredItem.category}
+              </span>{' '}
+              ({hoveredItem.stats.count} {isEn ? 'listings' : 'tin'}):
+            </div>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <span>Min: <strong>{hoveredItem.stats.min}k</strong></span>
+              <span>Q1: <strong>{hoveredItem.stats.q1}k</strong></span>
+              <span>Median: <strong>{hoveredItem.stats.median}k</strong></span>
+              <span>Q3: <strong>{hoveredItem.stats.q3}k</strong></span>
+              <span>Max: <strong>{hoveredItem.stats.max}k</strong></span>
+              <span>Mean: <strong>{hoveredItem.stats.mean}k</strong></span>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <span>Min: <strong>{hoveredItem.stats.min}k</strong></span>
-            <span>Q1: <strong>{hoveredItem.stats.q1}k</strong></span>
-            <span>Median: <strong>{hoveredItem.stats.median}k</strong></span>
-            <span>Q3: <strong>{hoveredItem.stats.q3}k</strong></span>
-            <span>Max: <strong>{hoveredItem.stats.max}k</strong></span>
-            <span>Mean: <strong>{hoveredItem.stats.mean}k</strong></span>
+        ) : (
+          <div style={{ color: '#64748b', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>💡</span>
+            <span>
+              {isEn
+                ? 'Hover over any furnishing tier to view distribution stats (Min, Q1, Median, Q3, Max)...'
+                : 'Rê chuột vào thanh phân vị từng mức nội thất để xem chi tiết (Min, Q1, Median, Q3, Max)...'}
+            </span>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

@@ -39,6 +39,70 @@ export default function ScatterLocationGridChart({
     const roomPoints = item.points.filter((p) => p.category.includes('Phòng'))
     const aptPoints = item.points.filter((p) => p.category.includes('Căn hộ'))
 
+    const LocationTooltip = ({ active, payload }: any) => {
+      if (!active || !payload || !payload.length) return null
+      const pt = payload[0]?.payload
+      if (!pt) return null
+
+      const name = payload[0]?.name || ''
+      const isTrendline = name.includes('Trendline') || name.includes('Hồi quy')
+      if (isTrendline) {
+        return (
+          <div
+            style={{
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '6px',
+              padding: '6px 10px',
+              boxShadow: '0 6px 15px rgba(0,0,0,0.08)',
+              fontSize: '11px',
+              fontFamily: "'Inter', sans-serif"
+            }}
+          >
+            <div style={{ fontWeight: 600, color: '#0f172a', marginBottom: '2px' }}>
+              {isEn ? 'Linear Regression' : 'Đường hồi quy'}
+            </div>
+            <div style={{ color: '#475569' }}>
+              {isEn ? item.titleEn || item.title : item.title}: <strong>{Number(pt.x).toFixed(1)} km</strong> → <strong>{Number(pt.regVal).toFixed(0)} {isEn ? 'k/m²' : 'nghìn/m²'}</strong>
+            </div>
+          </div>
+        )
+      }
+
+      const isRoom = name.includes('Room') || name.includes('Phòng')
+      const color = isRoom ? '#E07B39' : '#2E6F9E'
+      const catTitle = isRoom ? (isEn ? 'Rental Room' : 'Phòng trọ') : (isEn ? 'Apartment' : 'Căn hộ/Chung cư')
+
+      return (
+        <div
+          style={{
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            padding: '8px 12px',
+            boxShadow: '0 8px 20px rgba(0,0,0,0.08)',
+            fontSize: '11.5px',
+            fontFamily: "'Inter', sans-serif",
+            minWidth: '155px'
+          }}
+        >
+          <div style={{ fontWeight: 700, color, marginBottom: '4px', borderBottom: '1px solid #f1f5f9', paddingBottom: '3px' }}>
+            {catTitle}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+              <span style={{ color: '#64748b' }}>{isEn ? item.titleEn || item.title : item.title}:</span>
+              <strong style={{ color: '#0f172a' }}>{Number(pt.x).toFixed(1)} km</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+              <span style={{ color: '#64748b' }}>{isEn ? 'Unit Rent:' : 'Đơn giá:'}</span>
+              <strong style={{ color: '#0f172a' }}>{Number(pt.y).toFixed(1)} {isEn ? 'k VND/m²' : 'nghìn/m²'}</strong>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div
         key={item.key}
@@ -103,19 +167,8 @@ export default function ScatterLocationGridChart({
                 axisLine={false}
               />
               <Tooltip
-                cursor={{ strokeDasharray: '3 3' }}
-                formatter={(val: any, name: any) => [
-                  name === (isEn ? 'Distance' : 'Khoảng cách')
-                    ? `${val} km`
-                    : `${val} ${isEn ? 'k VND/m²' : 'nghìn đ/m²'}`,
-                  name
-                ]}
-                contentStyle={{
-                  background: 'var(--surface-card, #ffffff)',
-                  borderColor: 'var(--line, #e2e8f0)',
-                  borderRadius: '6px',
-                  fontSize: '11px'
-                }}
+                cursor={{ strokeDasharray: '3 3', stroke: '#94a3b8' }}
+                content={<LocationTooltip />}
               />
 
               {/* Room Points */}
