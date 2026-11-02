@@ -58,7 +58,6 @@ import {
   X,
   LogIn,
   LogOut,
-  ExternalLink,
   Trash2,
   Scale
 } from 'lucide-react'
@@ -1883,77 +1882,7 @@ export default function DashboardPage() {
               )}
             </>
           )}
-          {/* Dashboard Footer with Legal & Privacy Compliance */}
-          <footer
-            className="dashboard-footer"
-            style={{
-              marginTop: '40px',
-              padding: '24px 0 16px',
-              borderTop: '1px solid var(--line)',
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '14px',
-              fontSize: '12px',
-              color: 'var(--muted)'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Sparkles size={15} style={{ color: 'var(--blue)' }} />
-              <span>
-                <strong>RentIQ</strong> — Da Nang Market Intelligence © 2026 · Cập nhật 02/11/2026
-              </span>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px' }}>
-              <button
-                type="button"
-                onClick={() => openPrivacy()}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--muted)',
-                  cursor: 'pointer',
-                  padding: 0,
-                  fontSize: '12px',
-                  textDecoration: 'underline'
-                }}
-              >
-                {lang === 'en' ? 'Privacy Policy (Law 91/2025)' : 'Chính sách Bảo mật (Luật 91/2025)'}
-              </button>
-              <button
-                type="button"
-                onClick={() => openPrivacy()}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--muted)',
-                  cursor: 'pointer',
-                  padding: 0,
-                  fontSize: '12px',
-                  textDecoration: 'underline'
-                }}
-              >
-                {lang === 'en' ? 'AI Disclosures (Law 134/2025)' : 'Minh bạch AI (Luật 134/2025)'}
-              </button>
-              <a
-                href="/privacy"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  color: 'var(--blue)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  textDecoration: 'none',
-                  fontWeight: 600
-                }}
-              >
-                <span>/privacy</span>
-                <ExternalLink size={12} />
-              </a>
-            </div>
-          </footer>
+          
         </div>
       </section>
 
