@@ -57,13 +57,16 @@ export default function ChartAIExplainer({
     setLoading(true)
     setIsOpen(true)
     try {
+      const isEvent = overrideData && (typeof overrideData !== 'object' || 'nativeEvent' in overrideData || 'target' in overrideData)
+      const dataToSend = (!overrideData || isEvent) ? summaryData : overrideData
+
       const res = await fetch('/api/ai/explain-chart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chartId,
           chartTitle,
-          summaryData: overrideData || summaryData,
+          summaryData: dataToSend,
           lang
         })
       })
@@ -110,7 +113,7 @@ export default function ChartAIExplainer({
       {!isOpen && (
         <button
           type="button"
-          onClick={handleFetchInsight}
+          onClick={() => void handleFetchInsight()}
           disabled={loading}
           style={{
             display: 'inline-flex',
