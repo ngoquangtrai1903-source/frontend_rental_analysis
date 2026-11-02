@@ -15,19 +15,24 @@ import {
   ChevronRight,
   Printer,
   CheckCircle2,
-  Cpu
+  Cpu,
+  ArrowLeft
 } from 'lucide-react'
 
 export interface PrivacyPolicyModalProps {
   isOpen: boolean
   onClose: () => void
   lang?: 'vi' | 'en'
+  openedFromConsent?: boolean
+  onBackToConsent?: () => void
 }
 
 export default function PrivacyPolicyModal({
   isOpen,
   onClose,
-  lang = 'vi'
+  lang = 'vi',
+  openedFromConsent = false,
+  onBackToConsent
 }: PrivacyPolicyModalProps) {
   const [activeTab, setActiveTab] = useState<'privacy' | 'terms' | 'ai'>('privacy')
 
@@ -35,10 +40,18 @@ export default function PrivacyPolicyModal({
 
   const isEn = lang === 'en'
 
+  const handleReturn = () => {
+    if (onBackToConsent) {
+      onBackToConsent()
+    } else {
+      onClose()
+    }
+  }
+
   return (
     <div
       className="modal-backdrop"
-      onClick={onClose}
+      onClick={handleReturn}
       role="dialog"
       aria-modal="true"
       aria-labelledby="privacy-policy-modal-title"
@@ -128,7 +141,7 @@ export default function PrivacyPolicyModal({
             </button>
             <button
               className="modal-close-button"
-              onClick={onClose}
+              onClick={handleReturn}
               aria-label={isEn ? 'Close' : 'Đóng'}
               title={isEn ? 'Close' : 'Đóng'}
               style={{
@@ -578,20 +591,42 @@ export default function PrivacyPolicyModal({
             justifyContent: 'space-between',
             borderTop: '1px solid var(--line)',
             paddingTop: '14px',
-            flexShrink: 0
+            flexShrink: 0,
+            gap: '12px',
+            flexWrap: 'wrap'
           }}
         >
           <span style={{ fontSize: '11px', color: 'var(--muted)' }}>
             © 2026 RentIQ Market Intelligence · TP. Đà Nẵng
           </span>
-          <button
-            type="button"
-            className="button primary"
-            onClick={onClose}
-            style={{ padding: '8px 20px', fontSize: '13px' }}
-          >
-            {isEn ? 'Close & Understood' : 'Đóng & Đã hiểu'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {openedFromConsent && (
+              <button
+                type="button"
+                className="button secondary"
+                onClick={handleReturn}
+                style={{ padding: '8px 16px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <ArrowLeft size={14} />
+                <span>{isEn ? 'Back to Consent' : 'Quay lại màn hình đồng thuận'}</span>
+              </button>
+            )}
+            <button
+              type="button"
+              className="button primary"
+              onClick={handleReturn}
+              style={{ padding: '8px 20px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              {openedFromConsent ? (
+                <>
+                  <CheckCircle2 size={15} />
+                  <span>{isEn ? 'Understood & Return to Sign-in' : 'Đã hiểu & Quay lại đăng nhập'}</span>
+                </>
+              ) : (
+                <span>{isEn ? 'Close & Understood' : 'Đóng & Đã hiểu'}</span>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

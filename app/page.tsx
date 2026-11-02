@@ -78,25 +78,70 @@ function getProfileAvatarUrl(user: {
   user_metadata?: Record<string, unknown>
   identities?: Array<{ provider?: string; identity_data?: Record<string, unknown> | null }> | null
 } | null | undefined): string | null {
-  const googleIdentity = user?.identities?.find((identity) => identity.provider === 'google')
+  if (!user) return null
+  const googleIdentity = user.identities?.find((identity) => identity.provider === 'google')
   const candidates = [
-    googleIdentity?.identity_data?.picture,
+    user.user_metadata?.avatar_url,
+    user.user_metadata?.picture,
+    user.user_metadata?.picture_url,
+    user.user_metadata?.avatar,
+    user.user_metadata?.photoURL,
+    user.user_metadata?.image,
     googleIdentity?.identity_data?.avatar_url,
-    user?.user_metadata?.picture,
-    user?.user_metadata?.avatar_url
+    googleIdentity?.identity_data?.picture,
+    googleIdentity?.identity_data?.picture_url,
+    googleIdentity?.identity_data?.avatar,
+    googleIdentity?.identity_data?.photoURL,
+    (user.user_metadata?.custom_claims as Record<string, unknown> | undefined)?.picture
   ]
 
   for (const candidate of candidates) {
     if (typeof candidate !== 'string') continue
+    const trimmed = candidate.trim()
+    if (!trimmed) continue
     try {
-      const url = new URL(candidate)
-      if (url.protocol === 'https:') return url.href
+      const normalized = trimmed.startsWith('//') ? `https:${trimmed}` : trimmed
+      const url = new URL(normalized)
+      if (url.protocol === 'https:' || url.protocol === 'http:') return url.href
     } catch {
       continue
     }
   }
 
   return null
+}
+
+function ProfileAvatar({
+  url,
+  email,
+  className = 'profile-avatar-image'
+}: {
+  url: string | null
+  email: string | null
+  className?: string
+}) {
+  const [imgError, setImgError] = useState(false)
+  const initials = email ? email.slice(0, 2).toUpperCase() : '??'
+
+  useEffect(() => {
+    setImgError(false)
+  }, [url])
+
+  if (!url || imgError) {
+    return <span className="avatar-initials">{initials}</span>
+  }
+
+  return (
+    <img
+      className={className}
+      src={url}
+      alt={email ? `Avatar ${email}` : 'Avatar'}
+      referrerPolicy="no-referrer"
+      crossOrigin="anonymous"
+      loading="eager"
+      onError={() => setImgError(true)}
+    />
+  )
 }
 
 const navItems = [
@@ -194,7 +239,16 @@ export default function DashboardPage() {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
-  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null)
+  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('rentiq.user.avatar.v1') || null
+    } catch {
+      return null
+    }
+  })
+  const [returnToConsentAfterPrivacy, setReturnToConsentAfterPrivacy] = useState(false)
+  const [consentAgreedTerms, setConsentAgreedTerms] = useState(false)
+  const [consentAgreedDataUsage, setConsentAgreedDataUsage] = useState(false)
   const [authLoading, setAuthLoading] = useState(false)
   const [authMessage, setAuthMessage] = useState('')
   const signingOut = useRef(false)
@@ -219,15 +273,25 @@ export default function DashboardPage() {
     setHelpOpen(true)
   }
 
-  const openPrivacy = () => {
+  const openPrivacy = (fromConsent: boolean = false) => {
     modalTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
     setSettingsOpen(false)
     setHelpOpen(false)
+    if (fromConsent) {
+      setReturnToConsentAfterPrivacy(true)
+      setOauthConsentOpen(false)
+    } else {
+      setReturnToConsentAfterPrivacy(false)
+    }
     setPrivacyOpen(true)
   }
 
   const closePrivacy = () => {
     setPrivacyOpen(false)
+    if (returnToConsentAfterPrivacy) {
+      setReturnToConsentAfterPrivacy(false)
+      setOauthConsentOpen(true)
+    }
   }
 
   const closeModal = () => {
@@ -248,6 +312,8 @@ export default function DashboardPage() {
   const handleRevokeConsent = async () => {
     clearOAuthConsent()
     setConsentInfo(null)
+    setUserAvatarUrl(null)
+    try { localStorage.removeItem('rentiq.user.avatar.v1') } catch {}
     setRevokeNotice(
       lang === 'en'
         ? 'Consent revoked. Personal session data erased under Law 91/2025.'
@@ -315,8 +381,25 @@ export default function DashboardPage() {
         if (error) throw error
         if (hadSession && !data.session && !signingOut.current) setAuthMessage('Phiên đăng nhập đã kết thúc. Vui lòng đăng nhập lại.')
         hadSession = Boolean(data.session)
-        setUserEmail(data.session?.user.email ?? null)
-        setUserAvatarUrl(getProfileAvatarUrl(data.session?.user))
+        const email = data.session?.user.email ?? null
+        setUserEmail(email)
+        const avatar = getProfileAvatarUrl(data.session?.user)
+        if (avatar) {
+          setUserAvatarUrl(avatar)
+          try { localStorage.setItem('rentiq.user.avatar.v1', avatar) } catch {}
+        } else if (!email) {
+          setUserAvatarUrl(null)
+          try { localStorage.removeItem('rentiq.user.avatar.v1') } catch {}
+        } else {
+          void supabase.auth.getUser().then(({ data: userData }) => {
+            if (!mounted) return
+            const freshAvatar = getProfileAvatarUrl(userData?.user)
+            if (freshAvatar) {
+              setUserAvatarUrl(freshAvatar)
+              try { localStorage.setItem('rentiq.user.avatar.v1', freshAvatar) } catch {}
+            }
+          })
+        }
       } catch (error) {
         console.error('Failed to read Supabase auth session:', error)
         if (mounted) setAuthMessage('Không thể kiểm tra phiên đăng nhập. Kiểm tra kết nối hoặc đăng nhập lại.')
@@ -327,8 +410,25 @@ export default function DashboardPage() {
       if (!mounted) return
       if (event === 'SIGNED_OUT' && hadSession && !signingOut.current) setAuthMessage('Phiên đăng nhập đã kết thúc. Vui lòng đăng nhập lại.')
       hadSession = Boolean(session)
-      setUserEmail(session?.user?.email ?? null)
-      setUserAvatarUrl(getProfileAvatarUrl(session?.user))
+      const email = session?.user?.email ?? null
+      setUserEmail(email)
+      const avatar = getProfileAvatarUrl(session?.user)
+      if (avatar) {
+        setUserAvatarUrl(avatar)
+        try { localStorage.setItem('rentiq.user.avatar.v1', avatar) } catch {}
+      } else if (!email) {
+        setUserAvatarUrl(null)
+        try { localStorage.removeItem('rentiq.user.avatar.v1') } catch {}
+      } else {
+        void supabase.auth.getUser().then(({ data: userData }) => {
+          if (!mounted) return
+          const freshAvatar = getProfileAvatarUrl(userData?.user)
+          if (freshAvatar) {
+            setUserAvatarUrl(freshAvatar)
+            try { localStorage.setItem('rentiq.user.avatar.v1', freshAvatar) } catch {}
+          }
+        })
+      }
       if (session) setAuthMessage('')
     })
     window.addEventListener('focus', checkSession)
@@ -419,6 +519,9 @@ export default function DashboardPage() {
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
+      setUserAvatarUrl(null)
+      setUserEmail(null)
+      try { localStorage.removeItem('rentiq.user.avatar.v1') } catch {}
       setAuthMessage(''); setAccountMenuOpen(false)
     } catch (error) {
       console.error('Supabase sign-out failed:', error)
@@ -800,10 +903,10 @@ export default function DashboardPage() {
         <div className="sidebar-bottom">
           <button className="nav-item" onClick={openSettings}><Settings2 size={18} /><span>{lang === 'en' ? 'Settings' : 'Cài đặt'}</span></button>
           <button className="nav-item" onClick={openHelp}><CircleHelp size={18} /><span>{lang === 'en' ? 'Help' : 'Trợ giúp'}</span></button>
-          <button className="nav-item" onClick={openPrivacy} title={lang === 'en' ? 'Privacy Policy (Law 91/2025)' : 'Chính sách bảo mật (Luật 91/2025)'}><ShieldCheck size={18} /><span>{lang === 'en' ? 'Privacy Policy' : 'Chính sách bảo mật'}</span></button>
+          <button className="nav-item" onClick={() => openPrivacy()} title={lang === 'en' ? 'Privacy Policy (Law 91/2025)' : 'Chính sách bảo mật (Luật 91/2025)'}><ShieldCheck size={18} /><span>{lang === 'en' ? 'Privacy Policy' : 'Chính sách bảo mật'}</span></button>
           <button className={`user-card ${accountMenuOpen ? 'selected' : ''}`} aria-label="Mở menu tài khoản" onClick={() => setAccountMenuOpen((open) => !open)}>
             <span className="user-avatar">
-              {userAvatarUrl ? <img className="profile-avatar-image" src={userAvatarUrl} alt="" onError={() => setUserAvatarUrl(null)} /> : userEmail ? userEmail.slice(0, 2).toUpperCase() : '??'}
+              <ProfileAvatar url={userAvatarUrl} email={userEmail} />
             </span>
             <span>
               <strong>{userEmail ? userEmail.split('@')[0] : 'Chưa đăng nhập'}</strong>
@@ -856,9 +959,7 @@ export default function DashboardPage() {
                 aria-haspopup="menu"
                 onClick={() => setAccountMenuOpen((open) => !open)}
               >
-                {userAvatarUrl ? (
-                  <img className="profile-avatar-image" src={userAvatarUrl} alt="" onError={() => setUserAvatarUrl(null)} />
-                ) : userEmail ? userEmail.slice(0, 2).toUpperCase() : '??'}
+                <ProfileAvatar url={userAvatarUrl} email={userEmail} />
               </button>
               {accountMenuOpen && (
                 <div className="sidebar-popover account-popover" role="menu">
@@ -866,9 +967,7 @@ export default function DashboardPage() {
                     <>
                       <div className="account-popover-header">
                         <div className="user-avatar">
-                          {userAvatarUrl ? (
-                            <img className="profile-avatar-image" src={userAvatarUrl} alt="" onError={() => setUserAvatarUrl(null)} />
-                          ) : userEmail.slice(0, 2).toUpperCase()}
+                          <ProfileAvatar url={userAvatarUrl} email={userEmail} />
                         </div>
                         <div className="account-identity">
                           <strong>{userEmail.split('@')[0]}</strong>
@@ -1809,7 +1908,7 @@ export default function DashboardPage() {
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px' }}>
               <button
                 type="button"
-                onClick={openPrivacy}
+                onClick={() => openPrivacy()}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -1824,7 +1923,7 @@ export default function DashboardPage() {
               </button>
               <button
                 type="button"
-                onClick={openPrivacy}
+                onClick={() => openPrivacy()}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -1858,17 +1957,27 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <PrivacyPolicyModal isOpen={privacyOpen} onClose={closePrivacy} lang={lang} />
+      <PrivacyPolicyModal
+        isOpen={privacyOpen}
+        onClose={closePrivacy}
+        lang={lang}
+        openedFromConsent={returnToConsentAfterPrivacy}
+        onBackToConsent={closePrivacy}
+      />
       <OAuthConsentModal
         isOpen={oauthConsentOpen}
-        onClose={() => setOauthConsentOpen(false)}
-        onConfirm={() => void handleConsentConfirmed()}
-        onOpenPrivacyPolicy={() => {
+        onClose={() => {
           setOauthConsentOpen(false)
-          setPrivacyOpen(true)
+          setReturnToConsentAfterPrivacy(false)
         }}
+        onConfirm={() => void handleConsentConfirmed()}
+        onOpenPrivacyPolicy={() => openPrivacy(true)}
         isLoading={authLoading}
         lang={lang}
+        agreedTerms={consentAgreedTerms}
+        onAgreedTermsChange={setConsentAgreedTerms}
+        agreedDataUsage={consentAgreedDataUsage}
+        onAgreedDataUsageChange={setConsentAgreedDataUsage}
       />
     </main>
   )

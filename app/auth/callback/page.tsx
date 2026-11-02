@@ -22,11 +22,21 @@ function AuthCallbackContent() {
       return
     }
     void supabase.auth.exchangeCodeForSession(code)
-      .then(({ error }) => {
+      .then(({ data, error }) => {
         if (error) {
           console.warn('Failed to exchange Google OAuth code for a session:', error.message)
           router.replace('/?auth_error=callback')
           return
+        }
+        const avatar =
+          data.session?.user?.user_metadata?.avatar_url ||
+          data.session?.user?.user_metadata?.picture
+        if (typeof avatar === 'string' && avatar.trim()) {
+          try {
+            localStorage.setItem('rentiq.user.avatar.v1', avatar.trim())
+          } catch {
+            // Ignore storage restrictions
+          }
         }
         router.replace('/')
       })

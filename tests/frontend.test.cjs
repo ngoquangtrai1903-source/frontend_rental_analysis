@@ -189,3 +189,13 @@ test('PrivacyPolicyModal renders legal articles including Law 91/2025, Law 134/2
   assert.ok(html.includes('Cập nhật 02/11/2026'))
   assert.ok(html.includes('privacy@rentiq.vn'))
 })
+
+test('PrivacyPolicyModal renders return button when openedFromConsent is true', () => {
+  const html = renderToStaticMarkup(React.createElement(PrivacyPolicyModal, {
+    isOpen: true,
+    onClose: () => {},
+    openedFromConsent: true
+  }))
+  assert.ok(html.includes('Quay lại màn hình đồng thuận'))
+  assert.ok(html.includes('Đã hiểu &amp; Quay lại đăng nhập'))
+})

@@ -22,6 +22,10 @@ export interface OAuthConsentModalProps {
   onOpenPrivacyPolicy: () => void
   isLoading?: boolean
   lang?: 'vi' | 'en'
+  agreedTerms?: boolean
+  onAgreedTermsChange?: (val: boolean) => void
+  agreedDataUsage?: boolean
+  onAgreedDataUsageChange?: (val: boolean) => void
 }
 
 export const OAUTH_CONSENT_STORAGE_KEY = 'rentiq.oauth.consent.v1'
@@ -77,16 +81,32 @@ export default function OAuthConsentModal({
   onConfirm,
   onOpenPrivacyPolicy,
   isLoading = false,
-  lang = 'vi'
+  lang = 'vi',
+  agreedTerms: propAgreedTerms,
+  onAgreedTermsChange,
+  agreedDataUsage: propAgreedDataUsage,
+  onAgreedDataUsageChange
 }: OAuthConsentModalProps) {
-  const [agreedTerms, setAgreedTerms] = useState(false)
-  const [agreedDataUsage, setAgreedDataUsage] = useState(false)
+  const [internalAgreedTerms, setInternalAgreedTerms] = useState(false)
+  const [internalAgreedDataUsage, setInternalAgreedDataUsage] = useState(false)
   const [showError, setShowError] = useState(false)
+
+  const isAgreedTerms = propAgreedTerms !== undefined ? propAgreedTerms : internalAgreedTerms
+  const setIsAgreedTerms = (val: boolean) => {
+    if (onAgreedTermsChange) onAgreedTermsChange(val)
+    else setInternalAgreedTerms(val)
+  }
+
+  const isAgreedDataUsage = propAgreedDataUsage !== undefined ? propAgreedDataUsage : internalAgreedDataUsage
+  const setIsAgreedDataUsage = (val: boolean) => {
+    if (onAgreedDataUsageChange) onAgreedDataUsageChange(val)
+    else setInternalAgreedDataUsage(val)
+  }
 
   if (!isOpen) return null
 
   const handleConfirm = () => {
-    if (!agreedTerms || !agreedDataUsage) {
+    if (!isAgreedTerms || !isAgreedDataUsage) {
       setShowError(true)
       return
     }
@@ -318,10 +338,10 @@ export default function OAuthConsentModal({
           >
             <input
               type="checkbox"
-              checked={agreedTerms}
+              checked={isAgreedTerms}
               onChange={(e) => {
-                setAgreedTerms(e.target.checked)
-                if (e.target.checked && agreedDataUsage) setShowError(false)
+                setIsAgreedTerms(e.target.checked)
+                if (e.target.checked && isAgreedDataUsage) setShowError(false)
               }}
               style={{ marginTop: '2px', width: '16px', height: '16px', accentColor: 'var(--blue)', cursor: 'pointer' }}
             />
@@ -391,10 +411,10 @@ export default function OAuthConsentModal({
           >
             <input
               type="checkbox"
-              checked={agreedDataUsage}
+              checked={isAgreedDataUsage}
               onChange={(e) => {
-                setAgreedDataUsage(e.target.checked)
-                if (e.target.checked && agreedTerms) setShowError(false)
+                setIsAgreedDataUsage(e.target.checked)
+                if (e.target.checked && isAgreedTerms) setShowError(false)
               }}
               style={{ marginTop: '2px', width: '16px', height: '16px', accentColor: 'var(--blue)', cursor: 'pointer' }}
             />
