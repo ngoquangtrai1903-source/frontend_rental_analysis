@@ -196,6 +196,5 @@ test('PrivacyPolicyModal renders return button when openedFromConsent is true', 
     onClose: () => {},
     openedFromConsent: true
   }))
-  assert.ok(html.includes('Quay lại màn hình đồng thuận'))
   assert.ok(html.includes('Đã hiểu &amp; Quay lại đăng nhập'))
 })

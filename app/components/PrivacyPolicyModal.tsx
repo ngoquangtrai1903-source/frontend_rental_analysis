@@ -15,8 +15,7 @@ import {
   ChevronRight,
   Printer,
   CheckCircle2,
-  Cpu,
-  ArrowLeft
+  Cpu
 } from 'lucide-react'
 
 export interface PrivacyPolicyModalProps {
@@ -600,17 +599,7 @@ export default function PrivacyPolicyModal({
             © 2026 RentIQ Market Intelligence · TP. Đà Nẵng
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {openedFromConsent && (
-              <button
-                type="button"
-                className="button secondary"
-                onClick={handleReturn}
-                style={{ padding: '8px 16px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-              >
-                <ArrowLeft size={14} />
-                <span>{isEn ? 'Back to Consent' : 'Quay lại màn hình đồng thuận'}</span>
-              </button>
-            )}
+
             <button
               type="button"
               className="button primary"
