@@ -2978,7 +2978,45 @@
   border-color: #33415d !important;
 }
 
-/* AI Explainer Card Dark Mode */
+/* AI Explainer Styles - Light & Dark Mode */
+.chart-ai-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #c7d2fe;
+  background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%);
+  color: #4338ca;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(67, 56, 202, 0.06);
+}
+.chart-ai-toggle-btn .ai-btn-sparkle {
+  color: #6366f1;
+}
+.chart-ai-toggle-btn:hover:not(:disabled) {
+  background: #e0e7ff;
+  border-color: #818cf8;
+}
+.dark-mode .chart-ai-toggle-btn {
+  background: linear-gradient(135deg, #1e293b 0%, #172133 100%) !important;
+  border-color: #3b4d6b !important;
+  color: #c7d2fe !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+.dark-mode .chart-ai-toggle-btn .ai-btn-sparkle {
+  color: #a5b4fc !important;
+}
+.dark-mode .chart-ai-toggle-btn:hover:not(:disabled) {
+  background: #25334a !important;
+  border-color: #6366f1 !important;
+  color: #ffffff !important;
+}
+
+/* Explainer Card Container */
 .chart-ai-explainer-card {
   background: linear-gradient(to bottom, #f8faff 0%, #ffffff 100%);
   border: 1px solid #c7d2fe;
@@ -2989,58 +3027,236 @@
   line-height: 1.6;
   color: var(--ink, #1e293b);
 }
-
 .dark-mode .chart-ai-explainer-card {
-  background: linear-gradient(to bottom, #1e293b 0%, #151f32 100%) !important;
-  border-color: #33415d !important;
+  background: linear-gradient(to bottom, #182235 0%, #131b2a 100%) !important;
+  border-color: #2e3e58 !important;
   color: #e2e8f0 !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35) !important;
 }
 
+/* Explainer Card Header */
+.chart-ai-explainer-card .ai-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #e0e7ff;
+}
 .dark-mode .chart-ai-explainer-card .ai-header {
-  border-bottom-color: #33415d !important;
+  border-bottom-color: #2b3b55 !important;
 }
 
+.chart-ai-explainer-card .ai-bot-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: #6366f1;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dark-mode .chart-ai-explainer-card .ai-bot-icon {
+  background: #4f46e5 !important;
+  color: #ffffff !important;
+}
+
+.chart-ai-explainer-card .ai-title {
+  color: #3730a3;
+  font-size: 13px;
+  font-weight: 700;
+}
 .dark-mode .chart-ai-explainer-card .ai-title {
-  color: #a5b4fc !important;
+  color: #c7d2fe !important;
 }
 
+/* Pills */
+.chart-ai-explainer-card .ai-pill-ready {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
 .dark-mode .chart-ai-explainer-card .ai-pill-ready {
-  background: #202e46 !important;
+  background: #1e293b !important;
   color: #94a3b8 !important;
   border-color: #33415d !important;
 }
 
+.chart-ai-explainer-card .ai-pill-live {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.chart-ai-explainer-card .ai-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16a34a;
+  display: inline-block;
+}
 .dark-mode .chart-ai-explainer-card .ai-pill-live {
-  background: rgba(22, 163, 74, 0.2) !important;
+  background: rgba(34, 197, 94, 0.16) !important;
   color: #4ade80 !important;
-  border-color: rgba(74, 222, 128, 0.3) !important;
+  border-color: rgba(74, 222, 128, 0.35) !important;
+}
+.dark-mode .chart-ai-explainer-card .ai-live-dot {
+  background: #4ade80 !important;
 }
 
+/* Action Buttons (Copy, Refresh, Collapse) */
+.chart-ai-explainer-card .ai-action-btn {
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.12s ease;
+}
+.chart-ai-explainer-card .ai-action-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+.chart-ai-explainer-card .ai-collapse-btn {
+  border: none;
+  padding: 3px 4px;
+  color: #94a3b8;
+}
 .dark-mode .chart-ai-explainer-card .ai-action-btn {
   border-color: #33415d !important;
   color: #cbd5e1 !important;
-  background: #182235 !important;
+  background: #1e293b !important;
 }
-
 .dark-mode .chart-ai-explainer-card .ai-action-btn:hover {
-  background: #24344d !important;
+  background: #27364e !important;
   border-color: #6366f1 !important;
   color: #ffffff !important;
 }
-
-.dark-mode .chart-ai-explainer-card .ai-takeaway {
-  background: rgba(99, 102, 241, 0.12) !important;
-  border-left-color: #818cf8 !important;
-  color: #c7d2fe !important;
+.dark-mode .chart-ai-explainer-card .ai-collapse-btn {
+  background: transparent !important;
+  border: none !important;
+  color: #94a3b8 !important;
+}
+.dark-mode .chart-ai-explainer-card .ai-collapse-btn:hover {
+  color: #e2e8f0 !important;
 }
 
-.dark-mode .chart-ai-explainer-card p,
-.dark-mode .chart-ai-explainer-card li {
+/* Loading */
+.chart-ai-explainer-card .ai-loading {
+  padding: 16px 0;
+  text-align: center;
+  color: #6366f1;
+}
+.dark-mode .chart-ai-explainer-card .ai-loading {
+  color: #a5b4fc !important;
+}
+
+/* Raw Response Markdown Layout */
+.chart-ai-explainer-card .ai-raw-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #334155;
+}
+.dark-mode .chart-ai-explainer-card .ai-raw-content {
   color: #cbd5e1 !important;
 }
 
+.chart-ai-explainer-card .ai-raw-content h4 {
+  margin: 10px 0 3px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+.dark-mode .chart-ai-explainer-card .ai-raw-content h4 {
+  color: #f1f5f9 !important;
+}
+
+.chart-ai-explainer-card .ai-raw-content p {
+  margin: 0;
+  color: #334155;
+}
+.dark-mode .chart-ai-explainer-card .ai-raw-content p {
+  color: #cbd5e1 !important;
+}
+
+.chart-ai-explainer-card .ai-bullet-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding-left: 8px;
+}
+
+.chart-ai-explainer-card .ai-bullet-dot {
+  color: #6366f1;
+  margin-top: 1px;
+  font-size: 14px;
+  line-height: 1;
+}
+.dark-mode .chart-ai-explainer-card .ai-bullet-dot {
+  color: #818cf8 !important;
+}
+
+.chart-ai-explainer-card strong {
+  color: #0f172a;
+}
 .dark-mode .chart-ai-explainer-card strong {
   color: #f8fafc !important;
 }
 
+/* Structured Fallback Display */
+.chart-ai-explainer-card .ai-overview {
+  font-weight: 600;
+  color: #334155;
+  font-size: 12.5px;
+}
+.dark-mode .chart-ai-explainer-card .ai-overview {
+  color: #e2e8f0 !important;
+}
+
+.chart-ai-explainer-card .ai-insight-list li {
+  font-size: 12px;
+  color: #334155;
+}
+.dark-mode .chart-ai-explainer-card .ai-insight-list li {
+  color: #cbd5e1 !important;
+}
+
+/* Takeaway Box */
+.chart-ai-explainer-card .ai-takeaway {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #eef2ff;
+  border-left: 3px solid #6366f1;
+  font-size: 11.5px;
+  color: #3730a3;
+}
+.dark-mode .chart-ai-explainer-card .ai-takeaway {
+  background: rgba(99, 102, 241, 0.16) !important;
+  border-left-color: #818cf8 !important;
+  color: #c7d2fe !important;
+}
