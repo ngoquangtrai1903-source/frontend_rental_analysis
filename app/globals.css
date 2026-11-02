@@ -405,6 +405,11 @@
 /* Keep settings/help reachable on short and mobile screens. */
 .quick-modal { max-height: calc(100dvh - 32px); overflow-y: auto; }
 .quick-modal:has(.dashboard-help) { width: min(640px, calc(100vw - 32px)); }
+.quick-modal:has(.privacy-modal-wrapper), .quick-modal.privacy-modal-wrapper { width: min(800px, calc(100vw - 32px)) !important; }
+.quick-modal:has(.oauth-consent-modal), .quick-modal.oauth-consent-modal { width: min(560px, calc(100vw - 32px)) !important; }
+.dashboard-footer button:hover { color: var(--blue) !important; }
+.dark-mode .oauth-consent-modal { background: #182235 !important; border-color: #33415d !important; }
+.dark-mode .privacy-modal-wrapper { background: #182235 !important; border-color: #33415d !important; }
 .dashboard-help details { border-top: 1px solid var(--line); padding: 12px 0; }
 .dashboard-help summary { cursor: pointer; font-weight: 700; color: var(--ink); }
 .dashboard-help summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; }

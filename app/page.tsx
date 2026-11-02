@@ -52,14 +52,20 @@ import {
   Search,
   Settings2,
   ShieldAlert,
+  ShieldCheck,
   Sparkles,
   TrendingUp,
   X,
   LogIn,
-  LogOut
+  LogOut,
+  ExternalLink,
+  Trash2,
+  Scale
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { fetchAllRecords, toCsv } from '@/lib/csv'
+import PrivacyPolicyModal from './components/PrivacyPolicyModal'
+import OAuthConsentModal, { getStoredOAuthConsent, clearOAuthConsent } from './components/OAuthConsentModal'
 
 const SETTINGS_STORAGE_KEY = 'rentiq.dashboard.settings.v1'
 const DEFAULT_START_DATE = '2026-01-01'
@@ -180,6 +186,10 @@ export default function DashboardPage() {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
+  const [privacyOpen, setPrivacyOpen] = useState(false)
+  const [oauthConsentOpen, setOauthConsentOpen] = useState(false)
+  const [consentInfo, setConsentInfo] = useState<ReturnType<typeof getStoredOAuthConsent>>(null)
+  const [revokeNotice, setRevokeNotice] = useState('')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false)
@@ -198,18 +208,59 @@ export default function DashboardPage() {
   const openSettings = () => {
     modalTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
     setHelpOpen(false)
+    setPrivacyOpen(false)
     setSettingsOpen(true)
   }
 
   const openHelp = () => {
     modalTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
     setSettingsOpen(false)
+    setPrivacyOpen(false)
     setHelpOpen(true)
+  }
+
+  const openPrivacy = () => {
+    modalTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    setSettingsOpen(false)
+    setHelpOpen(false)
+    setPrivacyOpen(true)
+  }
+
+  const closePrivacy = () => {
+    setPrivacyOpen(false)
   }
 
   const closeModal = () => {
     setSettingsOpen(false)
     setHelpOpen(false)
+  }
+
+  const handleSignInClick = () => {
+    setOauthConsentOpen(true)
+  }
+
+  const handleConsentConfirmed = async () => {
+    setOauthConsentOpen(false)
+    setConsentInfo(getStoredOAuthConsent())
+    await signInWithGoogle()
+  }
+
+  const handleRevokeConsent = async () => {
+    clearOAuthConsent()
+    setConsentInfo(null)
+    setRevokeNotice(
+      lang === 'en'
+        ? 'Consent revoked. Personal session data erased under Law 91/2025.'
+        : 'Đã thu hồi đồng thuận và xóa dữ liệu cá nhân thành công theo Luật BVDLCN 91/2025.'
+    )
+    try {
+      localStorage.removeItem(SETTINGS_STORAGE_KEY)
+    } catch {
+      // Ignore storage errors
+    }
+    if (userEmail) {
+      await signOut()
+    }
   }
 
   useEffect(() => {
@@ -233,6 +284,7 @@ export default function DashboardPage() {
       // Unavailable storage or invalid saved data must not prevent using the app.
     } finally {
       setSettingsLoaded(true)
+      setConsentInfo(getStoredOAuthConsent())
     }
   }, [])
 
@@ -748,6 +800,7 @@ export default function DashboardPage() {
         <div className="sidebar-bottom">
           <button className="nav-item" onClick={openSettings}><Settings2 size={18} /><span>{lang === 'en' ? 'Settings' : 'Cài đặt'}</span></button>
           <button className="nav-item" onClick={openHelp}><CircleHelp size={18} /><span>{lang === 'en' ? 'Help' : 'Trợ giúp'}</span></button>
+          <button className="nav-item" onClick={openPrivacy} title={lang === 'en' ? 'Privacy Policy (Law 91/2025)' : 'Chính sách bảo mật (Luật 91/2025)'}><ShieldCheck size={18} /><span>{lang === 'en' ? 'Privacy Policy' : 'Chính sách bảo mật'}</span></button>
           <button className={`user-card ${accountMenuOpen ? 'selected' : ''}`} aria-label="Mở menu tài khoản" onClick={() => setAccountMenuOpen((open) => !open)}>
             <span className="user-avatar">
               {userAvatarUrl ? <img className="profile-avatar-image" src={userAvatarUrl} alt="" onError={() => setUserAvatarUrl(null)} /> : userEmail ? userEmail.slice(0, 2).toUpperCase() : '??'}
@@ -823,16 +876,28 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       <button role="menuitem" onClick={() => { openSettings(); setAccountMenuOpen(false) }}>
-                        <Settings2 size={14} /> Hồ sơ & cài đặt
+                        <Settings2 size={14} /> {lang === 'en' ? 'Profile & Settings' : 'Hồ sơ & cài đặt'}
+                      </button>
+                      <button role="menuitem" onClick={() => { openPrivacy(); setAccountMenuOpen(false) }}>
+                        <ShieldCheck size={14} /> {lang === 'en' ? 'Privacy Policy' : 'Chính sách bảo mật'}
                       </button>
                       <button role="menuitem" className="account-signout" onClick={() => void signOut()}>
-                        <LogOut size={14} /> Đăng xuất
+                        <LogOut size={14} /> {lang === 'en' ? 'Sign Out' : 'Đăng xuất'}
                       </button>
                     </>
                   ) : (
-                    <button role="menuitem" onClick={() => void signInWithGoogle()}>
-                      <LogIn size={14} /> {authLoading ? 'Đang chuyển tới Google...' : 'Đăng nhập bằng Google'}
-                    </button>
+                    <>
+                      <button role="menuitem" onClick={() => { setAccountMenuOpen(false); handleSignInClick() }}>
+                        <LogIn size={14} /> {authLoading ? (lang === 'en' ? 'Connecting to Google...' : 'Đang chuyển tới Google...') : (lang === 'en' ? 'Sign in with Google' : 'Đăng nhập bằng Google')}
+                      </button>
+                      <button role="menuitem" onClick={() => { openPrivacy(); setAccountMenuOpen(false) }}>
+                        <ShieldCheck size={14} /> {lang === 'en' ? 'Privacy Policy' : 'Chính sách bảo mật'}
+                      </button>
+                      <div style={{ padding: '4px 12px 6px', fontSize: '11px', color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <ShieldCheck size={12} style={{ color: '#16a34a' }} />
+                        <span>{lang === 'en' ? 'Protected under Law 91/2025' : 'Bảo vệ bởi Luật BVDLCN 91/2025'}</span>
+                      </div>
+                    </>
                   )}
                   <button role="menuitem" className="account-close" onClick={() => setAccountMenuOpen(false)}>Đóng menu</button>
                 </div>
@@ -852,6 +917,7 @@ export default function DashboardPage() {
           {navItems.map((item) => <button key={item.id} onClick={() => { setActiveNav(item.id); setMobileNavOpen(false) }}>{lang === 'en' ? item.labelEn : item.labelVi}</button>)}
           <button onClick={() => { setMobileNavOpen(false); openSettings() }}>{lang === 'en' ? 'Settings' : 'Cài đặt'}</button>
           <button onClick={() => { setMobileNavOpen(false); openHelp() }}>{lang === 'en' ? 'Help' : 'Trợ giúp'}</button>
+          <button onClick={() => { setMobileNavOpen(false); openPrivacy() }}>{lang === 'en' ? 'Privacy Policy' : 'Chính sách bảo mật'}</button>
         </div>}
         {modalOpen && <div className="modal-backdrop" onClick={closeModal}><div ref={modalRef} className="quick-modal" role="dialog" aria-modal="true" aria-labelledby="dashboard-modal-title" tabIndex={-1} onClick={(e) => e.stopPropagation()}>
           {settingsOpen ? <>
@@ -870,6 +936,49 @@ export default function DashboardPage() {
             <div className="settings-group"><span className="settings-group-title">{lang === 'en' ? 'Data' : 'Dữ liệu'}</span>
               <label className="setting-row"><span><strong>{lang === 'en' ? 'Auto-refresh Data' : 'Tự động làm mới dữ liệu'}</strong><small>{lang === 'en' ? 'Refresh overview every 60 seconds after data loads' : 'Làm mới tổng quan sau mỗi 60 giây khi tải xong dữ liệu'}</small></span><input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} /></label>
             </div>
+            <div className="settings-group">
+              <span className="settings-group-title">{lang === 'en' ? 'Privacy & Data Protection' : 'Quyền riêng tư & Bảo vệ dữ liệu'}</span>
+              <div className="setting-row" style={{ alignItems: 'center' }}>
+                <span>
+                  <strong>{lang === 'en' ? 'Privacy Policy (Law 91/2025)' : 'Chính sách Bảo mật (Luật 91/2025)'}</strong>
+                  <small>{lang === 'en' ? 'Updated Nov 2, 2026 under VN Personal Data Protection Law' : 'Cập nhật 02/11/2026 theo Luật BVDLCN & NĐ 356/2025'}</small>
+                </span>
+                <button
+                  type="button"
+                  className="button secondary"
+                  style={{ padding: '5px 12px', fontSize: '12px' }}
+                  onClick={() => { closeModal(); openPrivacy(); }}
+                >
+                  <ShieldCheck size={14} /> {lang === 'en' ? 'View Policy' : 'Xem chính sách'}
+                </button>
+              </div>
+              <div className="setting-row" style={{ alignItems: 'center' }}>
+                <span>
+                  <strong>{lang === 'en' ? 'OAuth Consent Status' : 'Trạng thái Đồng thuận Dữ liệu'}</strong>
+                  <small>
+                    {consentInfo
+                      ? (lang === 'en' ? `Consented on ${new Date(consentInfo.consentedAt).toLocaleDateString()}` : `Đã xác nhận đồng thuận ngày ${new Date(consentInfo.consentedAt).toLocaleDateString('vi-VN')}`)
+                      : (lang === 'en' ? 'No consent recorded (Guest)' : 'Chưa có bản ghi đồng thuận (Khách)')}
+                  </small>
+                </span>
+                {(consentInfo || userEmail) && (
+                  <button
+                    type="button"
+                    className="button secondary"
+                    style={{ padding: '5px 12px', fontSize: '12px', color: '#dc2626', borderColor: '#fca5a5' }}
+                    onClick={() => void handleRevokeConsent()}
+                    title={lang === 'en' ? 'Revoke consent and erase data' : 'Rút lại đồng thuận và xóa dữ liệu cá nhân'}
+                  >
+                    <Trash2 size={13} /> {lang === 'en' ? 'Revoke & Erase' : 'Rút lại & Xóa'}
+                  </button>
+                )}
+              </div>
+              {revokeNotice && (
+                <div style={{ fontSize: '11px', color: '#059669', padding: '6px 0', fontWeight: 600 }}>
+                  ✓ {revokeNotice}
+                </div>
+              )}
+            </div>
             <div className="settings-status"><span className="live-dot" /> {settingsSaved ? (lang === 'en' ? 'Settings saved on this browser' : 'Cài đặt đã lưu trên trình duyệt này') : (lang === 'en' ? 'Settings apply to this session only' : 'Cài đặt chỉ áp dụng trong phiên này; chưa lưu được trên trình duyệt')}</div>
           </> : <>
             <div className="modal-heading"><div><span className="modal-eyebrow">{lang === 'en' ? 'USER GUIDE' : 'HƯỚNG DẪN'}</span><h3 id="dashboard-modal-title">{lang === 'en' ? 'Help & Documentation' : 'Trợ giúp'}</h3></div><button className="modal-close-button" aria-label="Đóng" title="Đóng hướng dẫn" onClick={closeModal}><X size={17} /></button></div>
@@ -881,7 +990,7 @@ export default function DashboardPage() {
         <div className="page-wrap">
           {authMessage && <div role="alert" className="card" style={{ padding: 16, marginBottom: 16 }}>
             <p>{authMessage}</p>
-            <button className="button secondary" disabled={authLoading} onClick={() => void signInWithGoogle()}>{authLoading ? 'Đang mở Google…' : 'Đăng nhập lại'}</button>
+            <button className="button secondary" disabled={authLoading} onClick={handleSignInClick}>{authLoading ? (lang === 'en' ? 'Opening Google…' : 'Đang mở Google…') : (lang === 'en' ? 'Sign In Again' : 'Đăng nhập lại')}</button>
             <button className="button secondary" onClick={() => setAuthMessage('')}>Đóng</button>
           </div>}
           <div className="page-heading">
@@ -1675,8 +1784,92 @@ export default function DashboardPage() {
               )}
             </>
           )}
+          {/* Dashboard Footer with Legal & Privacy Compliance */}
+          <footer
+            className="dashboard-footer"
+            style={{
+              marginTop: '40px',
+              padding: '24px 0 16px',
+              borderTop: '1px solid var(--line)',
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '14px',
+              fontSize: '12px',
+              color: 'var(--muted)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Sparkles size={15} style={{ color: 'var(--blue)' }} />
+              <span>
+                <strong>RentIQ</strong> — Da Nang Market Intelligence © 2026 · Cập nhật 02/11/2026
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px' }}>
+              <button
+                type="button"
+                onClick={openPrivacy}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--muted)',
+                  cursor: 'pointer',
+                  padding: 0,
+                  fontSize: '12px',
+                  textDecoration: 'underline'
+                }}
+              >
+                {lang === 'en' ? 'Privacy Policy (Law 91/2025)' : 'Chính sách Bảo mật (Luật 91/2025)'}
+              </button>
+              <button
+                type="button"
+                onClick={openPrivacy}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--muted)',
+                  cursor: 'pointer',
+                  padding: 0,
+                  fontSize: '12px',
+                  textDecoration: 'underline'
+                }}
+              >
+                {lang === 'en' ? 'AI Disclosures (Law 134/2025)' : 'Minh bạch AI (Luật 134/2025)'}
+              </button>
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: 'var(--blue)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  textDecoration: 'none',
+                  fontWeight: 600
+                }}
+              >
+                <span>/privacy</span>
+                <ExternalLink size={12} />
+              </a>
+            </div>
+          </footer>
         </div>
       </section>
+
+      <PrivacyPolicyModal isOpen={privacyOpen} onClose={closePrivacy} lang={lang} />
+      <OAuthConsentModal
+        isOpen={oauthConsentOpen}
+        onClose={() => setOauthConsentOpen(false)}
+        onConfirm={() => void handleConsentConfirmed()}
+        onOpenPrivacyPolicy={() => {
+          setOauthConsentOpen(false)
+          setPrivacyOpen(true)
+        }}
+        isLoading={authLoading}
+        lang={lang}
+      />
     </main>
   )
 }

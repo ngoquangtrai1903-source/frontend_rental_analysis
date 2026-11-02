@@ -11,6 +11,9 @@ const { default: WardPriceHeatmapChart } = loadTs('app/components/WardPriceHeatm
 const { clusterMapPoints } = loadTs('lib/mapClustering.ts')
 const { buildWardPriceHeatmap } = loadTs('lib/wardPriceHeatmap.ts')
 const { useFilterStore } = loadTs('app/store/filterStore.ts')
+const { default: OAuthConsentModal } = loadTs('app/components/OAuthConsentModal.tsx')
+const { default: PrivacyPolicyModal } = loadTs('app/components/PrivacyPolicyModal.tsx')
+
 
 test('CSV preserves commas, quotes, newlines, nulls and Vietnamese', () => {
   assert.equal(toCsv([['Đà Nẵng, VN', 'a"b', 'a\nb', null, 123]]), '\uFEFF"Đà Nẵng, VN","a""b","a\nb","","123"')
@@ -162,4 +165,27 @@ test('ward price heatmap aggregates valid rents and weights each ward by average
   assert.equal(result.data.features[1].properties.heatmap_weight, 0.075)
   assert.equal(result.data.features[2].properties.heatmap_weight, 0.5)
   assert.equal(result.data.features[0].properties.median_price_vnd, 3_000_000)
+})
+
+test('OAuthConsentModal renders data fields collected and Law 91/2025 citations', () => {
+  const html = renderToStaticMarkup(React.createElement(OAuthConsentModal, {
+    isOpen: true,
+    onClose: () => {},
+    onConfirm: () => {},
+    onOpenPrivacyPolicy: () => {}
+  }))
+  assert.ok(html.includes('Luật BVDLCN 91/2025'))
+  assert.ok(html.includes('Địa chỉ Email'))
+  assert.ok(html.includes('Họ và Tên'))
+  assert.ok(html.includes('Đồng ý &amp; Đăng nhập Google'))
+})
+
+test('PrivacyPolicyModal renders legal articles including Law 91/2025, Law 134/2025 and DPO', () => {
+  const html = renderToStaticMarkup(React.createElement(PrivacyPolicyModal, {
+    isOpen: true,
+    onClose: () => {}
+  }))
+  assert.ok(html.includes('Luật Bảo vệ Dữ liệu Cá nhân số 91/2025/QH15'))
+  assert.ok(html.includes('Cập nhật 02/11/2026'))
+  assert.ok(html.includes('privacy@rentiq.vn'))
 })
