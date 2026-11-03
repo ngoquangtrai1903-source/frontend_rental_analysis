@@ -5,11 +5,12 @@ import dynamic from 'next/dynamic'
 import AmenitiesView from './components/AmenitiesView'
 import FloodRiskView from './components/FloodRiskView'
 import AdvancedAnalyticsView from './components/AdvancedAnalyticsView'
-import PricePredictionView from './components/PricePredictionView'
+import PricePredictionView, { translateFurnishing } from './components/PricePredictionView'
 import DashboardCharts from './components/DashboardCharts'
 import DashboardHelp from './components/DashboardHelp'
 import { useFilterStore } from './store/filterStore'
 import { useTranslation } from './store/languageStore'
+import { translateCategoryName } from './components/MapMarkerPopup'
 import { Language } from './i18n/translations'
 
 const LocationMapView = dynamic(() => import('./components/LocationMapView'), {
@@ -530,7 +531,7 @@ export default function DashboardPage() {
   }
 
   // Language & Translation
-  const { lang, setLang, toggleLang } = useTranslation()
+  const { lang, setLang, toggleLang, t } = useTranslation()
 
   // Filter States (BĐS Domain Standards)
   const filterStore = useFilterStore()
@@ -1294,7 +1295,7 @@ export default function DashboardPage() {
                 >
                   <option value="">{lang === 'en' ? 'All categories' : 'Tất cả loại hình'}</option>
                   {CATEGORY_OPTIONS.map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                    <option key={c} value={c}>{translateCategoryName(c, lang === 'en')}</option>
                   ))}
                 </select>
               </div>
@@ -1311,7 +1312,7 @@ export default function DashboardPage() {
                 >
                   <option value="">{lang === 'en' ? 'All furnishings' : 'Tất cả nội thất'}</option>
                   {FURNISHING_OPTIONS.map((f) => (
-                    <option key={f} value={f}>{f}</option>
+                    <option key={f} value={f}>{translateFurnishing(f, lang === 'en')}</option>
                   ))}
                 </select>
               </div>
@@ -1380,7 +1381,7 @@ export default function DashboardPage() {
                       checked={reqElevator}
                       onChange={(e) => { setReqElevator(e.target.checked); setPage(1) }}
                     />
-                    🛗 Thang máy
+                    {t('chips.elevator')}
                   </label>
                   <label style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', cursor: 'pointer', fontWeight: 500, color: 'var(--ink)' }}>
                     <input
@@ -1388,7 +1389,7 @@ export default function DashboardPage() {
                       checked={reqBalcony}
                       onChange={(e) => { setReqBalcony(e.target.checked); setPage(1) }}
                     />
-                    🌅 Ban công
+                    {t('chips.balcony')}
                   </label>
                   <label style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', cursor: 'pointer', fontWeight: 500, color: 'var(--ink)' }}>
                     <input
@@ -1424,16 +1425,16 @@ export default function DashboardPage() {
 
           {/* Active Filter Summary */}
           {activeFiltersCount > 0 && (
-            <div className="active-filters-wrap" aria-label="Điều kiện lọc đang áp dụng">
+            <div className="active-filters-wrap" aria-label={lang === 'en' ? 'Active filters' : 'Điều kiện lọc đang áp dụng'}>
               <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>
                 {lang === 'en' ? `Active Filters (${activeFiltersCount})` : `Điều kiện đang áp dụng (${activeFiltersCount})`}
               </span>
               {(startDate || endDate) && (
                 <span className="filter-chip">
-                  Ngày đăng: {startDate || 'bất kỳ'} — {endDate || 'bất kỳ'}
+                  {t('chips.date')} {startDate || t('chips.any')} — {endDate || t('chips.any')}
                   <button
-                    aria-label="Đặt lại điều kiện ngày đăng"
-                    title={startDate === DEFAULT_START_DATE && endDate === todayDate ? 'Xóa lọc ngày để xem tất cả lịch sử' : 'Đặt lại về mặc định từ tháng 1/2026'}
+                    aria-label={lang === 'en' ? 'Reset date filter' : 'Đặt lại điều kiện ngày đăng'}
+                    title={startDate === DEFAULT_START_DATE && endDate === todayDate ? (lang === 'en' ? 'Clear date filter to view all history' : 'Xóa lọc ngày để xem tất cả lịch sử') : (lang === 'en' ? 'Reset to January 2026' : 'Đặt lại về mặc định từ tháng 1/2026')}
                     onClick={() => {
                       if (startDate === DEFAULT_START_DATE && endDate === todayDate) {
                         setStartDate('')
@@ -1451,67 +1452,67 @@ export default function DashboardPage() {
               )}
               {wardFilter && (
                 <span className="filter-chip">
-                  Khu vực: {wardFilter}
+                  {t('chips.ward')} {wardFilter}
                   <button onClick={() => { setWardFilter(''); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {categoryFilter && (
                 <span className="filter-chip">
-                  Loại hình: {categoryFilter}
+                  {t('chips.category')} {translateCategoryName(categoryFilter, lang === 'en')}
                   <button onClick={() => { setCategoryFilter(''); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {furnishingFilter && (
                 <span className="filter-chip">
-                  Nội thất: {furnishingFilter}
+                  {t('chips.furnishing')} {translateFurnishing(furnishingFilter, lang === 'en')}
                   <button onClick={() => { setFurnishingFilter(''); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {priceRangeFilter && (
                 <span className="filter-chip">
-                  Giá: {priceRangeFilter === 'under_3m' ? '< 3 triệu' : priceRangeFilter === '3m_5m' || priceRangeFilter === '3m_6m' ? '3-5 triệu' : priceRangeFilter === '5m_8m' || priceRangeFilter === '6m_10m' ? '5-8 triệu' : priceRangeFilter === '8m_15m' ? '8-15 triệu' : '> 15 triệu'}
+                  {t('chips.price')} {priceRangeFilter === 'under_3m' ? (lang === 'en' ? '< 3M VND' : '< 3 triệu') : priceRangeFilter === '3m_5m' || priceRangeFilter === '3m_6m' ? (lang === 'en' ? '3-5M VND' : '3-5 triệu') : priceRangeFilter === '5m_8m' || priceRangeFilter === '6m_10m' ? (lang === 'en' ? '5-8M VND' : '5-8 triệu') : priceRangeFilter === '8m_15m' ? (lang === 'en' ? '8-15M VND' : '8-15 triệu') : (lang === 'en' ? '> 15M VND' : '> 15 triệu')}
                   <button onClick={() => { setPriceRangeFilter(''); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {sizeRangeFilter && (
                 <span className="filter-chip">
-                  DT: {sizeRangeFilter === 'under_20' ? '< 20m²' : sizeRangeFilter === '20_35' ? '20-35m²' : sizeRangeFilter === '35_50' ? '35-50m²' : '> 50m²'}
+                  {t('chips.size')} {sizeRangeFilter === 'under_20' ? '< 20m²' : sizeRangeFilter === '20_35' ? '20-35m²' : sizeRangeFilter === '35_50' ? '35-50m²' : '> 50m²'}
                   <button onClick={() => { setSizeRangeFilter(''); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {reqElevator && (
                 <span className="filter-chip">
-                  🛗 Thang máy
+                  {t('chips.elevator')}
                   <button onClick={() => { setReqElevator(false); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {reqBalcony && (
                 <span className="filter-chip">
-                  🌅 Ban công
+                  {t('chips.balcony')}
                   <button onClick={() => { setReqBalcony(false); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {reqPrivateBath && (
                 <span className="filter-chip">
-                  🚿 WC riêng
+                  {t('chips.privateBath')}
                   <button onClick={() => { setReqPrivateBath(false); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {reqParking && (
                 <span className="filter-chip">
-                  🛵 Chỗ để xe
+                  {t('chips.parking')}
                   <button onClick={() => { setReqParking(false); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {floodRiskFilter !== '' && (
                 <span className="filter-chip">
-                  Rủi ro ngập: {floodRiskFilter === '0' ? 'Thấp' : floodRiskFilter === '1' ? 'Trung bình' : 'Cao'}
+                  {t('chips.risk')} {floodRiskFilter === '0' ? (lang === 'en' ? 'Low' : 'Thấp') : floodRiskFilter === '1' ? (lang === 'en' ? 'Medium' : 'Trung bình') : (lang === 'en' ? 'High' : 'Cao')}
                   <button onClick={() => { setFloodRiskFilter(''); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {searchQuery && (
                 <span className="filter-chip">
-                  Tìm kiếm: &quot;{searchQuery}&quot;
+                  {lang === 'en' ? 'Search:' : 'Tìm kiếm:'} &quot;{searchQuery}&quot;
                   <button onClick={() => { setSearchInput(''); setSearchQuery(''); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
@@ -1992,6 +1993,8 @@ function AnalysisTab({
   wards: WardData[]
   priceDistribution: PriceDistribution[]
 }) {
+  const { lang } = useTranslation()
+  const isEn = lang === 'en'
   const market = tab === 'Thị trường'
   const maxWardCount = wards.length > 0 ? Math.max(...wards.map((w) => w.count), 1) : 1
 
@@ -2000,35 +2003,35 @@ function AnalysisTab({
       <div className="analysis-intro">
         <div>
           <span className="eyebrow">{market ? 'MARKET SIGNALS' : 'SUPPLY INTELLIGENCE'}</span>
-          <h2>{market ? 'Nhịp chuyển động của thị trường' : 'Bức tranh nguồn cung chi tiết'}</h2>
+          <h2>{market ? (isEn ? 'Rental market trends' : 'Nhịp chuyển động của thị trường') : (isEn ? 'Rental supply overview' : 'Bức tranh nguồn cung chi tiết')}</h2>
           <p>
             {market
-              ? 'Theo dõi nhu cầu, mặt bằng giá và các tín hiệu đang thay đổi theo khu vực từ kho dữ liệu gold.rental_room.'
-              : 'Đánh giá độ phủ tin đăng, loại hình và khoảng trống nguồn cung tại Đà Nẵng theo thời gian thực.'}
+              ? (isEn ? 'Track demand, rental prices and emerging trends by area using rental market data.' : 'Theo dõi nhu cầu, mặt bằng giá và các tín hiệu đang thay đổi theo khu vực từ kho dữ liệu gold.rental_room.')
+              : (isEn ? 'Explore listing coverage, property types and supply gaps across Da Nang in real time.' : 'Đánh giá độ phủ tin đăng, loại hình và khoảng trống nguồn cung tại Đà Nẵng theo thời gian thực.')}
           </p>
         </div>
         <span className="analysis-status">
-          <span className="live-dot" /> Dữ liệu đã đồng bộ từ Schema Gold
+          <span className="live-dot" /> {isEn ? 'Data synced from Gold schema' : 'Dữ liệu đã đồng bộ từ Schema Gold'}
         </span>
       </div>
 
       <div className="analysis-cards">
         <MetricCard
-          label={market ? 'Tổng quy mô mẫu lọc' : 'Tin đăng đang theo dõi'}
-          value={kpiData?.total_listings.toLocaleString() || '0'}
-          note="Từ kho dữ liệu gold.rental_room"
+          label={market ? (isEn ? 'Total matching listings' : 'Tổng quy mô mẫu lọc') : (isEn ? 'Listings tracked' : 'Tin đăng đang theo dõi')}
+          value={kpiData?.total_listings.toLocaleString(isEn ? 'en-US' : 'vi-VN') || '0'}
+          note={isEn ? 'From rental market data' : 'Từ kho dữ liệu gold.rental_room'}
           tone="blue"
         />
         <MetricCard
-          label={market ? 'Giá thuê trung bình' : 'Tỷ lệ căn hộ'}
-          value={market ? `${kpiData?.avg_price_million.toFixed(2) || '0'} tr` : `${kpiData?.apartment_percentage || 0}%`}
-          note={market ? 'Mặt bằng giá chung toàn bộ mẫu lọc' : 'Trong tổng số nguồn cung lọc'}
+          label={market ? (isEn ? 'Average rent' : 'Giá thuê trung bình') : (isEn ? 'Apartment share' : 'Tỷ lệ căn hộ')}
+          value={market ? `${kpiData?.avg_price_million.toFixed(2) || '0'} ${isEn ? 'M VND' : 'tr'}` : `${kpiData?.apartment_percentage || 0}%`}
+          note={market ? (isEn ? 'Average across all matching listings' : 'Mặt bằng giá chung toàn bộ mẫu lọc') : (isEn ? 'Share of matching supply' : 'Trong tổng số nguồn cung lọc')}
           tone="orange"
         />
         <MetricCard
-          label={market ? 'Tỷ lệ an toàn ngập' : 'Tỷ lệ phòng trọ'}
+          label={market ? (isEn ? 'Flood safety rate' : 'Tỷ lệ an toàn ngập') : (isEn ? 'Rental room share' : 'Tỷ lệ phòng trọ')}
           value={market ? `${kpiData?.flood_risk_low_percentage || 0}%` : `${kpiData?.room_percentage || 0}%`}
-          note="Phân khúc an toàn ngập úng"
+          note={market ? (isEn ? 'Listings in low flood-risk areas' : 'Phân khúc an toàn ngập úng') : (isEn ? 'Share of matching supply' : 'Trong tổng số nguồn cung lọc')}
           tone="purple"
         />
       </div>
@@ -2037,8 +2040,8 @@ function AnalysisTab({
       <div className="analysis-lower" style={{ marginTop: '16px' }}>
         <div className="card recommendation-card">
           <CardHeader
-            title={market ? 'Tín hiệu trọng điểm theo dữ liệu thực' : 'Phân bổ nguồn cung theo khu vực'}
-            subtitle={market ? 'Insight tự động phân tích từ tập dữ liệu đang lọc' : 'Top khu vực có mật độ tin đăng cao nhất'}
+            title={market ? (isEn ? 'Key market insights' : 'Tín hiệu trọng điểm theo dữ liệu thực') : (isEn ? 'Supply by area' : 'Phân bổ nguồn cung theo khu vực')}
+            subtitle={market ? (isEn ? 'Insights generated from matching listings' : 'Insight tự động phân tích từ tập dữ liệu đang lọc') : (isEn ? 'Areas with the most listings' : 'Top khu vực có mật độ tin đăng cao nhất')}
             action=""
           />
           <div className="recommendation-list">
@@ -2048,9 +2051,9 @@ function AnalysisTab({
                   <MapPin size={16} />
                 </div>
                 <div>
-                  <strong>{w.name}: {w.count} bài đăng</strong>
+                  <strong>{w.name}: {w.count} {isEn ? 'listings' : 'bài đăng'}</strong>
                   <p>
-                    Giá thuê trung bình: {(w.avgPrice / 1000000).toFixed(1)} tr/tháng · Tỷ trọng: {kpiData && kpiData.total_listings > 0 ? Math.round((w.count / kpiData.total_listings) * 100) : 0}% tổng nguồn cung.
+                    {isEn ? 'Average rent:' : 'Giá thuê trung bình:'} {(w.avgPrice / 1000000).toFixed(1)} {isEn ? 'M VND/month · Share:' : 'tr/tháng · Tỷ trọng:'} {kpiData && kpiData.total_listings > 0 ? Math.round((w.count / kpiData.total_listings) * 100) : 0}% {isEn ? 'of total supply.' : 'tổng nguồn cung.'}
                   </p>
                 </div>
               </div>
@@ -2060,8 +2063,8 @@ function AnalysisTab({
 
         <div className="card mini-summary">
           <CardHeader
-            title="Tỷ trọng nguồn cung"
-            subtitle="Phân theo khu vực dẫn đầu"
+            title={isEn ? 'Supply share' : 'Tỷ trọng nguồn cung'}
+            subtitle={isEn ? 'By leading areas' : 'Phân theo khu vực dẫn đầu'}
             action=""
           />
           <div className="summary-bars">
@@ -2071,7 +2074,7 @@ function AnalysisTab({
                 <div className="summary-bar" key={w.name}>
                   <div>
                     <span>{w.name}</span>
-                    <strong>{w.count} tin</strong>
+                    <strong>{w.count} {isEn ? 'listings' : 'tin'}</strong>
                   </div>
                   <div className="summary-track">
                     <span style={{ width: `${pct}%` }} />
