@@ -1530,7 +1530,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
               >
                 <Calculator size={28} />
               </div>
-              <h3 style={{ font: '800 18px Manrope', margin: '0 0 8px', color: 'var(--ink)' }}>
+              <h3 style={{ font: "800 18px 'Manrope', sans-serif", margin: '0 0 8px', color: 'var(--ink)' }}>
                 {isEn ? 'Ready to Value Rent & Visualize SHAP' : 'Sẵn Sàng Dự Đoán Giá Thuê & Trực Quan Hóa SHAP'}
               </h3>
               <p style={{ maxWidth: '440px', margin: '0 auto 20px', color: 'var(--muted)', fontSize: '13px' }}>
@@ -1556,7 +1556,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                 className="pulse-spinner"
                 style={{ width: '38px', height: '38px', margin: '0 auto 18px' }}
               />
-              <h3 style={{ font: '800 18px Manrope', margin: '0 0 6px' }}>
+              <h3 style={{ font: "800 18px 'Manrope', sans-serif", margin: '0 0 6px' }}>
                 {isEn ? 'Analyzing Parameters & Computing SHAP Values...' : 'Đang Phân Tích Thông Số & Tính Toán SHAP Values...'}
               </h3>
               <p style={{ color: 'var(--muted)', fontSize: '12px' }}>
@@ -1626,7 +1626,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                   <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>
                     {isEn ? 'Market Base Value' : 'Giá cơ sở thị trường (Base)'}
                   </span>
-                  <strong style={{ font: '800 18px Manrope', color: 'var(--ink)' }}>
+                  <strong style={{ font: "800 18px 'Manrope', sans-serif", color: 'var(--ink)' }}>
                     {formatMoney(prediction.explanation?.base_value_vnd || 2850000)}
                   </strong>
                   <small style={{ fontSize: '10px' }}>{isEn ? 'Da Nang overall benchmark' : 'Điểm chuẩn trung bình toàn Đà Nẵng'}</small>
@@ -1636,7 +1636,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                   <span className="metric-tag-positive" style={{ fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <TrendingUp size={13} /> {isEn ? 'Total positive impact' : 'Tổng tác động tăng giá'}
                   </span>
-                  <strong className="metric-val-positive" style={{ font: '800 18px Manrope' }}>
+                  <strong className="metric-val-positive" style={{ font: "800 18px 'Manrope', sans-serif" }}>
                     +{formatMoney(impactSummary.positiveVnd)}
                   </strong>
                   <small style={{ fontSize: '10px' }}>{isEn ? 'From location advantages & amenities' : 'Từ các ưu thế vị trí & tiện ích'}</small>
@@ -1646,7 +1646,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                   <span className="metric-tag-negative" style={{ fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <TrendingDown size={13} /> {isEn ? 'Total negative impact' : 'Tổng tác động giảm giá'}
                   </span>
-                  <strong className="metric-val-negative" style={{ font: '800 18px Manrope' }}>
+                  <strong className="metric-val-negative" style={{ font: "800 18px 'Manrope', sans-serif" }}>
                     -{formatMoney(impactSummary.negativeVnd)}
                   </strong>
                   <small style={{ fontSize: '10px' }}>{isEn ? 'From distance or missing amenities' : 'Do xa trung tâm hoặc thiếu tiện nghi'}</small>
@@ -1659,7 +1659,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
               <div className="shap-chart-card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
                   <div>
-                    <h3 style={{ font: '800 16px Manrope', margin: '0 0 4px', color: 'var(--ink)' }}>
+                    <h3 style={{ font: "800 16px 'Manrope', sans-serif", margin: '0 0 4px', color: 'var(--ink)' }}>
                       {isEn ? 'SHAP Feature Impact Horizontal Bar Chart' : 'Biểu Đồ Cột Ngang Tác Động SHAP (Feature Impact)'}
                     </h3>
                     <p style={{ margin: 0, fontSize: '11px', color: 'var(--muted)' }}>
@@ -1786,7 +1786,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
               <div className="breakdown-card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <h3 style={{ font: '800 16px Manrope', margin: '0 0 4px', color: 'var(--ink)' }}>
+                    <h3 style={{ font: "800 16px 'Manrope', sans-serif", margin: '0 0 4px', color: 'var(--ink)' }}>
                       {isEn ? 'Itemized Price Contribution Breakdown Table' : 'Bảng Chi Tiết Đóng Góp Giá (Breakdown Table)'}
                     </h3>
                     <p style={{ margin: 0, fontSize: '11px', color: 'var(--muted)' }}>
@@ -1877,7 +1877,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                         <td style={{ color: 'var(--blue)', fontWeight: 800 }}>
                           {formatPriceMillion(prediction?.price_million_vnd)} {isEn ? 'M VND / mo' : 'triệu/tháng'}
                         </td>
-                        <td style={{ textAlign: 'right', color: 'var(--blue)', font: '800 15px Manrope' }}>
+                        <td style={{ textAlign: 'right', color: 'var(--blue)', font: "800 15px 'Manrope', sans-serif" }}>
                           {formatMoney(prediction?.predicted_price_vnd || ((prediction?.price_million_vnd || 0) * 1000000))}
                         </td>
                       </tr>

@@ -166,14 +166,14 @@ export default function LocationMapView({
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginTop: '16px' }}>
             <div>
               <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>{isEn ? 'LISTED RENT' : 'GIÁ THUÊ NIÊM YẾT'}</span>
-              <div style={{ font: '800 22px Manrope', color: getPriceTierTheme(selectedPoint.price_vnd, isEn).color, marginTop: '3px' }}>
+              <div style={{ font: "800 22px 'Manrope', sans-serif", color: getPriceTierTheme(selectedPoint.price_vnd, isEn).color, marginTop: '3px' }}>
                 {formatVndPrice(selectedPoint.price_vnd, isEn)}
               </div>
             </div>
 
             <div>
               <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>{isEn ? 'SIZE & RATE' : 'DIỆN TÍCH & ĐƠN GIÁ'}</span>
-              <div style={{ font: '700 16px Manrope', color: 'var(--ink)', marginTop: '4px' }}>
+              <div style={{ font: "700 16px 'Manrope', sans-serif", color: 'var(--ink)', marginTop: '4px' }}>
                 {selectedPoint.size_m2 ? `${Math.round(selectedPoint.size_m2)} m²` : (isEn ? 'N/A' : 'Chưa rõ DT')} ({selectedPoint.price_per_m2_vnd ? `${selectedPoint.price_per_m2_vnd.toLocaleString()} ${isEn ? 'VND/m²' : 'đ/m²'}` : 'N/A'})
               </div>
             </div>

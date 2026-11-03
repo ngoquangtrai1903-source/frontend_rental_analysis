@@ -172,7 +172,7 @@ export default function FloodRiskView({ filterQueryString = '', lang = 'vi' }: F
                 </div>
 
                 <div style={{ textAlign: 'right', minWidth: '90px' }}>
-                  <div className={`flood-score ${zone.status}`} style={{ font: '800 16px Manrope' }}>
+                  <div className={`flood-score ${zone.status}`} style={{ font: "800 16px 'Manrope', sans-serif" }}>
                     {zone.safeScore}%
                   </div>
                   <small style={{ fontSize: '9px', color: 'var(--muted)' }}>{isEn ? 'Safety Score' : 'Chỉ số an toàn'}</small>

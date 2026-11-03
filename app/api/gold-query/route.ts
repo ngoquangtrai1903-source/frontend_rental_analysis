@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { fetchPresentationAnalytics } from '@/lib/presentationAnalyticsService'
 import {
   fetchFilteredRentalRooms,
   fetchGoldKpiMetrics,
@@ -191,6 +192,11 @@ export async function GET(request: NextRequest) {
     if (mode === 'price_insights') {
       const insights = await fetchGoldRentalPriceInsights(filters)
       return NextResponse.json(insights)
+    }
+
+    if (mode === 'presentation' || mode === 'presentation_charts') {
+      const data = await fetchPresentationAnalytics(filters)
+      return NextResponse.json(data)
     }
 
     // Mode: All-in-one advanced analytics

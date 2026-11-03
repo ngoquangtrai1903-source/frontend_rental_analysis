@@ -10,10 +10,15 @@ interface LanguageState {
 }
 
 const getInitialLang = (): Language => {
-  if (typeof window !== 'undefined' && window.localStorage) {
+  if (typeof window !== 'undefined') {
     try {
-      const saved = window.localStorage.getItem('rentiq_lang')
-      if (saved === 'en' || saved === 'vi') return saved
+      const urlParams = new URLSearchParams(window.location.search)
+      const langParam = urlParams.get('lang')
+      if (langParam === 'en' || langParam === 'vi') return langParam
+      if (window.localStorage) {
+        const saved = window.localStorage.getItem('rentiq_lang')
+        if (saved === 'en' || saved === 'vi') return saved
+      }
     } catch {
       // Ignore localStorage errors (e.g. private browsing)
     }
