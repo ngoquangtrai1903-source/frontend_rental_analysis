@@ -20,36 +20,12 @@ interface SpearmanHeatmapProps {
  *  0: #ffffff (White)
  * +1: #2166ac (Deep Blue)
  */
-function getRdBuColor(val: number, isDark = false): { bg: string; text: string } {
-  if (isNaN(val)) return { bg: isDark ? '#1e293b' : '#f1f5f9', text: '#94a3b8' }
+function getRdBuColor(val: number): { bg: string; text: string } {
+  if (isNaN(val)) return { bg: '#f1f5f9', text: '#94a3b8' }
   const clamped = Math.max(-1, Math.min(1, val))
 
-  if (isDark) {
-    if (clamped >= 0) {
-      // Dark Base (24, 34, 53) to Vibrant Blue (59, 130, 246)
-      const t = clamped
-      const r = Math.round(24 + t * (59 - 24))
-      const g = Math.round(34 + t * (130 - 34))
-      const b = Math.round(53 + t * (246 - 53))
-      return {
-        bg: `rgb(${r}, ${g}, ${b})`,
-        text: t > 0.35 ? '#ffffff' : '#cbd5e1'
-      }
-    } else {
-      // Dark Base (24, 34, 53) to Vibrant Coral Red (220, 38, 38)
-      const t = Math.abs(clamped)
-      const r = Math.round(24 + t * (220 - 24))
-      const g = Math.round(34 + t * (38 - 34))
-      const b = Math.round(53 + t * (38 - 53))
-      return {
-        bg: `rgb(${r}, ${g}, ${b})`,
-        text: t > 0.35 ? '#ffffff' : '#cbd5e1'
-      }
-    }
-  }
-
   if (clamped >= 0) {
-    // White (255, 255, 255) to Blue (33, 102, 172)
+    // White (255, 255, 255) to Deep Blue (33, 102, 172)
     const t = clamped
     const r = Math.round(255 - t * (255 - 33))
     const g = Math.round(255 - t * (255 - 102))
@@ -59,7 +35,7 @@ function getRdBuColor(val: number, isDark = false): { bg: string; text: string }
       text: t > 0.45 ? '#ffffff' : '#0f172a'
     }
   } else {
-    // White (255, 255, 255) to Red (178, 24, 43)
+    // White (255, 255, 255) to Deep Red (178, 24, 43)
     const t = Math.abs(clamped)
     const r = Math.round(255 - t * (255 - 178))
     const g = Math.round(255 - t * (255 - 24))
@@ -162,7 +138,7 @@ export default function SpearmanCorrelationHeatmap({
         }}
       >
         <table
-          className="matrix-table"
+          className="matrix-table spearman-heatmap-table"
           style={{
             borderCollapse: 'collapse',
             fontSize: '10px',
@@ -238,7 +214,7 @@ export default function SpearmanCorrelationHeatmap({
                 {/* Cells */}
                 {columns.map((colCol, cIdx) => {
                   const val = matrix[rIdx]?.[cIdx] ?? 0
-                  const color = getRdBuColor(val, isDark)
+                  const color = getRdBuColor(val)
                   const isHovered = hoveredCell?.rowIdx === rIdx && hoveredCell?.colIdx === cIdx
                   const isCross = hoveredCell?.rowIdx === rIdx || hoveredCell?.colIdx === cIdx
 
@@ -253,9 +229,9 @@ export default function SpearmanCorrelationHeatmap({
                         background: color.bg,
                         color: color.text,
                         fontWeight: rIdx === cIdx ? 800 : Math.abs(val) >= 0.4 ? 700 : 500,
-                        borderBottom: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.05)',
-                        borderRight: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.05)',
-                        outline: isHovered ? (isDark ? '2px solid #38bdf8' : '2px solid #0f172a') : isCross ? '1px dashed var(--muted, #94a3b8)' : 'none',
+                        borderBottom: '1px solid rgba(0,0,0,0.08)',
+                        borderRight: '1px solid rgba(0,0,0,0.08)',
+                        outline: isHovered ? '2px solid #0f172a' : isCross ? '1px dashed #64748b' : 'none',
                         zIndex: isHovered ? 1 : 0,
                         cursor: 'pointer',
                         transition: 'outline 0.05s ease'

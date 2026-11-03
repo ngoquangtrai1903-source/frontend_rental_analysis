@@ -2988,8 +2988,13 @@
   border-color: #33415d !important;
 }
 
-.dark-mode .matrix-table td {
+.dark-mode .matrix-table:not(.spearman-heatmap-table) td {
   border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark-mode .spearman-heatmap-table td {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
 .dark-mode .matrix-table td.matrix-row-header {
