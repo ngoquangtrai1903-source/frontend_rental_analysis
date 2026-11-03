@@ -4,6 +4,17 @@ import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Home, Sliders } from 'lucide-react'
 
+const amenityLabelsEn: Record<string, string> = {
+  has_balcony: 'Balcony',
+  free_hours: '24/7 access',
+  has_camera_security: 'Security cameras',
+  has_elevator: 'Elevator',
+  has_mezzanine: 'Mezzanine',
+  private_bathroom: 'Private bathroom',
+  wifi: 'Wi-Fi',
+  has_parking: 'Parking',
+  has_window: 'Window',
+}
 interface AmenityLiftItem {
   key: string
   label: string
@@ -122,7 +133,7 @@ export default function AmenitiesView({ filterQueryString = '', lang = 'vi' }: A
 
       {query.isError && (
         <div role="alert" className="card data-error-state">
-          <span>{isEn ? `Failed to load amenity data: ${query.error.message}` : `Không tải được dữ liệu tiện ích: ${query.error.message}`}</span>
+          <span>{isEn ? 'Unable to load amenity data. Please try again.' : 'Không tải được dữ liệu tiện ích. Vui lòng thử lại.'}</span>
           <button type="button" className="button secondary" onClick={() => void query.refetch()}>
             {isEn ? 'Retry' : 'Thử tải lại'}
           </button>
@@ -158,7 +169,7 @@ export default function AmenitiesView({ filterQueryString = '', lang = 'vi' }: A
         {amenitiesData.map((item) => (
           <div className="lift-card" key={item.key}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <strong style={{ fontSize: '13px' }}>{item.label}</strong>
+              <strong style={{ fontSize: '13px' }}>{isEn ? (amenityLabelsEn[item.key] ?? 'Other amenity') : item.label}</strong>
               <span className={`lift-badge ${item.liftPct > 0 ? 'positive' : 'neutral'}`}>
                 {item.liftPct > 0 ? `+${item.liftPct}% ${isEn ? 'lift' : 'giá'}` : `${item.liftPct}%`}
               </span>

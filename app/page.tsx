@@ -5,11 +5,12 @@ import dynamic from 'next/dynamic'
 import AmenitiesView from './components/AmenitiesView'
 import FloodRiskView from './components/FloodRiskView'
 import AdvancedAnalyticsView from './components/AdvancedAnalyticsView'
-import PricePredictionView from './components/PricePredictionView'
+import PricePredictionView, { translateFurnishing } from './components/PricePredictionView'
 import DashboardCharts from './components/DashboardCharts'
 import DashboardHelp from './components/DashboardHelp'
 import { useFilterStore } from './store/filterStore'
 import { useTranslation } from './store/languageStore'
+import { translateCategoryName } from './components/MapMarkerPopup'
 import { Language } from './i18n/translations'
 
 const LocationMapView = dynamic(() => import('./components/LocationMapView'), {
@@ -52,14 +53,19 @@ import {
   Search,
   Settings2,
   ShieldAlert,
+  ShieldCheck,
   Sparkles,
   TrendingUp,
   X,
   LogIn,
-  LogOut
+  LogOut,
+  Trash2,
+  Scale
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { fetchAllRecords, toCsv } from '@/lib/csv'
+import PrivacyPolicyModal from './components/PrivacyPolicyModal'
+import OAuthConsentModal, { getStoredOAuthConsent, clearOAuthConsent } from './components/OAuthConsentModal'
 
 const SETTINGS_STORAGE_KEY = 'rentiq.dashboard.settings.v1'
 const DEFAULT_START_DATE = '2026-01-01'
@@ -72,25 +78,70 @@ function getProfileAvatarUrl(user: {
   user_metadata?: Record<string, unknown>
   identities?: Array<{ provider?: string; identity_data?: Record<string, unknown> | null }> | null
 } | null | undefined): string | null {
-  const googleIdentity = user?.identities?.find((identity) => identity.provider === 'google')
+  if (!user) return null
+  const googleIdentity = user.identities?.find((identity) => identity.provider === 'google')
   const candidates = [
-    googleIdentity?.identity_data?.picture,
+    user.user_metadata?.avatar_url,
+    user.user_metadata?.picture,
+    user.user_metadata?.picture_url,
+    user.user_metadata?.avatar,
+    user.user_metadata?.photoURL,
+    user.user_metadata?.image,
     googleIdentity?.identity_data?.avatar_url,
-    user?.user_metadata?.picture,
-    user?.user_metadata?.avatar_url
+    googleIdentity?.identity_data?.picture,
+    googleIdentity?.identity_data?.picture_url,
+    googleIdentity?.identity_data?.avatar,
+    googleIdentity?.identity_data?.photoURL,
+    (user.user_metadata?.custom_claims as Record<string, unknown> | undefined)?.picture
   ]
 
   for (const candidate of candidates) {
     if (typeof candidate !== 'string') continue
+    const trimmed = candidate.trim()
+    if (!trimmed) continue
     try {
-      const url = new URL(candidate)
-      if (url.protocol === 'https:') return url.href
+      const normalized = trimmed.startsWith('//') ? `https:${trimmed}` : trimmed
+      const url = new URL(normalized)
+      if (url.protocol === 'https:' || url.protocol === 'http:') return url.href
     } catch {
       continue
     }
   }
 
   return null
+}
+
+function ProfileAvatar({
+  url,
+  email,
+  className = 'profile-avatar-image'
+}: {
+  url: string | null
+  email: string | null
+  className?: string
+}) {
+  const [imgError, setImgError] = useState(false)
+  const initials = email ? email.slice(0, 2).toUpperCase() : '??'
+
+  useEffect(() => {
+    setImgError(false)
+  }, [url])
+
+  if (!url || imgError) {
+    return <span className="avatar-initials">{initials}</span>
+  }
+
+  return (
+    <img
+      className={className}
+      src={url}
+      alt={email ? `Avatar ${email}` : 'Avatar'}
+      referrerPolicy="no-referrer"
+      crossOrigin="anonymous"
+      loading="eager"
+      onError={() => setImgError(true)}
+    />
+  )
 }
 
 const navItems = [
@@ -180,11 +231,24 @@ export default function DashboardPage() {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
+  const [privacyOpen, setPrivacyOpen] = useState(false)
+  const [oauthConsentOpen, setOauthConsentOpen] = useState(false)
+  const [consentInfo, setConsentInfo] = useState<ReturnType<typeof getStoredOAuthConsent>>(null)
+  const [revokeNotice, setRevokeNotice] = useState('')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
-  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null)
+  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('rentiq.user.avatar.v1') || null
+    } catch {
+      return null
+    }
+  })
+  const [returnToConsentAfterPrivacy, setReturnToConsentAfterPrivacy] = useState(false)
+  const [consentAgreedTerms, setConsentAgreedTerms] = useState(false)
+  const [consentAgreedDataUsage, setConsentAgreedDataUsage] = useState(false)
   const [authLoading, setAuthLoading] = useState(false)
   const [authMessage, setAuthMessage] = useState('')
   const signingOut = useRef(false)
@@ -198,18 +262,71 @@ export default function DashboardPage() {
   const openSettings = () => {
     modalTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
     setHelpOpen(false)
+    setPrivacyOpen(false)
     setSettingsOpen(true)
   }
 
   const openHelp = () => {
     modalTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
     setSettingsOpen(false)
+    setPrivacyOpen(false)
     setHelpOpen(true)
+  }
+
+  const openPrivacy = (fromConsent: boolean = false) => {
+    modalTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    setSettingsOpen(false)
+    setHelpOpen(false)
+    if (fromConsent) {
+      setReturnToConsentAfterPrivacy(true)
+      setOauthConsentOpen(false)
+    } else {
+      setReturnToConsentAfterPrivacy(false)
+    }
+    setPrivacyOpen(true)
+  }
+
+  const closePrivacy = () => {
+    setPrivacyOpen(false)
+    if (returnToConsentAfterPrivacy) {
+      setReturnToConsentAfterPrivacy(false)
+      setOauthConsentOpen(true)
+    }
   }
 
   const closeModal = () => {
     setSettingsOpen(false)
     setHelpOpen(false)
+  }
+
+  const handleSignInClick = () => {
+    setOauthConsentOpen(true)
+  }
+
+  const handleConsentConfirmed = async () => {
+    setOauthConsentOpen(false)
+    setConsentInfo(getStoredOAuthConsent())
+    await signInWithGoogle()
+  }
+
+  const handleRevokeConsent = async () => {
+    clearOAuthConsent()
+    setConsentInfo(null)
+    setUserAvatarUrl(null)
+    try { localStorage.removeItem('rentiq.user.avatar.v1') } catch {}
+    setRevokeNotice(
+      lang === 'en'
+        ? 'Consent revoked. Personal session data erased under Law 91/2025.'
+        : 'Đã thu hồi đồng thuận và xóa dữ liệu cá nhân thành công theo Luật BVDLCN 91/2025.'
+    )
+    try {
+      localStorage.removeItem(SETTINGS_STORAGE_KEY)
+    } catch {
+      // Ignore storage errors
+    }
+    if (userEmail) {
+      await signOut()
+    }
   }
 
   useEffect(() => {
@@ -233,6 +350,7 @@ export default function DashboardPage() {
       // Unavailable storage or invalid saved data must not prevent using the app.
     } finally {
       setSettingsLoaded(true)
+      setConsentInfo(getStoredOAuthConsent())
     }
   }, [])
 
@@ -263,8 +381,25 @@ export default function DashboardPage() {
         if (error) throw error
         if (hadSession && !data.session && !signingOut.current) setAuthMessage('Phiên đăng nhập đã kết thúc. Vui lòng đăng nhập lại.')
         hadSession = Boolean(data.session)
-        setUserEmail(data.session?.user.email ?? null)
-        setUserAvatarUrl(getProfileAvatarUrl(data.session?.user))
+        const email = data.session?.user.email ?? null
+        setUserEmail(email)
+        const avatar = getProfileAvatarUrl(data.session?.user)
+        if (avatar) {
+          setUserAvatarUrl(avatar)
+          try { localStorage.setItem('rentiq.user.avatar.v1', avatar) } catch {}
+        } else if (!email) {
+          setUserAvatarUrl(null)
+          try { localStorage.removeItem('rentiq.user.avatar.v1') } catch {}
+        } else {
+          void supabase.auth.getUser().then(({ data: userData }) => {
+            if (!mounted) return
+            const freshAvatar = getProfileAvatarUrl(userData?.user)
+            if (freshAvatar) {
+              setUserAvatarUrl(freshAvatar)
+              try { localStorage.setItem('rentiq.user.avatar.v1', freshAvatar) } catch {}
+            }
+          })
+        }
       } catch (error) {
         console.error('Failed to read Supabase auth session:', error)
         if (mounted) setAuthMessage('Không thể kiểm tra phiên đăng nhập. Kiểm tra kết nối hoặc đăng nhập lại.')
@@ -275,8 +410,25 @@ export default function DashboardPage() {
       if (!mounted) return
       if (event === 'SIGNED_OUT' && hadSession && !signingOut.current) setAuthMessage('Phiên đăng nhập đã kết thúc. Vui lòng đăng nhập lại.')
       hadSession = Boolean(session)
-      setUserEmail(session?.user?.email ?? null)
-      setUserAvatarUrl(getProfileAvatarUrl(session?.user))
+      const email = session?.user?.email ?? null
+      setUserEmail(email)
+      const avatar = getProfileAvatarUrl(session?.user)
+      if (avatar) {
+        setUserAvatarUrl(avatar)
+        try { localStorage.setItem('rentiq.user.avatar.v1', avatar) } catch {}
+      } else if (!email) {
+        setUserAvatarUrl(null)
+        try { localStorage.removeItem('rentiq.user.avatar.v1') } catch {}
+      } else {
+        void supabase.auth.getUser().then(({ data: userData }) => {
+          if (!mounted) return
+          const freshAvatar = getProfileAvatarUrl(userData?.user)
+          if (freshAvatar) {
+            setUserAvatarUrl(freshAvatar)
+            try { localStorage.setItem('rentiq.user.avatar.v1', freshAvatar) } catch {}
+          }
+        })
+      }
       if (session) setAuthMessage('')
     })
     window.addEventListener('focus', checkSession)
@@ -367,6 +519,9 @@ export default function DashboardPage() {
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
+      setUserAvatarUrl(null)
+      setUserEmail(null)
+      try { localStorage.removeItem('rentiq.user.avatar.v1') } catch {}
       setAuthMessage(''); setAccountMenuOpen(false)
     } catch (error) {
       console.error('Supabase sign-out failed:', error)
@@ -376,7 +531,7 @@ export default function DashboardPage() {
   }
 
   // Language & Translation
-  const { lang, setLang, toggleLang } = useTranslation()
+  const { lang, setLang, toggleLang, t } = useTranslation()
 
   // Filter States (BĐS Domain Standards)
   const filterStore = useFilterStore()
@@ -748,9 +903,10 @@ export default function DashboardPage() {
         <div className="sidebar-bottom">
           <button className="nav-item" onClick={openSettings}><Settings2 size={18} /><span>{lang === 'en' ? 'Settings' : 'Cài đặt'}</span></button>
           <button className="nav-item" onClick={openHelp}><CircleHelp size={18} /><span>{lang === 'en' ? 'Help' : 'Trợ giúp'}</span></button>
+          <button className="nav-item" onClick={() => openPrivacy()} title={lang === 'en' ? 'Privacy Policy (Law 91/2025)' : 'Chính sách bảo mật (Luật 91/2025)'}><ShieldCheck size={18} /><span>{lang === 'en' ? 'Privacy Policy' : 'Chính sách bảo mật'}</span></button>
           <button className={`user-card ${accountMenuOpen ? 'selected' : ''}`} aria-label="Mở menu tài khoản" onClick={() => setAccountMenuOpen((open) => !open)}>
             <span className="user-avatar">
-              {userAvatarUrl ? <img className="profile-avatar-image" src={userAvatarUrl} alt="" onError={() => setUserAvatarUrl(null)} /> : userEmail ? userEmail.slice(0, 2).toUpperCase() : '??'}
+              <ProfileAvatar url={userAvatarUrl} email={userEmail} />
             </span>
             <span>
               <strong>{userEmail ? userEmail.split('@')[0] : 'Chưa đăng nhập'}</strong>
@@ -803,9 +959,7 @@ export default function DashboardPage() {
                 aria-haspopup="menu"
                 onClick={() => setAccountMenuOpen((open) => !open)}
               >
-                {userAvatarUrl ? (
-                  <img className="profile-avatar-image" src={userAvatarUrl} alt="" onError={() => setUserAvatarUrl(null)} />
-                ) : userEmail ? userEmail.slice(0, 2).toUpperCase() : '??'}
+                <ProfileAvatar url={userAvatarUrl} email={userEmail} />
               </button>
               {accountMenuOpen && (
                 <div className="sidebar-popover account-popover" role="menu">
@@ -813,9 +967,7 @@ export default function DashboardPage() {
                     <>
                       <div className="account-popover-header">
                         <div className="user-avatar">
-                          {userAvatarUrl ? (
-                            <img className="profile-avatar-image" src={userAvatarUrl} alt="" onError={() => setUserAvatarUrl(null)} />
-                          ) : userEmail.slice(0, 2).toUpperCase()}
+                          <ProfileAvatar url={userAvatarUrl} email={userEmail} />
                         </div>
                         <div className="account-identity">
                           <strong>{userEmail.split('@')[0]}</strong>
@@ -823,16 +975,28 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       <button role="menuitem" onClick={() => { openSettings(); setAccountMenuOpen(false) }}>
-                        <Settings2 size={14} /> Hồ sơ & cài đặt
+                        <Settings2 size={14} /> {lang === 'en' ? 'Profile & Settings' : 'Hồ sơ & cài đặt'}
+                      </button>
+                      <button role="menuitem" onClick={() => { openPrivacy(); setAccountMenuOpen(false) }}>
+                        <ShieldCheck size={14} /> {lang === 'en' ? 'Privacy Policy' : 'Chính sách bảo mật'}
                       </button>
                       <button role="menuitem" className="account-signout" onClick={() => void signOut()}>
-                        <LogOut size={14} /> Đăng xuất
+                        <LogOut size={14} /> {lang === 'en' ? 'Sign Out' : 'Đăng xuất'}
                       </button>
                     </>
                   ) : (
-                    <button role="menuitem" onClick={() => void signInWithGoogle()}>
-                      <LogIn size={14} /> {authLoading ? 'Đang chuyển tới Google...' : 'Đăng nhập bằng Google'}
-                    </button>
+                    <>
+                      <button role="menuitem" onClick={() => { setAccountMenuOpen(false); handleSignInClick() }}>
+                        <LogIn size={14} /> {authLoading ? (lang === 'en' ? 'Connecting to Google...' : 'Đang chuyển tới Google...') : (lang === 'en' ? 'Sign in with Google' : 'Đăng nhập bằng Google')}
+                      </button>
+                      <button role="menuitem" onClick={() => { openPrivacy(); setAccountMenuOpen(false) }}>
+                        <ShieldCheck size={14} /> {lang === 'en' ? 'Privacy Policy' : 'Chính sách bảo mật'}
+                      </button>
+                      <div style={{ padding: '4px 12px 6px', fontSize: '11px', color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <ShieldCheck size={12} style={{ color: '#16a34a' }} />
+                        <span>{lang === 'en' ? 'Protected under Law 91/2025' : 'Bảo vệ bởi Luật BVDLCN 91/2025'}</span>
+                      </div>
+                    </>
                   )}
                   <button role="menuitem" className="account-close" onClick={() => setAccountMenuOpen(false)}>Đóng menu</button>
                 </div>
@@ -852,6 +1016,7 @@ export default function DashboardPage() {
           {navItems.map((item) => <button key={item.id} onClick={() => { setActiveNav(item.id); setMobileNavOpen(false) }}>{lang === 'en' ? item.labelEn : item.labelVi}</button>)}
           <button onClick={() => { setMobileNavOpen(false); openSettings() }}>{lang === 'en' ? 'Settings' : 'Cài đặt'}</button>
           <button onClick={() => { setMobileNavOpen(false); openHelp() }}>{lang === 'en' ? 'Help' : 'Trợ giúp'}</button>
+          <button onClick={() => { setMobileNavOpen(false); openPrivacy() }}>{lang === 'en' ? 'Privacy Policy' : 'Chính sách bảo mật'}</button>
         </div>}
         {modalOpen && <div className="modal-backdrop" onClick={closeModal}><div ref={modalRef} className="quick-modal" role="dialog" aria-modal="true" aria-labelledby="dashboard-modal-title" tabIndex={-1} onClick={(e) => e.stopPropagation()}>
           {settingsOpen ? <>
@@ -870,6 +1035,49 @@ export default function DashboardPage() {
             <div className="settings-group"><span className="settings-group-title">{lang === 'en' ? 'Data' : 'Dữ liệu'}</span>
               <label className="setting-row"><span><strong>{lang === 'en' ? 'Auto-refresh Data' : 'Tự động làm mới dữ liệu'}</strong><small>{lang === 'en' ? 'Refresh overview every 60 seconds after data loads' : 'Làm mới tổng quan sau mỗi 60 giây khi tải xong dữ liệu'}</small></span><input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} /></label>
             </div>
+            <div className="settings-group">
+              <span className="settings-group-title">{lang === 'en' ? 'Privacy & Data Protection' : 'Quyền riêng tư & Bảo vệ dữ liệu'}</span>
+              <div className="setting-row" style={{ alignItems: 'center' }}>
+                <span>
+                  <strong>{lang === 'en' ? 'Privacy Policy (Law 91/2025)' : 'Chính sách Bảo mật (Luật 91/2025)'}</strong>
+                  <small>{lang === 'en' ? 'Updated Nov 2, 2026 under VN Personal Data Protection Law' : 'Cập nhật 02/11/2026 theo Luật BVDLCN & NĐ 356/2025'}</small>
+                </span>
+                <button
+                  type="button"
+                  className="button secondary"
+                  style={{ padding: '5px 12px', fontSize: '12px' }}
+                  onClick={() => { closeModal(); openPrivacy(); }}
+                >
+                  <ShieldCheck size={14} /> {lang === 'en' ? 'View Policy' : 'Xem chính sách'}
+                </button>
+              </div>
+              <div className="setting-row" style={{ alignItems: 'center' }}>
+                <span>
+                  <strong>{lang === 'en' ? 'OAuth Consent Status' : 'Trạng thái Đồng thuận Dữ liệu'}</strong>
+                  <small>
+                    {consentInfo
+                      ? (lang === 'en' ? `Consented on ${new Date(consentInfo.consentedAt).toLocaleDateString()}` : `Đã xác nhận đồng thuận ngày ${new Date(consentInfo.consentedAt).toLocaleDateString('vi-VN')}`)
+                      : (lang === 'en' ? 'No consent recorded (Guest)' : 'Chưa có bản ghi đồng thuận (Khách)')}
+                  </small>
+                </span>
+                {(consentInfo || userEmail) && (
+                  <button
+                    type="button"
+                    className="button secondary"
+                    style={{ padding: '5px 12px', fontSize: '12px', color: '#dc2626', borderColor: '#fca5a5' }}
+                    onClick={() => void handleRevokeConsent()}
+                    title={lang === 'en' ? 'Revoke consent and erase data' : 'Rút lại đồng thuận và xóa dữ liệu cá nhân'}
+                  >
+                    <Trash2 size={13} /> {lang === 'en' ? 'Revoke & Erase' : 'Rút lại & Xóa'}
+                  </button>
+                )}
+              </div>
+              {revokeNotice && (
+                <div style={{ fontSize: '11px', color: '#059669', padding: '6px 0', fontWeight: 600 }}>
+                  ✓ {revokeNotice}
+                </div>
+              )}
+            </div>
             <div className="settings-status"><span className="live-dot" /> {settingsSaved ? (lang === 'en' ? 'Settings saved on this browser' : 'Cài đặt đã lưu trên trình duyệt này') : (lang === 'en' ? 'Settings apply to this session only' : 'Cài đặt chỉ áp dụng trong phiên này; chưa lưu được trên trình duyệt')}</div>
           </> : <>
             <div className="modal-heading"><div><span className="modal-eyebrow">{lang === 'en' ? 'USER GUIDE' : 'HƯỚNG DẪN'}</span><h3 id="dashboard-modal-title">{lang === 'en' ? 'Help & Documentation' : 'Trợ giúp'}</h3></div><button className="modal-close-button" aria-label="Đóng" title="Đóng hướng dẫn" onClick={closeModal}><X size={17} /></button></div>
@@ -881,7 +1089,7 @@ export default function DashboardPage() {
         <div className="page-wrap">
           {authMessage && <div role="alert" className="card" style={{ padding: 16, marginBottom: 16 }}>
             <p>{authMessage}</p>
-            <button className="button secondary" disabled={authLoading} onClick={() => void signInWithGoogle()}>{authLoading ? 'Đang mở Google…' : 'Đăng nhập lại'}</button>
+            <button className="button secondary" disabled={authLoading} onClick={handleSignInClick}>{authLoading ? (lang === 'en' ? 'Opening Google…' : 'Đang mở Google…') : (lang === 'en' ? 'Sign In Again' : 'Đăng nhập lại')}</button>
             <button className="button secondary" onClick={() => setAuthMessage('')}>Đóng</button>
           </div>}
           <div className="page-heading">
@@ -895,7 +1103,6 @@ export default function DashboardPage() {
                 )}
               </div>
               <h1>{lang === 'en' ? 'Da Nang Rental Market Dashboard' : 'Bảng Điều Khiển Thị Trường Thuê Đà Nẵng'}</h1>
-              <p>{lang === 'en' ? 'Aggregated analytics from Gold layer Data Warehouse with Dynamic Query Builder.' : 'Dữ liệu tổng hợp từ Data Warehouse tầng Gold với cơ chế Dynamic Query Builder.'}</p>
             </div>
 
             <div className="heading-actions">
@@ -1087,7 +1294,7 @@ export default function DashboardPage() {
                 >
                   <option value="">{lang === 'en' ? 'All categories' : 'Tất cả loại hình'}</option>
                   {CATEGORY_OPTIONS.map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                    <option key={c} value={c}>{translateCategoryName(c, lang === 'en')}</option>
                   ))}
                 </select>
               </div>
@@ -1104,7 +1311,7 @@ export default function DashboardPage() {
                 >
                   <option value="">{lang === 'en' ? 'All furnishings' : 'Tất cả nội thất'}</option>
                   {FURNISHING_OPTIONS.map((f) => (
-                    <option key={f} value={f}>{f}</option>
+                    <option key={f} value={f}>{translateFurnishing(f, lang === 'en')}</option>
                   ))}
                 </select>
               </div>
@@ -1173,7 +1380,7 @@ export default function DashboardPage() {
                       checked={reqElevator}
                       onChange={(e) => { setReqElevator(e.target.checked); setPage(1) }}
                     />
-                    🛗 Thang máy
+                    {t('chips.elevator')}
                   </label>
                   <label style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', cursor: 'pointer', fontWeight: 500, color: 'var(--ink)' }}>
                     <input
@@ -1181,7 +1388,7 @@ export default function DashboardPage() {
                       checked={reqBalcony}
                       onChange={(e) => { setReqBalcony(e.target.checked); setPage(1) }}
                     />
-                    🌅 Ban công
+                    {t('chips.balcony')}
                   </label>
                   <label style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', cursor: 'pointer', fontWeight: 500, color: 'var(--ink)' }}>
                     <input
@@ -1217,16 +1424,16 @@ export default function DashboardPage() {
 
           {/* Active Filter Summary */}
           {activeFiltersCount > 0 && (
-            <div className="active-filters-wrap" aria-label="Điều kiện lọc đang áp dụng">
+            <div className="active-filters-wrap" aria-label={lang === 'en' ? 'Active filters' : 'Điều kiện lọc đang áp dụng'}>
               <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>
                 {lang === 'en' ? `Active Filters (${activeFiltersCount})` : `Điều kiện đang áp dụng (${activeFiltersCount})`}
               </span>
               {(startDate || endDate) && (
                 <span className="filter-chip">
-                  Ngày đăng: {startDate || 'bất kỳ'} — {endDate || 'bất kỳ'}
+                  {t('chips.date')} {startDate || t('chips.any')} — {endDate || t('chips.any')}
                   <button
-                    aria-label="Đặt lại điều kiện ngày đăng"
-                    title={startDate === DEFAULT_START_DATE && endDate === todayDate ? 'Xóa lọc ngày để xem tất cả lịch sử' : 'Đặt lại về mặc định từ tháng 1/2026'}
+                    aria-label={lang === 'en' ? 'Reset date filter' : 'Đặt lại điều kiện ngày đăng'}
+                    title={startDate === DEFAULT_START_DATE && endDate === todayDate ? (lang === 'en' ? 'Clear date filter to view all history' : 'Xóa lọc ngày để xem tất cả lịch sử') : (lang === 'en' ? 'Reset to January 2026' : 'Đặt lại về mặc định từ tháng 1/2026')}
                     onClick={() => {
                       if (startDate === DEFAULT_START_DATE && endDate === todayDate) {
                         setStartDate('')
@@ -1244,67 +1451,67 @@ export default function DashboardPage() {
               )}
               {wardFilter && (
                 <span className="filter-chip">
-                  Khu vực: {wardFilter}
+                  {t('chips.ward')} {wardFilter}
                   <button onClick={() => { setWardFilter(''); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {categoryFilter && (
                 <span className="filter-chip">
-                  Loại hình: {categoryFilter}
+                  {t('chips.category')} {translateCategoryName(categoryFilter, lang === 'en')}
                   <button onClick={() => { setCategoryFilter(''); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {furnishingFilter && (
                 <span className="filter-chip">
-                  Nội thất: {furnishingFilter}
+                  {t('chips.furnishing')} {translateFurnishing(furnishingFilter, lang === 'en')}
                   <button onClick={() => { setFurnishingFilter(''); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {priceRangeFilter && (
                 <span className="filter-chip">
-                  Giá: {priceRangeFilter === 'under_3m' ? '< 3 triệu' : priceRangeFilter === '3m_5m' || priceRangeFilter === '3m_6m' ? '3-5 triệu' : priceRangeFilter === '5m_8m' || priceRangeFilter === '6m_10m' ? '5-8 triệu' : priceRangeFilter === '8m_15m' ? '8-15 triệu' : '> 15 triệu'}
+                  {t('chips.price')} {priceRangeFilter === 'under_3m' ? (lang === 'en' ? '< 3M VND' : '< 3 triệu') : priceRangeFilter === '3m_5m' || priceRangeFilter === '3m_6m' ? (lang === 'en' ? '3-5M VND' : '3-5 triệu') : priceRangeFilter === '5m_8m' || priceRangeFilter === '6m_10m' ? (lang === 'en' ? '5-8M VND' : '5-8 triệu') : priceRangeFilter === '8m_15m' ? (lang === 'en' ? '8-15M VND' : '8-15 triệu') : (lang === 'en' ? '> 15M VND' : '> 15 triệu')}
                   <button onClick={() => { setPriceRangeFilter(''); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {sizeRangeFilter && (
                 <span className="filter-chip">
-                  DT: {sizeRangeFilter === 'under_20' ? '< 20m²' : sizeRangeFilter === '20_35' ? '20-35m²' : sizeRangeFilter === '35_50' ? '35-50m²' : '> 50m²'}
+                  {t('chips.size')} {sizeRangeFilter === 'under_20' ? '< 20m²' : sizeRangeFilter === '20_35' ? '20-35m²' : sizeRangeFilter === '35_50' ? '35-50m²' : '> 50m²'}
                   <button onClick={() => { setSizeRangeFilter(''); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {reqElevator && (
                 <span className="filter-chip">
-                  🛗 Thang máy
+                  {t('chips.elevator')}
                   <button onClick={() => { setReqElevator(false); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {reqBalcony && (
                 <span className="filter-chip">
-                  🌅 Ban công
+                  {t('chips.balcony')}
                   <button onClick={() => { setReqBalcony(false); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {reqPrivateBath && (
                 <span className="filter-chip">
-                  🚿 WC riêng
+                  {t('chips.privateBath')}
                   <button onClick={() => { setReqPrivateBath(false); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {reqParking && (
                 <span className="filter-chip">
-                  🛵 Chỗ để xe
+                  {t('chips.parking')}
                   <button onClick={() => { setReqParking(false); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {floodRiskFilter !== '' && (
                 <span className="filter-chip">
-                  Rủi ro ngập: {floodRiskFilter === '0' ? 'Thấp' : floodRiskFilter === '1' ? 'Trung bình' : 'Cao'}
+                  {t('chips.risk')} {floodRiskFilter === '0' ? (lang === 'en' ? 'Low' : 'Thấp') : floodRiskFilter === '1' ? (lang === 'en' ? 'Medium' : 'Trung bình') : (lang === 'en' ? 'High' : 'Cao')}
                   <button onClick={() => { setFloodRiskFilter(''); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
               {searchQuery && (
                 <span className="filter-chip">
-                  Tìm kiếm: &quot;{searchQuery}&quot;
+                  {lang === 'en' ? 'Search:' : 'Tìm kiếm:'} &quot;{searchQuery}&quot;
                   <button onClick={() => { setSearchInput(''); setSearchQuery(''); setPage(1) }}><X size={12} /></button>
                 </span>
               )}
@@ -1654,16 +1861,20 @@ export default function DashboardPage() {
                         </span>
                         <div className="pagination-controls">
                           <button
+                            type="button"
                             className="page-btn"
                             disabled={page <= 1}
                             onClick={() => setPage((p) => Math.max(1, p - 1))}
+                            aria-label={lang === 'en' ? 'Previous page' : 'Trang trước'}
                           >
                             <ChevronLeft size={14} /> {lang === 'en' ? 'Prev' : 'Trước'}
                           </button>
                           <button
+                            type="button"
                             className="page-btn"
                             disabled={page >= totalPages}
                             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                            aria-label={lang === 'en' ? 'Next page' : 'Trang sau'}
                           >
                             {lang === 'en' ? 'Next' : 'Sau'} <ChevronRight size={14} />
                           </button>
@@ -1675,8 +1886,32 @@ export default function DashboardPage() {
               )}
             </>
           )}
+          
         </div>
       </section>
+
+      <PrivacyPolicyModal
+        isOpen={privacyOpen}
+        onClose={closePrivacy}
+        lang={lang}
+        openedFromConsent={returnToConsentAfterPrivacy}
+        onBackToConsent={closePrivacy}
+      />
+      <OAuthConsentModal
+        isOpen={oauthConsentOpen}
+        onClose={() => {
+          setOauthConsentOpen(false)
+          setReturnToConsentAfterPrivacy(false)
+        }}
+        onConfirm={() => void handleConsentConfirmed()}
+        onOpenPrivacyPolicy={() => openPrivacy(true)}
+        isLoading={authLoading}
+        lang={lang}
+        agreedTerms={consentAgreedTerms}
+        onAgreedTermsChange={setConsentAgreedTerms}
+        agreedDataUsage={consentAgreedDataUsage}
+        onAgreedDataUsageChange={setConsentAgreedDataUsage}
+      />
     </main>
   )
 }
@@ -1757,6 +1992,8 @@ function AnalysisTab({
   wards: WardData[]
   priceDistribution: PriceDistribution[]
 }) {
+  const { lang } = useTranslation()
+  const isEn = lang === 'en'
   const market = tab === 'Thị trường'
   const maxWardCount = wards.length > 0 ? Math.max(...wards.map((w) => w.count), 1) : 1
 
@@ -1765,35 +2002,35 @@ function AnalysisTab({
       <div className="analysis-intro">
         <div>
           <span className="eyebrow">{market ? 'MARKET SIGNALS' : 'SUPPLY INTELLIGENCE'}</span>
-          <h2>{market ? 'Nhịp chuyển động của thị trường' : 'Bức tranh nguồn cung chi tiết'}</h2>
+          <h2>{market ? (isEn ? 'Rental market trends' : 'Nhịp chuyển động của thị trường') : (isEn ? 'Rental supply overview' : 'Bức tranh nguồn cung chi tiết')}</h2>
           <p>
             {market
-              ? 'Theo dõi nhu cầu, mặt bằng giá và các tín hiệu đang thay đổi theo khu vực từ kho dữ liệu gold.rental_room.'
-              : 'Đánh giá độ phủ tin đăng, loại hình và khoảng trống nguồn cung tại Đà Nẵng theo thời gian thực.'}
+              ? (isEn ? 'Track demand, rental prices and emerging trends by area using rental market data.' : 'Theo dõi nhu cầu, mặt bằng giá và các tín hiệu đang thay đổi theo khu vực từ kho dữ liệu gold.rental_room.')
+              : (isEn ? 'Explore listing coverage, property types and supply gaps across Da Nang in real time.' : 'Đánh giá độ phủ tin đăng, loại hình và khoảng trống nguồn cung tại Đà Nẵng theo thời gian thực.')}
           </p>
         </div>
         <span className="analysis-status">
-          <span className="live-dot" /> Dữ liệu đã đồng bộ từ Schema Gold
+          <span className="live-dot" /> {isEn ? 'Data synced from Gold schema' : 'Dữ liệu đã đồng bộ từ Schema Gold'}
         </span>
       </div>
 
       <div className="analysis-cards">
         <MetricCard
-          label={market ? 'Tổng quy mô mẫu lọc' : 'Tin đăng đang theo dõi'}
-          value={kpiData?.total_listings.toLocaleString() || '0'}
-          note="Từ kho dữ liệu gold.rental_room"
+          label={market ? (isEn ? 'Total matching listings' : 'Tổng quy mô mẫu lọc') : (isEn ? 'Listings tracked' : 'Tin đăng đang theo dõi')}
+          value={kpiData?.total_listings.toLocaleString(isEn ? 'en-US' : 'vi-VN') || '0'}
+          note={isEn ? 'From rental market data' : 'Từ kho dữ liệu gold.rental_room'}
           tone="blue"
         />
         <MetricCard
-          label={market ? 'Giá thuê trung bình' : 'Tỷ lệ căn hộ'}
-          value={market ? `${kpiData?.avg_price_million.toFixed(2) || '0'} tr` : `${kpiData?.apartment_percentage || 0}%`}
-          note={market ? 'Mặt bằng giá chung toàn bộ mẫu lọc' : 'Trong tổng số nguồn cung lọc'}
+          label={market ? (isEn ? 'Average rent' : 'Giá thuê trung bình') : (isEn ? 'Apartment share' : 'Tỷ lệ căn hộ')}
+          value={market ? `${kpiData?.avg_price_million.toFixed(2) || '0'} ${isEn ? 'M VND' : 'tr'}` : `${kpiData?.apartment_percentage || 0}%`}
+          note={market ? (isEn ? 'Average across all matching listings' : 'Mặt bằng giá chung toàn bộ mẫu lọc') : (isEn ? 'Share of matching supply' : 'Trong tổng số nguồn cung lọc')}
           tone="orange"
         />
         <MetricCard
-          label={market ? 'Tỷ lệ an toàn ngập' : 'Tỷ lệ phòng trọ'}
+          label={market ? (isEn ? 'Flood safety rate' : 'Tỷ lệ an toàn ngập') : (isEn ? 'Rental room share' : 'Tỷ lệ phòng trọ')}
           value={market ? `${kpiData?.flood_risk_low_percentage || 0}%` : `${kpiData?.room_percentage || 0}%`}
-          note="Phân khúc an toàn ngập úng"
+          note={market ? (isEn ? 'Listings in low flood-risk areas' : 'Phân khúc an toàn ngập úng') : (isEn ? 'Share of matching supply' : 'Trong tổng số nguồn cung lọc')}
           tone="purple"
         />
       </div>
@@ -1802,8 +2039,8 @@ function AnalysisTab({
       <div className="analysis-lower" style={{ marginTop: '16px' }}>
         <div className="card recommendation-card">
           <CardHeader
-            title={market ? 'Tín hiệu trọng điểm theo dữ liệu thực' : 'Phân bổ nguồn cung theo khu vực'}
-            subtitle={market ? 'Insight tự động phân tích từ tập dữ liệu đang lọc' : 'Top khu vực có mật độ tin đăng cao nhất'}
+            title={market ? (isEn ? 'Key market insights' : 'Tín hiệu trọng điểm theo dữ liệu thực') : (isEn ? 'Supply by area' : 'Phân bổ nguồn cung theo khu vực')}
+            subtitle={market ? (isEn ? 'Insights generated from matching listings' : 'Insight tự động phân tích từ tập dữ liệu đang lọc') : (isEn ? 'Areas with the most listings' : 'Top khu vực có mật độ tin đăng cao nhất')}
             action=""
           />
           <div className="recommendation-list">
@@ -1813,9 +2050,9 @@ function AnalysisTab({
                   <MapPin size={16} />
                 </div>
                 <div>
-                  <strong>{w.name}: {w.count} bài đăng</strong>
+                  <strong>{w.name}: {w.count} {isEn ? 'listings' : 'bài đăng'}</strong>
                   <p>
-                    Giá thuê trung bình: {(w.avgPrice / 1000000).toFixed(1)} tr/tháng · Tỷ trọng: {kpiData && kpiData.total_listings > 0 ? Math.round((w.count / kpiData.total_listings) * 100) : 0}% tổng nguồn cung.
+                    {isEn ? 'Average rent:' : 'Giá thuê trung bình:'} {(w.avgPrice / 1000000).toFixed(1)} {isEn ? 'M VND/month · Share:' : 'tr/tháng · Tỷ trọng:'} {kpiData && kpiData.total_listings > 0 ? Math.round((w.count / kpiData.total_listings) * 100) : 0}% {isEn ? 'of total supply.' : 'tổng nguồn cung.'}
                   </p>
                 </div>
               </div>
@@ -1825,8 +2062,8 @@ function AnalysisTab({
 
         <div className="card mini-summary">
           <CardHeader
-            title="Tỷ trọng nguồn cung"
-            subtitle="Phân theo khu vực dẫn đầu"
+            title={isEn ? 'Supply share' : 'Tỷ trọng nguồn cung'}
+            subtitle={isEn ? 'By leading areas' : 'Phân theo khu vực dẫn đầu'}
             action=""
           />
           <div className="summary-bars">
@@ -1836,7 +2073,7 @@ function AnalysisTab({
                 <div className="summary-bar" key={w.name}>
                   <div>
                     <span>{w.name}</span>
-                    <strong>{w.count} tin</strong>
+                    <strong>{w.count} {isEn ? 'listings' : 'tin'}</strong>
                   </div>
                   <div className="summary-track">
                     <span style={{ width: `${pct}%` }} />

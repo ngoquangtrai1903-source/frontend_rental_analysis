@@ -1190,9 +1190,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
           <span className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Activity size={13} style={{ color: '#3078f0' }} />
             AI RENTAL & APARTMENT VALUATION ENGINE (FASTAPI 2026)
-            <span className="active-model-pill">
-              {propertyType === 'apartment' ? 'Model: CanHo HGBoost' : 'Model: Tro CatBoost'}
-            </span>
+            
           </span>
           <h2 style={{ fontSize: '23px', margin: '6px 0 4px' }}>
             {propertyType === 'apartment'
@@ -1203,15 +1201,6 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                 ? 'AI Rental Room Valuation & SHAP Explainability Engine'
                 : 'Triển Khai Model Dự Đoán Giá Phòng Trọ & Giải Thích SHAP'}
           </h2>
-          <p style={{ fontSize: '12px', color: 'var(--muted)' }}>
-            {propertyType === 'apartment'
-              ? isEn
-                ? 'High-precision pricing for 1-3 room apartments and condominiums in Da Nang with SHAP explanations.'
-                : 'Định giá chính xác cho căn hộ/chung cư (1, 2, 3 phòng ngủ) tại Đà Nẵng, bóc tách giải thích đóng góp đặc trưng bằng SHAP.'
-              : isEn
-                ? 'Real-time rental room valuation based on spatial, location, and amenity parameters in Da Nang.'
-                : 'Ước tính giá thuê phòng trọ thời gian thực dựa trên 11 thông số không gian và tiện ích tại Đà Nẵng.'}
-          </p>
         </div>
 
         {/* Backend Online/Offline Pill */}
@@ -1313,9 +1302,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
               </div>
               <div className="mode-btn-content">
                 <span className="mode-btn-title">{isEn ? 'Rental Room' : 'Phòng trọ'}</span>
-                <span className="mode-btn-sub">
-                  {isEn ? 'CatBoost / ExtraTrees Pipeline' : 'Mô hình CatBoost / ExtraTrees'}
-                </span>
+          
               </div>
             </button>
 
@@ -1329,9 +1316,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
               </div>
               <div className="mode-btn-content">
                 <span className="mode-btn-title">{isEn ? 'Apartment / Condo' : 'Căn hộ / Chung cư'}</span>
-                <span className="mode-btn-sub">
-                  {isEn ? 'HGBoost Pipeline (1-3 Rooms)' : 'Mô hình HGBoost (1-3 Phòng)'}
-                </span>
+              
               </div>
             </button>
           </div>

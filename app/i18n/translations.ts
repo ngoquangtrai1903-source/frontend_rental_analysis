@@ -23,6 +23,10 @@ export const translations = {
     signInGoogle: 'Đăng nhập bằng Google',
     signingIn: 'Đang chuyển tới Google...',
     reSignIn: 'Đăng nhập lại',
+    privacyPolicy: 'Chính sách bảo mật',
+    privacyCompliance: 'Tuân thủ Luật BVDLCN 91/2025',
+    revokeConsent: 'Rút lại đồng thuận & Xóa dữ liệu',
+    revokeSuccess: 'Đã rút lại đồng thuận và xóa dữ liệu thành công.',
     searchPlaceholder: 'Tìm khu vực, loại hình...',
     notificationsTitle: 'Trạng thái dữ liệu',
     errorLoadingData: 'Không thể tải dữ liệu:',
@@ -36,7 +40,8 @@ export const translations = {
       analytics: 'Phân tích nâng cao',
       aiPredict: 'Dự đoán giá AI',
       settings: 'Cài đặt',
-      help: 'Trợ giúp'
+      help: 'Trợ giúp',
+      privacy: 'Chính sách bảo mật'
     },
 
     // Heading Actions
@@ -230,6 +235,10 @@ export const translations = {
     signInGoogle: 'Sign in with Google',
     signingIn: 'Redirecting to Google...',
     reSignIn: 'Sign In Again',
+    privacyPolicy: 'Privacy Policy',
+    privacyCompliance: 'Compliant with Law 91/2025',
+    revokeConsent: 'Revoke Consent & Erase Data',
+    revokeSuccess: 'Consent revoked and personal data erased successfully.',
     searchPlaceholder: 'Search area, category...',
     notificationsTitle: 'Data Status',
     errorLoadingData: 'Failed to load data:',
@@ -243,7 +252,8 @@ export const translations = {
       analytics: 'Advanced Analytics',
       aiPredict: 'AI Price Prediction',
       settings: 'Settings',
-      help: 'Help'
+      help: 'Help',
+      privacy: 'Privacy Policy'
     },
 
     // Heading Actions
