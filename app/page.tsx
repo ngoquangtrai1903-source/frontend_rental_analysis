@@ -1861,16 +1861,20 @@ export default function DashboardPage() {
                         </span>
                         <div className="pagination-controls">
                           <button
+                            type="button"
                             className="page-btn"
                             disabled={page <= 1}
                             onClick={() => setPage((p) => Math.max(1, p - 1))}
+                            aria-label={lang === 'en' ? 'Previous page' : 'Trang trước'}
                           >
                             <ChevronLeft size={14} /> {lang === 'en' ? 'Prev' : 'Trước'}
                           </button>
                           <button
+                            type="button"
                             className="page-btn"
                             disabled={page >= totalPages}
                             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                            aria-label={lang === 'en' ? 'Next page' : 'Trang sau'}
                           >
                             {lang === 'en' ? 'Next' : 'Sau'} <ChevronRight size={14} />
                           </button>

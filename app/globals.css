@@ -161,7 +161,7 @@
 .page-btn {
   height: 28px;
   padding: 0 10px;
-  background: #fff;
+  background: var(--sidebar, #fff);
   border: 1px solid var(--line);
   border-radius: 6px;
   color: var(--ink);
@@ -171,13 +171,33 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  transition: all 0.15s ease;
 }
 .page-btn:hover:not(:disabled) {
   border-color: var(--blue);
   color: var(--blue);
+  background: var(--bg);
 }
 .page-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.dark-mode .page-btn {
+  background: #1b2940;
+  border-color: #34445f;
+  color: #c2cee0;
+}
+.dark-mode .page-btn:hover:not(:disabled) {
+  background: #243a60;
+  border-color: #5d8fdc;
+  color: #ffffff;
+}
+.dark-mode .page-btn:disabled {
+  background: #141d2d !important;
+  border-color: #243348 !important;
+  color: #50617a !important;
+  opacity: 0.55 !important;
   cursor: not-allowed;
 }
 .loading-indicator {
