@@ -181,7 +181,7 @@ export default function LocationMapView({
             <div>
               <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>{isEn ? 'STRATEGIC HOTSPOT DISTANCES' : 'CỰ LY ĐIỂM NÓNG CHIẾN LƯỢC'}</span>
               <div style={{ fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'grid', gap: '2px' }}>
-                <div>🏖️ {isEn ? 'My Khe Beach' : 'Biển Mỹ Khê'}: {selectedPoint.dist_to_beach ? `${selectedPoint.dist_to_beach.toFixed(1)} km` : '—'}</div>
+                <div>🏖️ {isEn ? 'Nearest beach' : 'Bãi biển gần nhất'}: {selectedPoint.dist_to_beach ? `${selectedPoint.dist_to_beach.toFixed(1)} km` : '—'}</div>
                 <div>🏙️ {isEn ? 'Dragon Bridge CBD' : 'CBD Cầu Rồng'}: {selectedPoint.dist_to_cbd ? `${selectedPoint.dist_to_cbd.toFixed(1)} km` : '—'}</div>
                 <div>🎓 {isEn ? 'Nearest University' : 'Đại học gần nhất'}: {selectedPoint.dist_to_nearest_uni ? `${selectedPoint.dist_to_nearest_uni.toFixed(1)} km` : '—'}</div>
               </div>
