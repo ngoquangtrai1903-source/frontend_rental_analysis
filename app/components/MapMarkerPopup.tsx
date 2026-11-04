@@ -217,7 +217,7 @@ export default function MapMarkerPopup({
         {/* Distance Proximity Indicators */}
         <div className="popup-distance-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginTop: '10px', padding: '8px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
           <div style={{ textAlign: 'center' }}>
-            <span style={{ fontSize: '9px', color: '#64748b', display: 'block' }}>{isEn ? 'Beach' : 'Biển'}</span>
+            <span style={{ fontSize: '9px', color: '#64748b', display: 'block' }}>{isEn ? 'Nearest beach' : 'Bãi biển gần nhất'}</span>
             <strong style={{ fontSize: '11px', color: '#0284c7' }}>
               {point.dist_to_beach ? `${point.dist_to_beach.toFixed(1)} km` : '—'}
             </strong>
@@ -229,7 +229,7 @@ export default function MapMarkerPopup({
             </strong>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <span style={{ fontSize: '9px', color: '#64748b', display: 'block' }}>{isEn ? 'University' : 'Đại học'}</span>
+            <span style={{ fontSize: '9px', color: '#64748b', display: 'block' }}>{isEn ? 'Nearest university' : 'Đại học gần nhất'}</span>
             <strong style={{ fontSize: '11px', color: '#059669' }}>
               {point.dist_to_nearest_uni ? `${point.dist_to_nearest_uni.toFixed(1)} km` : '—'}
             </strong>

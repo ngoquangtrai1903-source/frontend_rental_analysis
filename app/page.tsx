@@ -1267,7 +1267,7 @@ export default function DashboardPage() {
                 />
               </div>
               <div className="filter-item">
-                <label>{lang === 'en' ? 'Ward' : 'Khu vực (Ward)'}</label>
+                <label>{lang === 'en' ? 'Ward/commune' : 'Phường/xã'}</label>
                 <select
                   className="filter-control"
                   value={wardFilter}
@@ -1276,7 +1276,7 @@ export default function DashboardPage() {
                     setPage(1)
                   }}
                 >
-                  <option value="">{lang === 'en' ? 'All districts' : 'Tất cả quận/huyện'}</option>
+                  <option value="">{lang === 'en' ? 'All wards/communes' : 'Tất cả phường/xã'}</option>
                   {WARDS_OPTIONS.map((w) => (
                     <option key={w} value={w}>{w}</option>
                   ))}

@@ -97,7 +97,7 @@ export default function LocationMapView({
 
         <div className="card metric-card">
           <div className="kpi-icon orange"><DollarSign size={17} /></div>
-          <span>{isEn ? 'AVERAGE COORDINATE RENT' : 'GIÁ THUÊ TRUNG BÌNH TOẠ ĐỘ'}</span>
+          <span>{isEn ? 'Average rent of listings on the map' : 'Giá thuê trung bình các tin trên bản đồ'}</span>
           <strong>{stats.avgPriceMillion} {isEn ? 'M / mo' : 'tr / tháng'}</strong>
           <small>{isEn ? `Unit rate: ${stats.avgPpm2.toLocaleString()} VND/m²` : `Đơn giá diện tích: ${stats.avgPpm2.toLocaleString()} đ/m²`}</small>
         </div>
@@ -112,8 +112,8 @@ export default function LocationMapView({
           </strong>
           <small>
             {isEn
-              ? `${stats.roomCount.toLocaleString()} student / worker rental rooms`
-              : `${stats.roomCount.toLocaleString()} phòng trọ sinh viên / người đi làm`}
+              ? `${stats.roomCount.toLocaleString()} rental room listings`
+              : `${stats.roomCount.toLocaleString()} tin phòng trọ`}
           </small>
         </div>
       </div>
@@ -179,7 +179,7 @@ export default function LocationMapView({
             </div>
 
             <div>
-              <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>{isEn ? 'STRATEGIC HOTSPOT DISTANCES' : 'CỰ LY ĐIỂM NÓNG CHIẾN LƯỢC'}</span>
+              <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>{isEn ? 'Distances to places of interest' : 'Khoảng cách đến các địa điểm'}</span>
               <div style={{ fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'grid', gap: '2px' }}>
                 <div>🏖️ {isEn ? 'Nearest beach' : 'Bãi biển gần nhất'}: {selectedPoint.dist_to_beach ? `${selectedPoint.dist_to_beach.toFixed(1)} km` : '—'}</div>
                 <div>🏙️ {isEn ? 'Dragon Bridge CBD' : 'CBD Cầu Rồng'}: {selectedPoint.dist_to_cbd ? `${selectedPoint.dist_to_cbd.toFixed(1)} km` : '—'}</div>
