@@ -179,6 +179,15 @@ npm run dev
 ```
 Mở trình duyệt tại địa chỉ [http://localhost:3000](http://localhost:3000) để trải nghiệm giao diện.
 
+### Đăng nhập để dự đoán giá
+
+- Tổng quan, bản đồ, tiện ích và các trang phân tích vẫn cho phép truy cập công khai.
+- Phần dự đoán giá (cả model thật và mô phỏng) yêu cầu phiên đăng nhập Google còn hiệu lực. Đăng xuất hoặc hết phiên sẽ đóng biểu mẫu, xóa kết quả đang hiển thị và hủy yêu cầu đang chờ trên trình duyệt.
+- Next.js `/api/predict` và FastAPI `/predict` đều xác minh access token với Supabase Auth. Token được gửi bằng `Authorization: Bearer <access_token>`; không dùng thông tin hồ sơ do người dùng chỉnh sửa để cấp quyền.
+- Khi chạy FastAPI, dùng cùng `NEXT_PUBLIC_SUPABASE_URL` và `NEXT_PUBLIC_SUPABASE_ANON_KEY` với Next.js. Có thể xuất hai biến vào môi trường hoặc chạy `uvicorn main:app --env-file .env.local --port 8000` khi đã cài `python-dotenv`. Địa chỉ và khóa công khai mặc định trùng với dự án hiện tại.
+- OAuth dùng PKCE và trang `/auth/callback` đổi mã đăng nhập một lần. Trong Supabase Auth, cấu hình URL callback phù hợp cho môi trường triển khai.
+- Kiểm tra tự động: `npm run check`. Kiểm tra bảo vệ FastAPI riêng (cần `fastapi` và `httpx`): `python -m unittest discover -s tests -p "test_*.py"`.
+
 ### 5. Kiểm Tra Đóng Gói Production (Build Check)
 ```bash
 npm run build

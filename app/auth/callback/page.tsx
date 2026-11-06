@@ -11,6 +11,12 @@ function AuthCallbackContent() {
   useEffect(() => {
     if (started.current) return
     started.current = true
+    let destination = '/'
+    try {
+      if (sessionStorage.getItem('rentiq.auth.return') === 'prediction') destination = '/?nav=prediction'
+      sessionStorage.removeItem('rentiq.auth.return')
+    } catch { /* Use the overview when storage is unavailable. */ }
+    const errorDestination = `${destination}${destination.includes('?') ? '&' : '?'}auth_error=callback`
     const code = params.get('code')
     if (params.has('error') || !code) {
       console.warn(
@@ -18,14 +24,14 @@ function AuthCallbackContent() {
         params.get('error'),
         params.get('error_description')
       )
-      router.replace('/?auth_error=callback')
+      router.replace(errorDestination)
       return
     }
     void supabase.auth.exchangeCodeForSession(code)
       .then(({ data, error }) => {
-        if (error) {
-          console.warn('Failed to exchange Google OAuth code for a session:', error.message)
-          router.replace('/?auth_error=callback')
+        if (error || !data.session) {
+          console.warn('Failed to exchange Google OAuth code for a session:', error?.message)
+          router.replace(errorDestination)
           return
         }
         const avatar =
@@ -38,11 +44,11 @@ function AuthCallbackContent() {
             // Ignore storage restrictions
           }
         }
-        router.replace('/')
+        router.replace(destination)
       })
       .catch((error: unknown) => {
         console.warn('Unexpected Google OAuth callback failure:', error)
-        router.replace('/?auth_error=callback')
+        router.replace(errorDestination)
       })
   }, [params, router])
   return <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>Đang hoàn tất đăng nhập Google...</main>

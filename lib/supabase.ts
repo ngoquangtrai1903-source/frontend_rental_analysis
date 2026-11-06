@@ -1,8 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { Database } from './database.types'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vfvulyiabgfwujmjunva.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_b5FYMZo4Z0bKHQT4ZCkDKA_E65rMNfN'
+import { supabaseUrl, supabaseAnonKey } from './supabaseConfig'
 
 // Supabase client explicitly targeted at the 'gold' Data Warehouse schema
 export const supabaseGold = createClient<Database, 'gold'>(supabaseUrl, supabaseAnonKey, {
@@ -10,7 +8,10 @@ export const supabaseGold = createClient<Database, 'gold'>(supabaseUrl, supabase
     schema: 'gold'
   },
   auth: {
-    persistSession: true
+    persistSession: true,
+    flowType: 'pkce',
+    // The callback page explicitly exchanges the code once.
+    detectSessionInUrl: false
   }
 })
 

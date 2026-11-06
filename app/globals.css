@@ -1520,6 +1520,33 @@
    AI RENTAL PRICE PREDICTION & SHAP VISUALIZATION MODULE
    ========================================================================= */
 
+.prediction-access-card {
+  margin-top: 16px;
+  min-height: 340px;
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.prediction-access-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: var(--blue-light, #edf4ff);
+  color: var(--blue);
+}
+
+.prediction-access-card h2 { margin: 0; font-size: 22px; }
+.prediction-access-card p { margin: 0; color: var(--muted); line-height: 1.6; }
+.prediction-access-card .prediction-signin { width: auto; max-width: 100%; margin-top: 0; }
+.prediction-access-card .prediction-access-hint { max-width: 480px; font-size: 13px; }
+
 .predict-layout {
   display: grid;
   grid-template-columns: 495px 1fr;

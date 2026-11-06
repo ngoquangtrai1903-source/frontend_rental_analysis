@@ -21,11 +21,12 @@ import numpy as np
 import pandas as pd
 import shap
 import sklearn
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, ValidationError
 from scipy import sparse
+from prediction_auth import require_google_user
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("rental-api")
@@ -545,7 +546,7 @@ def meta(property_type: Literal["room", "apartment"] = "room") -> dict[str, Any]
     return _metadata(state)
 
 
-@app.post("/predict")
+@app.post("/predict", dependencies=[Depends(require_google_user)])
 def predict(payload: dict[str, Any]) -> dict[str, Any]:
     data = dict(payload)
     property_type = _resolve_property_type(data)

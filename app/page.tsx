@@ -5,7 +5,8 @@ import dynamic from 'next/dynamic'
 import AmenitiesView from './components/AmenitiesView'
 import FloodRiskView from './components/FloodRiskView'
 import AdvancedAnalyticsView from './components/AdvancedAnalyticsView'
-import PricePredictionView, { translateFurnishing } from './components/PricePredictionView'
+import { translateFurnishing } from './components/PricePredictionView'
+import ProtectedPricePrediction from './components/ProtectedPricePrediction'
 import DashboardCharts from './components/DashboardCharts'
 import DashboardHelp from './components/DashboardHelp'
 import { useFilterStore } from './store/filterStore'
@@ -335,6 +336,8 @@ export default function DashboardPage() {
       const navParam = params.get('nav')
       if (navParam === 'advanced' || navParam === 'Phân tích nâng cao') {
         setActiveNav('Phân tích nâng cao')
+      } else if (navParam === 'prediction') {
+        setActiveNav('Dự đoán giá AI')
       }
     } catch {
       // Ignore URL parsing errors
@@ -506,6 +509,12 @@ export default function DashboardPage() {
     setAuthLoading(true)
     setAuthMessage('')
     try {
+      const returnToPrediction = activeNav === 'Dự đoán giá AI' ||
+        (activeNav === 'Tổng quan' && activeTab === 'Dự đoán giá AI')
+      try {
+        if (returnToPrediction) sessionStorage.setItem('rentiq.auth.return', 'prediction')
+        else sessionStorage.removeItem('rentiq.auth.return')
+      } catch { /* Returning to the overview is safe when storage is unavailable. */ }
       const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback` } })
       if (error) throw error
     } catch (error) {
@@ -1546,7 +1555,7 @@ export default function DashboardPage() {
           )}
 
           {activeNav === 'Dự đoán giá AI' && (
-            <PricePredictionView lang={lang} />
+            <ProtectedPricePrediction lang={lang} onSignIn={handleSignInClick} authLoading={authLoading} />
           )}
 
           {activeNav === 'Tổng quan' && (
@@ -1615,7 +1624,7 @@ export default function DashboardPage() {
               </div>
 
               {activeTab === 'Dự đoán giá AI' && (
-                <PricePredictionView lang={lang} />
+                <ProtectedPricePrediction lang={lang} onSignIn={handleSignInClick} authLoading={authLoading} />
               )}
 
               {activeTab !== 'Tổng quan' && activeTab !== 'Dự đoán giá AI' && (

@@ -1,6 +1,8 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { supabase } from '@/lib/supabase'
+import { hasPredictionSession } from '@/lib/predictionAccess'
 import {
   Sparkles,
   Calculator,
@@ -308,6 +310,7 @@ export const UNI_LABELS: Record<string, string> = {
 
 export interface PricePredictionViewProps {
   lang?: 'vi' | 'en'
+  onAuthRequired: () => void
 }
 
 export const UNI_LABELS_EN: Record<string, string> = {
@@ -578,8 +581,10 @@ export function normalizePredictionResponse(raw: any): PredictionResult {
   }
 }
 
-export default function PricePredictionView({ lang = 'vi' }: PricePredictionViewProps = {}) {
+export default function PricePredictionView({ lang = 'vi', onAuthRequired }: PricePredictionViewProps) {
   const isEn = lang === 'en'
+  const predictionRequest = useRef<AbortController | null>(null)
+  useEffect(() => () => { predictionRequest.current?.abort() }, [])
 
   // 1. Property Type Mode: 'room' | 'apartment'
   const [propertyType, setPropertyType] = useState<'room' | 'apartment'>('room')
@@ -1036,6 +1041,9 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
 
     setLoading(true)
     setErrorMsg(null)
+    predictionRequest.current?.abort()
+    const controller = new AbortController()
+    predictionRequest.current = controller
 
     const payload: any = {
       property_type: propertyType,
@@ -1059,13 +1067,28 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
     }
 
     try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+      if (controller.signal.aborted) return
+      if (sessionError || !hasPredictionSession(sessionData.session)) {
+        onAuthRequired()
+        return
+      }
       const res = await fetch('/api/predict', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionData.session.access_token}`
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
       })
 
+      if (res.status === 401 || res.status === 403) {
+        onAuthRequired()
+        return
+      }
       const data = await res.json()
+      if (controller.signal.aborted) return
 
       if (!res.ok || data.success === false) {
         throw new Error(data.error || `Lỗi máy chủ (${res.status})`)
@@ -1090,6 +1113,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
         setIsBackendOnline(true)
       }
     } catch (err: any) {
+      if (controller.signal.aborted) return
       console.error('Prediction failed:', err)
       setErrorMsg(
         err?.message ||
@@ -1098,7 +1122,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
             : 'Không thể kết nối đến Backend FastAPI tại http://localhost:8000. Bạn có thể bấm nút "Mô phỏng thử nghiệm" bên dưới để kiểm tra giao diện.')
       )
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
   }
 

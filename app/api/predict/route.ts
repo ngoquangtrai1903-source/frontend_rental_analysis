@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { authorizePrediction } from '@/lib/predictionAuth'
 
 interface PredictPayload {
   property_type?: 'room' | 'apartment' | string
@@ -402,6 +403,9 @@ function simulateDanangModelPrediction(payload: PredictPayload) {
 }
 
 export async function POST(req: Request) {
+  const authError = await authorizePrediction(req)
+  if (authError) return authError
+
   try {
     const rawBody = await req.json()
     const { backend_url, allow_simulation, ...modelInputs } = rawBody
@@ -430,7 +434,8 @@ export async function POST(req: Request) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'Authorization': req.headers.get('authorization')!
           },
           body: JSON.stringify(modelInputs),
           signal: controller.signal
@@ -512,6 +517,10 @@ export async function POST(req: Request) {
             backend_source: targetBackend
           })
         } else {
+          // Authentication errors must never fall through to the local simulation.
+          if (response.status === 401 || response.status === 403) {
+            return NextResponse.json({ success: false, code: 'AUTH_REQUIRED', error: 'Vui lòng đăng nhập để sử dụng tính năng dự đoán giá' }, { status: response.status })
+          }
           const errorText = await response.text()
           console.warn(`[Next.js API] FastAPI ${targetBackend}/predict returned ${response.status}:`, errorText)
           if (!allow_simulation) {
