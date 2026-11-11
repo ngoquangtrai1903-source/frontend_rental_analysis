@@ -12,6 +12,8 @@ import { MapRentalPoint } from '@/lib/goldQueryService'
 import useRentalMapData from '@/app/hooks/useRentalMapData'
 import RentalMapbox from './RentalMapbox'
 import { getPriceTierTheme, getFloodRiskBadge, formatVndPrice, translateCategoryName } from './MapMarkerPopup'
+import { getNearestBeachName, getNearestUniversityName } from '../../lib/locationPlaces'
+import GoogleMapsActions from './GoogleMapsActions'
 
 interface LocationMapViewProps {
   filterQueryString?: string
@@ -163,7 +165,9 @@ export default function LocationMapView({
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginTop: '16px' }}>
+          <GoogleMapsActions latitude={selectedPoint.latitude} longitude={selectedPoint.longitude} lang={lang} />
+
+          <div className="selected-property-metrics" style={{ display: 'grid', gap: '16px', marginTop: '16px' }}>
             <div>
               <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>{isEn ? 'LISTED RENT' : 'GIÁ THUÊ NIÊM YẾT'}</span>
               <div style={{ font: "800 22px 'Manrope', sans-serif", color: getPriceTierTheme(selectedPoint.price_vnd, isEn).color, marginTop: '3px' }}>
@@ -181,9 +185,9 @@ export default function LocationMapView({
             <div>
               <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>{isEn ? 'Distances to places of interest' : 'Khoảng cách đến các địa điểm'}</span>
               <div style={{ fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'grid', gap: '2px' }}>
-                <div>🏖️ {isEn ? 'Nearest beach' : 'Bãi biển gần nhất'}: {selectedPoint.dist_to_beach ? `${selectedPoint.dist_to_beach.toFixed(1)} km` : '—'}</div>
+                <div>🏖️ {isEn ? 'Nearest beach' : 'Bãi biển gần nhất'}: {getNearestBeachName(selectedPoint.nearest_beach_code, isEn)} · {selectedPoint.dist_to_beach ? `${selectedPoint.dist_to_beach.toFixed(1)} km` : '—'}</div>
                 <div>🏙️ {isEn ? 'Dragon Bridge CBD' : 'CBD Cầu Rồng'}: {selectedPoint.dist_to_cbd ? `${selectedPoint.dist_to_cbd.toFixed(1)} km` : '—'}</div>
-                <div>🎓 {isEn ? 'Nearest University' : 'Đại học gần nhất'}: {selectedPoint.dist_to_nearest_uni ? `${selectedPoint.dist_to_nearest_uni.toFixed(1)} km` : '—'}</div>
+                <div>🎓 {isEn ? 'Nearest University' : 'Đại học gần nhất'}: {getNearestUniversityName(selectedPoint.nearest_uni_code, isEn)} · {selectedPoint.dist_to_nearest_uni ? `${selectedPoint.dist_to_nearest_uni.toFixed(1)} km` : '—'}</div>
               </div>
             </div>
 

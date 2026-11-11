@@ -12,6 +12,8 @@ import {
   ExternalLink
 } from 'lucide-react'
 import { MapRentalPoint } from '@/lib/goldQueryService'
+import { getNearestBeachName, getNearestUniversityName } from '../../lib/locationPlaces'
+import GoogleMapsActions from './GoogleMapsActions'
 
 interface MapMarkerPopupProps {
   point: MapRentalPoint
@@ -101,6 +103,7 @@ export default function MapMarkerPopup({
       className="map-marker-popup-card"
       style={{
         width: '320px',
+        maxWidth: '100%',
         backgroundColor: '#ffffff',
         borderRadius: '14px',
         boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
@@ -218,6 +221,7 @@ export default function MapMarkerPopup({
         <div className="popup-distance-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginTop: '10px', padding: '8px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
           <div style={{ textAlign: 'center' }}>
             <span style={{ fontSize: '9px', color: '#64748b', display: 'block' }}>{isEn ? 'Nearest beach' : 'Bãi biển gần nhất'}</span>
+            <span className="popup-place-name">{getNearestBeachName(point.nearest_beach_code, isEn)}</span>
             <strong style={{ fontSize: '11px', color: '#0284c7' }}>
               {point.dist_to_beach ? `${point.dist_to_beach.toFixed(1)} km` : '—'}
             </strong>
@@ -230,6 +234,7 @@ export default function MapMarkerPopup({
           </div>
           <div style={{ textAlign: 'center' }}>
             <span style={{ fontSize: '9px', color: '#64748b', display: 'block' }}>{isEn ? 'Nearest university' : 'Đại học gần nhất'}</span>
+            <span className="popup-place-name">{getNearestUniversityName(point.nearest_uni_code, isEn)}</span>
             <strong style={{ fontSize: '11px', color: '#059669' }}>
               {point.dist_to_nearest_uni ? `${point.dist_to_nearest_uni.toFixed(1)} km` : '—'}
             </strong>
@@ -259,6 +264,8 @@ export default function MapMarkerPopup({
             </span>
           )}
         </div>
+
+        <GoogleMapsActions latitude={point.latitude} longitude={point.longitude} lang={lang} />
 
         {/* Action Button */}
         {onSelectDetails && (
