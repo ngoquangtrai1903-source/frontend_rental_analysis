@@ -1529,6 +1529,7 @@ export default function DashboardPage() {
           {activeNav === 'Tiện ích' && (
             <AmenitiesView
               filterQueryString={filterQueryString}
+              onCategoryChange={(value) => { setCategoryFilter(value); setPage(1) }}
               lang={lang}
             />
           )}
