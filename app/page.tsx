@@ -1103,7 +1103,6 @@ export default function DashboardPage() {
                 )}
               </div>
               <h1>{lang === 'en' ? 'Da Nang Rental Market Dashboard' : 'Bảng Điều Khiển Thị Trường Thuê Đà Nẵng'}</h1>
-              <p>{lang === 'en' ? 'Aggregated analytics from Gold layer Data Warehouse with Dynamic Query Builder.' : 'Dữ liệu tổng hợp từ Data Warehouse tầng Gold với cơ chế Dynamic Query Builder.'}</p>
             </div>
 
             <div className="heading-actions">
@@ -1530,6 +1529,7 @@ export default function DashboardPage() {
           {activeNav === 'Tiện ích' && (
             <AmenitiesView
               filterQueryString={filterQueryString}
+              onCategoryChange={(value) => { setCategoryFilter(value); setPage(1) }}
               lang={lang}
             />
           )}

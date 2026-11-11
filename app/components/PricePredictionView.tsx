@@ -5,29 +5,23 @@ import {
   Sparkles,
   Calculator,
   Building2,
+  DoorClosed,
+  Home,
   MapPin,
-  Compass,
-  GraduationCap,
-  Waves,
   Armchair,
-  CheckCircle2,
   AlertCircle,
   AlertTriangle,
   RotateCcw,
-  Sliders,
   TrendingUp,
   TrendingDown,
   Info,
   Maximize2,
-  Layers,
   Check,
-  HelpCircle,
-  Server,
-  ArrowRight,
-  ShieldCheck,
   Activity,
   Lightbulb,
-  Navigation
+  Navigation,
+  Bed,
+  Users
 } from 'lucide-react'
 
 // Standard Ward list for Da Nang (11 wards according to requirement)
@@ -312,6 +306,106 @@ export const UNI_LABELS: Record<string, string> = {
   UPU: 'UPU - Học Viện Chính Trị Khu Vực III'
 }
 
+export interface PricePredictionViewProps {
+  lang?: 'vi' | 'en'
+}
+
+export const UNI_LABELS_EN: Record<string, string> = {
+  DUT: 'DUT - Da Nang Univ. of Science & Technology',
+  UED: 'UED - Da Nang Univ. of Education',
+  DUE: 'DUE - Univ. of Economics (Da Nang)',
+  UFLS: 'UFLS - Univ. of Foreign Languages',
+  UTE: 'UTE - Univ. of Technology & Education',
+  VKU: 'VKU - Vietnam-Korea IT University',
+  VNUK: 'VNUK - VN-UK Institute for Research & Exec.',
+  DAU: 'DAU - Da Nang Architecture University',
+  DTU_HK: 'DTU_HK - Duy Tan Univ. (Hoa Khanh)',
+  DTU_NVL: 'DTU_NVL - Duy Tan Univ. (Nguyen Van Linh)',
+  FPTU: 'FPTU - FPT University Da Nang',
+  UDA: 'UDA - Dong A University (Hai Chau)',
+  SMP: 'SMP - School of Medicine & Pharmacy',
+  UPES3: 'UPES3 - Univ. of Sports & Physical Education',
+  PU: 'Regional Academy of Politics III',
+  UPU: 'UPU - Regional Academy of Politics III'
+}
+
+export const WARD_GEO_PROFILES_EN: Record<string, { groupName: string; hint: string }> = {
+  'Hải Châu': {
+    groupName: 'Central District (CBD)',
+    hint: 'Administrative & commercial center of Da Nang, adjacent to Dragon Bridge / Han River'
+  },
+  'Thanh Khê': {
+    groupName: 'Central District',
+    hint: 'Vibrant residential area, near Da Nang station, Tech Univ. & Thanh Binh beach'
+  },
+  'An Khê': {
+    groupName: 'Thanh Khe District (West)',
+    hint: 'Western Thanh Khe, near Da Nang airport & Dien Bien Phu artery'
+  },
+  'Hòa Cường': {
+    groupName: 'Central Campus Cluster (South Hai Chau)',
+    hint: 'Major university cluster: Architecture (DAU), Dong A (UDA), Foreign Lang.'
+  },
+  'Cẩm Lệ': {
+    groupName: 'Cam Le District (South of Center)',
+    hint: 'South of center, near Cam Le bridge, market & Architecture Univ.'
+  },
+  'An Hải': {
+    groupName: 'Coastal / Tourism Ward (Son Tra)',
+    hint: 'Pham Van Dong beach hotel & tourism zone, along Han River near Dragon Bridge'
+  },
+  'Sơn Trà': {
+    groupName: 'Coastal / Son Tra Peninsula District',
+    hint: 'My Khe / Pham Van Dong tourist coastline & Son Tra peninsula'
+  },
+  'Hòa Khánh': {
+    groupName: 'Northern Area / PolyTech Univ. Cluster',
+    hint: 'Student rental hub: near PolyTech Univ. (DUT), Pedagogical Univ. (UED)'
+  },
+  'Liên Chiểu': {
+    groupName: 'Northern District (Northwest Gateway)',
+    hint: 'Near Da Nang Bay, Xuan Thieu beach, Nam O & PolyTech Univ.'
+  },
+  'Ngũ Hành Sơn': {
+    groupName: 'Southeastern Area / Economics Univ. & FPT',
+    hint: 'Economics Univ. (DUE), FPT Univ., VKU & Non Nuoc beach'
+  },
+  'Hòa Xuân': {
+    groupName: 'South Cam Le Eco-Urban / Hoa Xuan',
+    hint: 'Eco-urban zone South of Cam Le bridge, convenient link to Ngu Hanh Son'
+  }
+}
+
+export function translateFeatureLabel(label: string, isEn = false): string {
+  if (!label) return label
+  if (label === 'rooms' || label.toLowerCase().includes('phòng ngủ') || label.toLowerCase().includes('số phòng')) {
+    return isEn ? 'Bedrooms / Rooms' : 'Số phòng ngủ / Không gian'
+  }
+  if (!isEn) return label
+  const l = label.toLowerCase()
+  if (l.includes('diện tích')) return 'Property Size'
+  if (l.includes('nội thất')) return 'Furnishing & Interior'
+  if (l.includes('khu vực') || l.includes('phường')) return 'Ward / District'
+  if (l.includes('khoảng cách đến cbd') || l.includes('cbd')) return 'Distance to CBD'
+  if (l.includes('thang máy')) return 'Elevator'
+  if (l.includes('biển')) return 'Distance to Beach'
+  if (l.includes('ban công')) return 'Balcony'
+  if (l.includes('đại học') || l.includes('trường')) return 'Distance to University'
+  if (l.includes('cửa sổ')) return 'Window'
+  if (l.includes('bãi biển')) return 'Nearest Beach'
+  if (l.includes('thuộc tính')) return 'Feature'
+  return label
+}
+
+export function translateFurnishing(status: string, isEn = false): string {
+  if (!isEn) return status
+  if (status.includes('Không')) return 'Unfurnished'
+  if (status.includes('cơ bản')) return 'Semi-furnished'
+  if (status.includes('Đầy đủ')) return 'Fully furnished'
+  if (status.includes('cao cấp')) return 'Luxury furnishing'
+  return status
+}
+
 export interface ContributionItem {
   feature?: string
   label: string
@@ -323,6 +417,7 @@ export interface ContributionItem {
 }
 
 export interface PredictionResult {
+  property_type?: 'room' | 'apartment' | string
   predicted_price_vnd?: number
   price_million_vnd: number
   range_estimate?: {
@@ -347,7 +442,7 @@ export interface PredictionResult {
 
 export function normalizePredictionResponse(raw: any): PredictionResult {
   const data = raw?.data || raw?.result || raw || {}
-  const predObj = (typeof data.prediction === 'object' && data.prediction !== null) ? data.prediction : {}
+  const predObj = typeof data.prediction === 'object' && data.prediction !== null ? data.prediction : {}
 
   // 1. Extract price in Million VND (supports nested data.prediction and root level)
   let priceMillion = 0
@@ -468,6 +563,7 @@ export function normalizePredictionResponse(raw: any): PredictionResult {
 
   return {
     ...data,
+    property_type: data.property_type || (data.input?.rooms ? 'apartment' : 'room'),
     price_million_vnd: priceMillion,
     predicted_price_vnd: priceVnd,
     range_estimate: rangeEstimate,
@@ -477,109 +573,19 @@ export function normalizePredictionResponse(raw: any): PredictionResult {
       contributions
     },
     model_metadata: data.model_metadata || {
-      model_name: data.model_name || 'FastAPI Machine Learning'
+      model_name: data.model_name || data.model?.name || 'FastAPI Machine Learning'
     }
   }
 }
 
-export interface PricePredictionViewProps {
-  lang?: 'vi' | 'en'
-}
-
-export const UNI_LABELS_EN: Record<string, string> = {
-  DUT: 'DUT - Da Nang Univ. of Science & Technology',
-  UED: 'UED - Da Nang Univ. of Education',
-  DUE: 'DUE - Univ. of Economics (Da Nang)',
-  UFLS: 'UFLS - Univ. of Foreign Languages',
-  UTE: 'UTE - Univ. of Technology & Education',
-  VKU: 'VKU - Vietnam-Korea IT University',
-  VNUK: 'VNUK - VN-UK Institute for Research & Exec.',
-  DAU: 'DAU - Da Nang Architecture University',
-  DTU_HK: 'DTU_HK - Duy Tan Univ. (Hoa Khanh)',
-  DTU_NVL: 'DTU_NVL - Duy Tan Univ. (Nguyen Van Linh)',
-  FPTU: 'FPTU - FPT University Da Nang',
-  UDA: 'UDA - Dong A University (Hai Chau)',
-  SMP: 'SMP - School of Medicine & Pharmacy',
-  UPES3: 'UPES3 - Univ. of Sports & Physical Education',
-  PU: 'Regional Academy of Politics III',
-  UPU: 'UPU - Regional Academy of Politics III'
-}
-
-export const WARD_GEO_PROFILES_EN: Record<string, { groupName: string; hint: string }> = {
-  'Hải Châu': {
-    groupName: 'Central District (CBD)',
-    hint: 'Administrative & commercial center of Da Nang, adjacent to Dragon Bridge / Han River'
-  },
-  'Thanh Khê': {
-    groupName: 'Central District',
-    hint: 'Vibrant residential area, near Da Nang station, Tech Univ. & Thanh Binh beach'
-  },
-  'An Khê': {
-    groupName: 'Thanh Khe District (West)',
-    hint: 'Western Thanh Khe, near Da Nang airport & Dien Bien Phu artery'
-  },
-  'Hòa Cường': {
-    groupName: 'Central Campus Cluster (South Hai Chau)',
-    hint: 'Major university cluster: Architecture (DAU), Dong A (UDA), Foreign Lang.'
-  },
-  'Cẩm Lệ': {
-    groupName: 'Cam Le District (South of Center)',
-    hint: 'South of center, near Cam Le bridge, market & Architecture Univ.'
-  },
-  'An Hải': {
-    groupName: 'Coastal / Tourism Ward (Son Tra)',
-    hint: 'Pham Van Dong beach hotel & tourism zone, along Han River near Dragon Bridge'
-  },
-  'Sơn Trà': {
-    groupName: 'Coastal / Son Tra Peninsula District',
-    hint: 'My Khe / Pham Van Dong tourist coastline & Son Tra peninsula'
-  },
-  'Hòa Khánh': {
-    groupName: 'Northern Area / PolyTech Univ. Cluster',
-    hint: 'Student rental hub: near PolyTech Univ. (DUT), Pedagogical Univ. (UED)'
-  },
-  'Liên Chiểu': {
-    groupName: 'Northern District (Northwest Gateway)',
-    hint: 'Near Da Nang Bay, Xuan Thieu beach, Nam O & PolyTech Univ.'
-  },
-  'Ngũ Hành Sơn': {
-    groupName: 'Southeastern Area / Economics Univ. & FPT',
-    hint: 'Economics Univ. (DUE), FPT Univ., VKU & Non Nuoc beach'
-  },
-  'Hòa Xuân': {
-    groupName: 'South Cam Le Eco-Urban / Hoa Xuan',
-    hint: 'Eco-urban zone South of Cam Le bridge, convenient link to Ngu Hanh Son'
-  }
-}
-
-export function translateFeatureLabel(label: string, isEn = false): string {
-  if (!isEn || !label) return label
-  const l = label.toLowerCase()
-  if (l.includes('diện tích')) return 'Room Size'
-  if (l.includes('nội thất')) return 'Furnishing & Interior'
-  if (l.includes('khu vực') || l.includes('phường')) return 'Ward / District'
-  if (l.includes('khoảng cách đến cbd') || l.includes('cbd')) return 'Distance to CBD'
-  if (l.includes('thang máy')) return 'Elevator'
-  if (l.includes('biển')) return 'Distance to Beach'
-  if (l.includes('ban công')) return 'Balcony'
-  if (l.includes('đại học') || l.includes('trường')) return 'Distance to University'
-  if (l.includes('cửa sổ')) return 'Window'
-  if (l.includes('bãi biển')) return 'Nearest Beach'
-  if (l.includes('thuộc tính')) return 'Feature'
-  return label
-}
-
-export function translateFurnishing(status: string, isEn = false): string {
-  if (!isEn) return status
-  if (status.includes('Không')) return 'Unfurnished'
-  if (status.includes('cơ bản')) return 'Semi-furnished'
-  if (status.includes('Đầy đủ')) return 'Fully furnished'
-  if (status.includes('cao cấp')) return 'Luxury furnishing'
-  return status
-}
-
 export default function PricePredictionView({ lang = 'vi' }: PricePredictionViewProps = {}) {
   const isEn = lang === 'en'
+
+  // 1. Property Type Mode: 'room' | 'apartment'
+  const [propertyType, setPropertyType] = useState<'room' | 'apartment'>('room')
+  // Strictly 1, 2, or 3 for apartment rooms
+  const [rooms, setRooms] = useState<number>(1)
+
   // Backend connection & metadata states
   const [isBackendOnline, setIsBackendOnline] = useState<boolean | null>(null)
   const [checkingBackend, setCheckingBackend] = useState(false)
@@ -611,6 +617,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
     version?: string
     r2_score?: number
     mae_million?: number
+    category_name?: string
   } | null>(null)
 
   // Form input states
@@ -652,11 +659,36 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
 
   // Hard input validation rules (Min/Max based on Da Nang reality)
   const sizeError = useMemo(() => {
-    if (sizeM2 <= 0) return isEn ? 'Room size must be greater than 0 m².' : 'Diện tích phòng trọ phải lớn hơn 0 m².'
-    if (sizeM2 < 5) return isEn ? 'Minimum room size is 5 m².' : 'Diện tích phòng tối thiểu phải từ 5 m².'
-    if (sizeM2 > 80) return isEn ? 'Maximum recommended room size is 80 m².' : 'Diện tích phòng trọ tối đa khuyến nghị 80 m² (vượt quá chuẩn phòng trọ phổ biến).'
+    if (sizeM2 <= 0) {
+      return isEn ? 'Property size must be greater than 0 m².' : 'Diện tích phải lớn hơn 0 m².'
+    }
+    if (propertyType === 'apartment') {
+      if (sizeM2 < 20) {
+        return isEn ? 'Minimum apartment size is 20 m².' : 'Diện tích căn hộ/chung cư tối thiểu thường từ 20 m².'
+      }
+      if (sizeM2 > 200) {
+        return isEn ? 'Maximum recommended apartment size is 200 m².' : 'Diện tích căn hộ khuyến nghị tối đa 200 m².'
+      }
+    } else {
+      if (sizeM2 < 5) {
+        return isEn ? 'Minimum room size is 5 m².' : 'Diện tích phòng tối thiểu phải từ 5 m².'
+      }
+      if (sizeM2 > 80) {
+        return isEn ? 'Maximum recommended room size is 80 m².' : 'Diện tích phòng trọ tối đa khuyến nghị 80 m².'
+      }
+    }
     return null
-  }, [sizeM2, isEn])
+  }, [sizeM2, propertyType, isEn])
+
+  const roomsError = useMemo(() => {
+    if (propertyType !== 'apartment') return null
+    if (![1, 2, 3].includes(rooms)) {
+      return isEn
+        ? 'Room count must be strictly 1, 2, or 3.'
+        : 'Số phòng ngủ chỉ được phép là 1, 2 hoặc 3 phòng.'
+    }
+    return null
+  }, [propertyType, rooms, isEn])
 
   const cbdError = useMemo(() => {
     if (distToCbd < 0) return isEn ? 'Distance cannot be negative.' : 'Khoảng cách không thể là số âm.'
@@ -676,7 +708,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
     return null
   }, [distToUni, isEn])
 
-  const hasHardErrors = Boolean(sizeError || cbdError || beachError || uniError)
+  const hasHardErrors = Boolean(sizeError || roomsError || cbdError || beachError || uniError)
 
   // Soft Warnings (Cảnh báo mềm & gợi ý tương quan Phường/Xã)
   const cbdWarning = useMemo(() => {
@@ -750,7 +782,11 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
       setDistToUni(profile.defaultDistUni)
       if (profile.defaultBeach) setNearestBeachCode(profile.defaultBeach)
       if (profile.defaultUni) setNearestUniCode(profile.defaultUni)
-      setSmartNotice(isEn ? `Suggested spatial parameters for ${newWard} (CBD: ${profile.defaultDistCbd}km, Beach: ${profile.defaultDistBeach}km)` : `Đã tự động gợi ý thông số địa lý cho ${newWard} (CBD: ${profile.defaultDistCbd}km, Biển: ${profile.defaultDistBeach}km)`)
+      setSmartNotice(
+        isEn
+          ? `Suggested spatial parameters for ${newWard} (CBD: ${profile.defaultDistCbd}km, Beach: ${profile.defaultDistBeach}km)`
+          : `Đã tự động gợi ý thông số địa lý cho ${newWard} (CBD: ${profile.defaultDistCbd}km, Biển: ${profile.defaultDistBeach}km)`
+      )
     }
   }
 
@@ -763,16 +799,19 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
       setDistToUni(profile.defaultDistUni)
       if (profile.defaultBeach) setNearestBeachCode(profile.defaultBeach)
       if (profile.defaultUni) setNearestUniCode(profile.defaultUni)
-      setSmartNotice(isEn ? `Applied standard benchmark parameters for ${ward}` : `Đã áp dụng thông số tham chiếu chuẩn cho ${ward}`)
+      setSmartNotice(
+        isEn
+          ? `Applied standard benchmark parameters for ${ward}`
+          : `Đã áp dụng thông số tham chiếu chuẩn cho ${ward}`
+      )
     }
   }
 
-  // 1. Check and Load Metadata on Mount
-  const fetchMetadata = async () => {
+  // 1. Check and Load Metadata on Mount and when switching Property Type
+  const fetchMetadata = async (targetType = propertyType) => {
     setCheckingBackend(true)
     try {
-      // Proxy route connects to FastAPI Backend directly
-      const res = await fetch('/api/meta')
+      const res = await fetch(`/api/meta?property_type=${targetType}`)
       if (res.ok) {
         const data = await res.json()
 
@@ -808,17 +847,22 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
         const rawFurnishing = data.furnishing_values || data.furnishing_status_values
         if (rawFurnishing && Array.isArray(rawFurnishing)) {
           const filtered = rawFurnishing
-            .map((f: string) => f.includes('Không xác định') ? null : f)
+            .map((f: string) => (f.includes('Không xác định') ? null : f))
             .filter(Boolean) as string[]
           setFurnishingOptions(filtered.length > 0 ? filtered : STANDARD_FURNISHING)
         }
 
         if (data.model || data.model_info) {
-          setModelInfo(data.model_info || {
-            model_name: data.model,
-            r2_score: data.metrics?.cv_r2_log,
-            mae_million: data.metrics?.holdout_test?.mae_vnd ? Number((data.metrics.holdout_test.mae_vnd / 1e6).toFixed(2)) : undefined
-          })
+          setModelInfo(
+            data.model_info || {
+              model_name: data.model,
+              r2_score: data.metrics?.cv_r2_log,
+              mae_million: data.metrics?.holdout_test?.mae_vnd
+                ? Number((data.metrics.holdout_test.mae_vnd / 1e6).toFixed(2))
+                : undefined,
+              category_name: targetType === 'apartment' ? 'Căn hộ/Chung cư' : 'Phòng trọ'
+            }
+          )
         }
         setIsBackendOnline(data.is_backend_online ?? false)
       } else {
@@ -833,51 +877,141 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
   }
 
   useEffect(() => {
-    fetchMetadata()
+    fetchMetadata(propertyType)
   }, [])
 
-  // Sample Presets for 1-Click Testing
-  const handleApplyPreset = (presetKey: 'student' | 'studio' | 'luxury') => {
+  // Property Type Switcher Handler
+  const handlePropertyTypeChange = (newType: 'room' | 'apartment') => {
+    if (newType === propertyType) return
+    setPropertyType(newType)
     setErrorMsg(null)
-    if (presetKey === 'student') {
-      setSizeM2(18)
-      setDistToCbd(8.5)
-      setDistToBeach(2.0)
-      setDistToUni(0.5)
-      setHasBalcony(0)
-      setHasElevator(0)
-      setHasWindow(1)
-      setFurnishingStatus('Nội thất cơ bản')
-      setWardName(wardOptions.includes('Hòa Khánh') ? 'Hòa Khánh' : wardOptions[0] || 'Liên Chiểu')
-      setNearestBeachCode('XuanThieu')
-      setNearestUniCode('DUT')
-      setSmartNotice(isEn ? 'Applied PolyTech Student preset (Hoa Khanh)' : 'Đã áp dụng mẫu SV Bách Khoa (Hòa Khánh)')
-    } else if (presetKey === 'studio') {
-      setSizeM2(32)
-      setDistToCbd(3.5)
-      setDistToBeach(0.6)
-      setDistToUni(2.5)
-      setHasBalcony(1)
+    setPrediction(null)
+
+    if (newType === 'apartment') {
+      if (sizeM2 < 30) setSizeM2(55)
+      setRooms(1) // strictly default to 1 room
       setHasElevator(1)
-      setHasWindow(1)
-      setFurnishingStatus('Đầy đủ nội thất')
-      setWardName(wardOptions.includes('Sơn Trà') ? 'Sơn Trà' : 'Ngũ Hành Sơn')
-      setNearestBeachCode('MyKhe')
-      setNearestUniCode('DUE')
-      setSmartNotice('Đã áp dụng mẫu Studio Biển (Sơn Trà / Mỹ Khê)')
-    } else if (presetKey === 'luxury') {
-      setSizeM2(48)
-      setDistToCbd(1.0)
-      setDistToBeach(2.8)
-      setDistToUni(1.2)
-      setHasBalcony(1)
-      setHasElevator(1)
-      setHasWindow(1)
-      setFurnishingStatus('Nội thất cao cấp')
-      setWardName(wardOptions.includes('Hải Châu') ? 'Hải Châu' : wardOptions[0] || 'Hải Châu')
-      setNearestBeachCode('PhamVanDong')
-      setNearestUniCode('DTU_NVL')
-      setSmartNotice('Đã áp dụng mẫu Căn hộ TT Hải Châu')
+      setSmartNotice(
+        isEn
+          ? 'Switched to Apartment / Condo valuation mode (Model CanHo HGBoost)'
+          : 'Đã chuyển sang chế độ Dự đoán Căn hộ / Chung cư (Model CanHo HGBoost)'
+      )
+    } else {
+      if (sizeM2 > 50) setSizeM2(25)
+      setSmartNotice(
+        isEn
+          ? 'Switched to Room rental valuation mode (Model Tro CatBoost)'
+          : 'Đã chuyển sang chế độ Dự đoán Phòng trọ (Model Tro CatBoost / ExtraTrees)'
+      )
+    }
+
+    fetchMetadata(newType)
+  }
+
+  // Sample Presets for 1-Click Testing based on current propertyType
+  const handleApplyPreset = (presetKey: string) => {
+    setErrorMsg(null)
+    if (propertyType === 'apartment') {
+      if (presetKey === 'apt1') {
+        setSizeM2(45)
+        setRooms(1) // strictly 1 room
+        setDistToCbd(3.2)
+        setDistToBeach(0.8)
+        setDistToUni(2.5)
+        setHasBalcony(1)
+        setHasElevator(1)
+        setHasWindow(1)
+        setFurnishingStatus('Đầy đủ nội thất')
+        setWardName(wardOptions.includes('Sơn Trà') ? 'Sơn Trà' : 'An Hải')
+        setNearestBeachCode('MyKhe')
+        setNearestUniCode('DUE')
+        setSmartNotice(
+          isEn
+            ? 'Applied 1-Bed Apartment preset (Son Tra / My Khe)'
+            : 'Đã áp dụng mẫu Căn hộ 1PN Biển (Sơn Trà / Mỹ Khê, 1 phòng)'
+        )
+      } else if (presetKey === 'apt2') {
+        setSizeM2(72)
+        setRooms(2) // strictly 2 rooms
+        setDistToCbd(1.2)
+        setDistToBeach(2.5)
+        setDistToUni(1.0)
+        setHasBalcony(1)
+        setHasElevator(1)
+        setHasWindow(1)
+        setFurnishingStatus('Đầy đủ nội thất')
+        setWardName(wardOptions.includes('Hải Châu') ? 'Hải Châu' : 'Hòa Cường')
+        setNearestBeachCode('PhamVanDong')
+        setNearestUniCode('DTU_NVL')
+        setSmartNotice(
+          isEn
+            ? 'Applied 2-Bed Family Apartment preset (Hai Chau CBD)'
+            : 'Đã áp dụng mẫu Căn hộ 2PN Gia đình (Hải Châu TT, 2 phòng)'
+        )
+      } else if (presetKey === 'apt3') {
+        setSizeM2(115)
+        setRooms(3) // strictly 3 rooms
+        setDistToCbd(2.0)
+        setDistToBeach(0.5)
+        setDistToUni(2.8)
+        setHasBalcony(1)
+        setHasElevator(1)
+        setHasWindow(1)
+        setFurnishingStatus('Nội thất cao cấp')
+        setWardName(wardOptions.includes('Ngũ Hành Sơn') ? 'Ngũ Hành Sơn' : 'Sơn Trà')
+        setNearestBeachCode('BacMyAn')
+        setNearestUniCode('DUE')
+        setSmartNotice(
+          isEn
+            ? 'Applied 3-Bed Luxury Condo preset (Beachfront)'
+            : 'Đã áp dụng mẫu Căn hộ 3PN Cao cấp (Ven biển, 3 phòng)'
+        )
+      }
+    } else {
+      if (presetKey === 'student') {
+        setSizeM2(18)
+        setDistToCbd(8.5)
+        setDistToBeach(2.0)
+        setDistToUni(0.5)
+        setHasBalcony(0)
+        setHasElevator(0)
+        setHasWindow(1)
+        setFurnishingStatus('Nội thất cơ bản')
+        setWardName(wardOptions.includes('Hòa Khánh') ? 'Hòa Khánh' : wardOptions[0] || 'Liên Chiểu')
+        setNearestBeachCode('XuanThieu')
+        setNearestUniCode('DUT')
+        setSmartNotice(
+          isEn ? 'Applied PolyTech Student preset (Hoa Khanh)' : 'Đã áp dụng mẫu SV Bách Khoa (Hòa Khánh)'
+        )
+      } else if (presetKey === 'studio') {
+        setSizeM2(32)
+        setDistToCbd(3.5)
+        setDistToBeach(0.6)
+        setDistToUni(2.5)
+        setHasBalcony(1)
+        setHasElevator(1)
+        setHasWindow(1)
+        setFurnishingStatus('Đầy đủ nội thất')
+        setWardName(wardOptions.includes('Sơn Trà') ? 'Sơn Trà' : 'Ngũ Hành Sơn')
+        setNearestBeachCode('MyKhe')
+        setNearestUniCode('DUE')
+        setSmartNotice(
+          isEn ? 'Applied Beach Studio preset (Son Tra / My Khe)' : 'Đã áp dụng mẫu Studio Biển (Sơn Trà / Mỹ Khê)'
+        )
+      } else if (presetKey === 'luxury') {
+        setSizeM2(48)
+        setDistToCbd(1.0)
+        setDistToBeach(2.8)
+        setDistToUni(1.2)
+        setHasBalcony(1)
+        setHasElevator(1)
+        setHasWindow(1)
+        setFurnishingStatus('Nội thất cao cấp')
+        setWardName(wardOptions.includes('Hải Châu') ? 'Hải Châu' : wardOptions[0] || 'Hải Châu')
+        setNearestBeachCode('PhamVanDong')
+        setNearestUniCode('DTU_NVL')
+        setSmartNotice(isEn ? 'Applied Hai Chau Central Flat preset' : 'Đã áp dụng mẫu Phòng trọ VIP TT Hải Châu')
+      }
     }
   }
 
@@ -885,14 +1019,17 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
   const handlePredict = async (e?: React.FormEvent, forceSimulation = false) => {
     if (e) e.preventDefault()
 
-    // Validate inputs against Da Nang geographical boundaries
+    // Validate inputs against Da Nang geographical boundaries & room restrictions
     if (hasHardErrors) {
       setErrorMsg(
         sizeError ||
-        cbdError ||
-        beachError ||
-        uniError ||
-        'Vui lòng điều chỉnh lại các thông số hợp lệ theo giới hạn địa lý thực tế tại Đà Nẵng.'
+          roomsError ||
+          cbdError ||
+          beachError ||
+          uniError ||
+          (isEn
+            ? 'Please correct invalid values before predicting.'
+            : 'Vui lòng điều chỉnh lại các thông số hợp lệ theo giới hạn địa lý thực tế tại Đà Nẵng.')
       )
       return
     }
@@ -900,7 +1037,8 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
     setLoading(true)
     setErrorMsg(null)
 
-    const payload = {
+    const payload: any = {
+      property_type: propertyType,
       size_m2: Number(sizeM2),
       dist_to_cbd: Number(distToCbd),
       dist_to_beach: Number(distToBeach),
@@ -915,8 +1053,12 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
       allow_simulation: forceSimulation || isBackendOnline === false
     }
 
+    // Strictly send rooms for apartment (clamped strictly to 1, 2, or 3)
+    if (propertyType === 'apartment') {
+      payload.rooms = Math.min(3, Math.max(1, Math.round(rooms || 1)))
+    }
+
     try {
-      // Direct call via proxy route ensuring complete safety against CORS
       const res = await fetch('/api/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -934,8 +1076,10 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
       if (!normalized.price_million_vnd && !normalized.predicted_price_vnd) {
         throw new Error(
           data.detail ||
-          data.message ||
-          'Dữ liệu phản hồi từ Backend không đúng cấu trúc giá dự đoán.'
+            data.message ||
+            (isEn
+              ? 'Backend response does not match expected price structure.'
+              : 'Dữ liệu phản hồi từ Backend không đúng cấu trúc giá dự đoán.')
         )
       }
 
@@ -949,7 +1093,9 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
       console.error('Prediction failed:', err)
       setErrorMsg(
         err?.message ||
-        'Không thể kết nối đến Backend FastAPI tại http://localhost:8000. Bạn có thể bấm nút "Mô phỏng thử nghiệm" bên dưới để kiểm tra giao diện.'
+          (isEn
+            ? 'Unable to connect to FastAPI backend at http://localhost:8000. You can click "Run UI simulation" below.'
+            : 'Không thể kết nối đến Backend FastAPI tại http://localhost:8000. Bạn có thể bấm nút "Mô phỏng thử nghiệm" bên dưới để kiểm tra giao diện.')
       )
     } finally {
       setLoading(false)
@@ -1038,26 +1184,28 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
       {/* Hero Header */}
       <div className="workspace-hero">
         <div className="workspace-hero-icon">
-          <Sparkles size={24} />
+          {propertyType === 'apartment' ? <Building2 size={24} /> : <Sparkles size={24} />}
         </div>
         <div>
           <span className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Activity size={13} style={{ color: '#3078f0' }} />
-            AI RENTAL VALUATION & SHAP EXPLAINABILITY ENGINE (FASTAPI 2026)
+            AI RENTAL & APARTMENT VALUATION ENGINE (FASTAPI 2026)
+            
           </span>
           <h2 style={{ fontSize: '23px', margin: '6px 0 4px' }}>
-            {isEn ? 'AI Rental Valuation & SHAP Explainability Engine' : 'Triển Khai Model Dự Đoán Giá Phòng Trọ & Giải Thích SHAP'}
+            {propertyType === 'apartment'
+              ? isEn
+                ? 'AI Apartment / Condo Valuation & SHAP Explainability Engine'
+                : 'Triển Khai Model Dự Đoán Giá Căn Hộ / Chung Cư & Giải Thích SHAP'
+              : isEn
+                ? 'AI Rental Room Valuation & SHAP Explainability Engine'
+                : 'Triển Khai Model Dự Đoán Giá Phòng Trọ & Giải Thích SHAP'}
           </h2>
-          <p style={{ fontSize: '12px', color: 'var(--muted)' }}>
-            {isEn ? 'Real-time rental valuation based on 11 spatial, location, and amenity parameters in Da Nang.' : 'Ước tính giá thuê thời gian thực dựa trên 11 thông số không gian và tiện ích tại Đà Nẵng.'}
-          </p>
         </div>
 
         {/* Backend Online/Offline Pill */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-          <div
-            className={`predict-status-pill ${isBackendOnline ? 'online' : 'offline'}`}
-          >
+          <div className={`predict-status-pill ${isBackendOnline ? 'online' : 'offline'}`}>
             <span
               style={{
                 width: '8px',
@@ -1067,10 +1215,12 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                 boxShadow: isBackendOnline ? '0 0 0 3px rgba(16, 185, 129, 0.25)' : 'none'
               }}
             />
-            <span>{isBackendOnline ? 'FastAPI Online (Port 8000)' : (isEn ? 'Backend Disconnected' : 'Backend Chưa Kết Nối')}</span>
+            <span>
+              {isBackendOnline ? 'FastAPI Online (Port 8000)' : isEn ? 'Backend Disconnected' : 'Backend Chưa Kết Nối'}
+            </span>
             <button
-              onClick={() => fetchMetadata()}
-              title={isEn ? "Check connection" : "Kiểm tra lại kết nối"}
+              onClick={() => fetchMetadata(propertyType)}
+              title={isEn ? 'Check connection' : 'Kiểm tra lại kết nối'}
               style={{
                 border: 'none',
                 background: 'none',
@@ -1095,22 +1245,41 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
         <div className="predict-form-card">
           <div className="predict-form-header">
             <div>
-              <h3>{isEn ? 'Property Specifications' : 'Thông Số Căn Phòng Trọ'}</h3>
-              <p>{isEn ? 'Enter property parameters or pick a quick preset to predict rent' : 'Nhập thông tin hoặc chọn mẫu thử nghiệm nhanh để dự đoán'}</p>
+              <h3>{isEn ? 'Property Specifications' : 'Thông Số Bất Động Sản'}</h3>
+              <p>
+                {isEn
+                  ? 'Select property type, input parameters or choose a quick sample'
+                  : 'Chọn loại hình bất động sản và nhập thông số để dự đoán giá'}
+              </p>
             </div>
             <button
               onClick={() => {
-                setSizeM2(25)
-                setDistToCbd(1.0)
-                setDistToBeach(2.8)
-                setDistToUni(1.2)
-                setHasBalcony(1)
-                setHasElevator(0)
-                setHasWindow(1)
-                setFurnishingStatus('Đầy đủ nội thất')
-                setWardName('Hải Châu')
-                setNearestBeachCode('PhamVanDong')
-                setNearestUniCode('DTU_NVL')
+                if (propertyType === 'apartment') {
+                  setSizeM2(55)
+                  setRooms(1) // strictly reset to 1 room
+                  setDistToCbd(2.5)
+                  setDistToBeach(1.2)
+                  setDistToUni(1.5)
+                  setHasBalcony(1)
+                  setHasElevator(1)
+                  setHasWindow(1)
+                  setFurnishingStatus('Đầy đủ nội thất')
+                  setWardName('Sơn Trà')
+                  setNearestBeachCode('MyKhe')
+                  setNearestUniCode('DUE')
+                } else {
+                  setSizeM2(25)
+                  setDistToCbd(1.0)
+                  setDistToBeach(2.8)
+                  setDistToUni(1.2)
+                  setHasBalcony(1)
+                  setHasElevator(0)
+                  setHasWindow(1)
+                  setFurnishingStatus('Đầy đủ nội thất')
+                  setWardName('Hải Châu')
+                  setNearestBeachCode('PhamVanDong')
+                  setNearestUniCode('DTU_NVL')
+                }
                 setErrorMsg(null)
                 setSmartNotice(null)
               }}
@@ -1121,56 +1290,162 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
             </button>
           </div>
 
-          {/* Quick Presets Bar */}
-          <div className="preset-bar">
-            <span className="preset-title">{isEn ? 'Presets:' : 'Mẫu nhanh:'}</span>
+          {/* 1. PROPERTY TYPE MODE SWITCHER: Phòng trọ vs Căn hộ / Chung cư */}
+          <div className="property-mode-selector">
             <button
               type="button"
-              className="preset-chip"
-              onClick={() => handleApplyPreset('student')}
+              className={`property-mode-btn ${propertyType === 'room' ? 'active' : ''}`}
+              onClick={() => handlePropertyTypeChange('room')}
             >
-              {isEn ? '🎓 PolyTech Student (18m²)' : '🎓 SV Bách Khoa (18m²)'}
+              <div className="property-mode-icon">
+                <DoorClosed size={18} />
+              </div>
+              <div className="mode-btn-content">
+                <span className="mode-btn-title">{isEn ? 'Rental Room' : 'Phòng trọ'}</span>
+          
+              </div>
             </button>
+
             <button
               type="button"
-              className="preset-chip"
-              onClick={() => handleApplyPreset('studio')}
+              className={`property-mode-btn ${propertyType === 'apartment' ? 'active' : ''}`}
+              onClick={() => handlePropertyTypeChange('apartment')}
             >
-              {isEn ? '🏖️ Beach Studio (32m²)' : '🏖️ Studio Biển (32m²)'}
-            </button>
-            <button
-              type="button"
-              className="preset-chip"
-              onClick={() => handleApplyPreset('luxury')}
-            >
-              {isEn ? '🏙️ Hai Chau CBD Apt' : '🏙️ Căn Hộ TT Hải Châu'}
+              <div className="property-mode-icon">
+                <Building2 size={18} />
+              </div>
+              <div className="mode-btn-content">
+                <span className="mode-btn-title">{isEn ? 'Apartment / Condo' : 'Căn hộ / Chung cư'}</span>
+              
+              </div>
             </button>
           </div>
 
+          {/* Quick Presets Bar */}
+          <div className="preset-bar">
+            <span className="preset-title">{isEn ? 'Presets:' : 'Mẫu nhanh:'}</span>
+            {propertyType === 'apartment' ? (
+              <>
+                <button
+                  type="button"
+                  className="preset-chip"
+                  onClick={() => handleApplyPreset('apt1')}
+                >
+                  🏢 {isEn ? '1-Bed Beach Apt (45m²)' : 'Căn 1PN Biển (45m², 1 phòng)'}
+                </button>
+                <button
+                  type="button"
+                  className="preset-chip"
+                  onClick={() => handleApplyPreset('apt2')}
+                >
+                  👨‍👩‍👧 {isEn ? '2-Bed Family Apt (72m²)' : 'Căn 2PN TT Hải Châu (72m², 2 phòng)'}
+                </button>
+                <button
+                  type="button"
+                  className="preset-chip"
+                  onClick={() => handleApplyPreset('apt3')}
+                >
+                  🌟 {isEn ? '3-Bed Luxury Condo (115m²)' : 'Căn 3PN VIP Biển (115m², 3 phòng)'}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="preset-chip"
+                  onClick={() => handleApplyPreset('student')}
+                >
+                  🎓 {isEn ? 'PolyTech Student (18m²)' : 'SV Bách Khoa (18m²)'}
+                </button>
+                <button
+                  type="button"
+                  className="preset-chip"
+                  onClick={() => handleApplyPreset('studio')}
+                >
+                  🏖️ {isEn ? 'Beach Studio (32m²)' : 'Studio Biển (32m²)'}
+                </button>
+                <button
+                  type="button"
+                  className="preset-chip"
+                  onClick={() => handleApplyPreset('luxury')}
+                >
+                  🏙️ {isEn ? 'Hai Chau Flat (48m²)' : 'Phòng trọ VIP Hải Châu (48m²)'}
+                </button>
+              </>
+            )}
+          </div>
+
           <form onSubmit={handlePredict}>
-            {/* GROUP 1: Physical Size & Location Metrics */}
+            {/* GROUP 1: Physical Size, Rooms & Location Metrics */}
             <div className="form-group-title">
               <Maximize2 size={13} style={{ color: 'var(--blue)' }} />
-              {isEn ? '1. Size & Commute Distances' : '1. Diện tích & Khoảng cách di chuyển'}
+              {propertyType === 'apartment'
+                ? isEn
+                  ? '1. Size, Rooms & Commute Distances'
+                  : '1. Diện tích, Số phòng ngủ & Cự ly di chuyển'
+                : isEn
+                  ? '1. Size & Commute Distances'
+                  : '1. Diện tích & Khoảng cách di chuyển'}
             </div>
+
+            {/* ONLY FOR APARTMENT: Strictly 1, 2, or 3 Rooms */}
+            {propertyType === 'apartment' && (
+              <div className="form-field" style={{ marginBottom: '14px' }}>
+                <label>
+                  <span>{isEn ? 'Number of Bedrooms / Rooms' : 'Số phòng ngủ / Không gian (rooms)'}</span>
+                  <span className="unit">{isEn ? '(Strictly 1, 2, or 3)' : '(Chỉ nhận 1, 2 hoặc 3 phòng)'}</span>
+                </label>
+                <div className="rooms-selector-group">
+                  {[1, 2, 3].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      className={`room-chip-btn ${rooms === num ? 'active' : ''}`}
+                      onClick={() => setRooms(num)}
+                    >
+                      <span className="room-chip-num">{num}</span>
+                      <span className="room-chip-label">
+                        {num === 1
+                          ? isEn
+                            ? '1 Room (Studio/1BR)'
+                            : '1 Phòng (Studio / 1PN)'
+                          : num === 2
+                            ? isEn
+                              ? '2 Rooms (Family 2BR)'
+                              : '2 Phòng (Gia đình 2PN)'
+                            : isEn
+                              ? '3 Rooms (Spacious 3BR)'
+                              : '3 Phòng (Rộng rãi 3PN)'}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                {roomsError && (
+                  <div className="field-error-text">
+                    <AlertCircle size={13} style={{ flexShrink: 0 }} />
+                    <span>{roomsError}</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="form-row">
               <div className="form-field">
                 <label>
-                  <span>{isEn ? 'Room size' : 'Diện tích phòng'}</span>
-                  <span className="unit">(5 - 80 m²)</span>
+                  <span>{propertyType === 'apartment' ? (isEn ? 'Apartment size' : 'Diện tích căn hộ') : isEn ? 'Room size' : 'Diện tích phòng'}</span>
+                  <span className="unit">{propertyType === 'apartment' ? '(20 - 200 m²)' : '(5 - 80 m²)'}</span>
                 </label>
                 <div className="form-input-wrap">
                   <input
                     type="number"
                     step="0.5"
-                    min="5"
-                    max="80"
+                    min={propertyType === 'apartment' ? 20 : 5}
+                    max={propertyType === 'apartment' ? 200 : 80}
                     required
                     value={sizeM2}
                     onChange={(e) => setSizeM2(parseFloat(e.target.value) || 0)}
                     className={`form-input ${sizeError ? 'input-error' : ''}`}
-                    placeholder={isEn ? "e.g. 25" : "VD: 25"}
+                    placeholder={propertyType === 'apartment' ? 'VD: 60' : 'VD: 25'}
                   />
                 </div>
                 {sizeError && (
@@ -1180,7 +1455,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                   </div>
                 )}
                 <div className="quick-chips">
-                  {[18, 25, 35, 50].map((val) => (
+                  {(propertyType === 'apartment' ? [45, 65, 85, 120] : [18, 25, 35, 50]).map((val) => (
                     <button
                       key={val}
                       type="button"
@@ -1208,7 +1483,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                     value={distToCbd}
                     onChange={(e) => setDistToCbd(parseFloat(e.target.value) || 0)}
                     className={`form-input ${cbdError ? 'input-error' : cbdWarning ? 'input-warning' : ''}`}
-                    placeholder={isEn ? "e.g. 3.5" : "VD: 3.5"}
+                    placeholder={isEn ? 'e.g. 3.5' : 'VD: 3.5'}
                   />
                 </div>
                 {cbdError && (
@@ -1242,7 +1517,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                     value={distToBeach}
                     onChange={(e) => setDistToBeach(parseFloat(e.target.value) || 0)}
                     className={`form-input ${beachError ? 'input-error' : beachWarning ? 'input-warning' : ''}`}
-                    placeholder={isEn ? "e.g. 2.0" : "VD: 2.0"}
+                    placeholder={isEn ? 'e.g. 2.0' : 'VD: 2.0'}
                   />
                 </div>
                 {beachError && (
@@ -1274,7 +1549,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                     value={distToUni}
                     onChange={(e) => setDistToUni(parseFloat(e.target.value) || 0)}
                     className={`form-input ${uniError ? 'input-error' : ''}`}
-                    placeholder={isEn ? "e.g. 1.2" : "VD: 1.2"}
+                    placeholder={isEn ? 'e.g. 1.2' : 'VD: 1.2'}
                   />
                 </div>
                 {uniError && (
@@ -1311,7 +1586,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                     fontWeight: 'bold',
                     lineHeight: 1
                   }}
-                  title={isEn ? "Close notice" : "Đóng thông báo"}
+                  title={isEn ? 'Close notice' : 'Đóng thông báo'}
                 >
                   ×
                 </button>
@@ -1319,17 +1594,32 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
             )}
 
             <div className="form-field" style={{ marginBottom: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px', gap: '8px', flexWrap: 'wrap' }}>
-                <label style={{ margin: 0, whiteSpace: 'nowrap' }}>{isEn ? 'Ward / Area (Da Nang)' : 'Phường / Xã (Đà Nẵng)'}</label>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '6px',
+                  gap: '8px',
+                  flexWrap: 'wrap'
+                }}
+              >
+                <label style={{ margin: 0, whiteSpace: 'nowrap' }}>
+                  {isEn ? 'Ward / Area (Da Nang)' : 'Phường / Xã (Đà Nẵng)'}
+                </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                   <button
                     type="button"
                     className={`smart-toggle-btn ${enableSmartDefaults ? 'active' : ''}`}
                     onClick={() => setEnableSmartDefaults(!enableSmartDefaults)}
-                    title={isEn ? 'Toggle auto-suggest distance & location anchors' : 'Bật/Tắt tự động gợi ý khoảng cách & địa điểm khi đổi phường'}
+                    title={
+                      isEn
+                        ? 'Toggle auto-suggest distance & location anchors'
+                        : 'Bật/Tắt tự động gợi ý khoảng cách & địa điểm khi đổi phường'
+                    }
                   >
                     <Lightbulb size={11} />
-                    {enableSmartDefaults ? (isEn ? 'Hints: ON' : 'Gợi ý: BẬT') : (isEn ? 'Hints: OFF' : 'Gợi ý: TẮT')}
+                    {enableSmartDefaults ? (isEn ? 'Hints: ON' : 'Gợi ý: BẬT') : isEn ? 'Hints: OFF' : 'Gợi ý: TẮT'}
                   </button>
                   <button
                     type="button"
@@ -1393,7 +1683,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                 >
                   {uniCodeOptions.map((u) => (
                     <option key={u} value={u}>
-                      {isEn ? (UNI_LABELS_EN[u] || UNI_LABELS[u] || u) : (UNI_LABELS[u] || u)}
+                      {isEn ? UNI_LABELS_EN[u] || UNI_LABELS[u] || u : UNI_LABELS[u] || u}
                     </option>
                   ))}
                 </select>
@@ -1409,7 +1699,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
             {/* GROUP 3: Furnishing & Interior Amenities */}
             <div className="form-group-title">
               <Armchair size={13} style={{ color: 'var(--blue)' }} />
-              {isEn ? '3. Furnishing & Amenities' : '3. Tình trạng nội thất & Tiện nghi phòng'}
+              {isEn ? '3. Furnishing & Amenities' : '3. Tình trạng nội thất & Tiện nghi'}
             </div>
 
             <div className="form-field" style={{ marginBottom: '14px' }}>
@@ -1440,7 +1730,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                   </div>
                   <div className="label-box">
                     <strong>{isEn ? 'Balcony' : 'Ban công'}</strong>
-                    <small>{hasBalcony === 1 ? (isEn ? 'Has balcony' : 'Có ban công') : (isEn ? 'None' : 'Không có')}</small>
+                    <small>{hasBalcony === 1 ? (isEn ? 'Has balcony' : 'Có ban công') : isEn ? 'None' : 'Không có'}</small>
                   </div>
                 </div>
 
@@ -1454,7 +1744,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                   </div>
                   <div className="label-box">
                     <strong>{isEn ? 'Elevator' : 'Thang máy'}</strong>
-                    <small>{hasElevator === 1 ? (isEn ? 'Has elevator' : 'Có thang máy') : (isEn ? 'Walk-up' : 'Đi bộ')}</small>
+                    <small>{hasElevator === 1 ? (isEn ? 'Has elevator' : 'Có thang máy') : isEn ? 'Walk-up' : 'Đi bộ'}</small>
                   </div>
                 </div>
 
@@ -1468,7 +1758,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                   </div>
                   <div className="label-box">
                     <strong>{isEn ? 'Window' : 'Cửa sổ'}</strong>
-                    <small>{hasWindow === 1 ? (isEn ? 'Has window' : 'Có cửa sổ') : (isEn ? 'No window' : 'Phòng kín')}</small>
+                    <small>{hasWindow === 1 ? (isEn ? 'Has window' : 'Có cửa sổ') : isEn ? 'No window' : 'Phòng kín'}</small>
                   </div>
                 </div>
               </div>
@@ -1499,7 +1789,15 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
               type="submit"
               disabled={loading || hasHardErrors}
               className="btn-predict"
-              title={hasHardErrors ? (isEn ? 'Please correct invalid values before predicting' : 'Vui lòng điều chỉnh lại các trường dữ liệu hợp lệ trước khi dự đoán') : (isEn ? 'Click to predict rental price' : 'Bấm để dự đoán giá phòng')}
+              title={
+                hasHardErrors
+                  ? isEn
+                    ? 'Please correct invalid values before predicting'
+                    : 'Vui lòng điều chỉnh lại các trường dữ liệu hợp lệ trước khi dự đoán'
+                  : isEn
+                    ? 'Click to predict rental price'
+                    : 'Bấm để dự đoán giá'
+              }
             >
               {loading ? (
                 <>
@@ -1509,7 +1807,15 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
               ) : (
                 <>
                   <Sparkles size={17} />
-                  <span>{isEn ? 'Predict Rental Price' : 'Dự đoán giá phòng trọ'}</span>
+                  <span>
+                    {propertyType === 'apartment'
+                      ? isEn
+                        ? 'Predict Apartment Price'
+                        : 'Dự đoán giá Căn hộ / Chung cư'
+                      : isEn
+                        ? 'Predict Room Rental Price'
+                        : 'Dự đoán giá phòng trọ'}
+                  </span>
                 </>
               )}
             </button>
@@ -1522,380 +1828,519 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
         <div>
           {/* State 1: When no prediction has been run yet */}
           {!prediction && !loading && (
-            <div
-              className="card predict-empty-card"
-            >
-              <div
-                className="predict-empty-icon"
-              >
+            <div className="card predict-empty-card">
+              <div className="predict-empty-icon">
                 <Calculator size={28} />
               </div>
               <h3 style={{ font: "800 18px 'Manrope', sans-serif", margin: '0 0 8px', color: 'var(--ink)' }}>
                 {isEn ? 'Ready to Value Rent & Visualize SHAP' : 'Sẵn Sàng Dự Đoán Giá Thuê & Trực Quan Hóa SHAP'}
               </h3>
               <p style={{ maxWidth: '440px', margin: '0 auto 20px', color: 'var(--muted)', fontSize: '13px' }}>
-                {isEn ? 'Enter property parameters on the left or select a Quick Preset to activate the valuation model.' : 'Điền các thông số căn phòng trọ ở cột bên trái hoặc bấm vào một trong các Mẫu nhanh để kích hoạt mô hình dự đoán.'}
+                {propertyType === 'apartment'
+                  ? isEn
+                    ? 'Enter apartment parameters on the left or select a Quick Preset to run the apartment valuation pipeline.'
+                    : 'Điền các thông số căn hộ/chung cư ở cột bên trái hoặc bấm vào một trong các Mẫu nhanh để kích hoạt mô hình dự đoán căn hộ.'
+                  : isEn
+                    ? 'Enter property parameters on the left or select a Quick Preset to activate the room valuation model.'
+                    : 'Điền các thông số căn phòng trọ ở cột bên trái hoặc bấm vào một trong các Mẫu nhanh để kích hoạt mô hình dự đoán phòng trọ.'}
               </p>
               <button
                 type="button"
-                onClick={() => handleApplyPreset('studio')}
+                onClick={() => handleApplyPreset(propertyType === 'apartment' ? 'apt1' : 'studio')}
                 className="button primary"
                 style={{ margin: '0 auto' }}
               >
-                <Sparkles size={15} /> {isEn ? 'Try with Beach Studio preset' : 'Thử ngay với mẫu Studio Biển'}
+                <Sparkles size={15} />{' '}
+                {propertyType === 'apartment'
+                  ? isEn
+                    ? 'Try with 1-Bed Beach Apt preset'
+                    : 'Thử ngay với mẫu Căn 1PN Biển'
+                  : isEn
+                    ? 'Try with Beach Studio preset'
+                    : 'Thử ngay với mẫu Studio Biển'}
               </button>
             </div>
           )}
 
           {/* State 2: While loading */}
           {loading && (
-            <div
-              className="card predict-loading-card"
-            >
-              <div
-                className="pulse-spinner"
-                style={{ width: '38px', height: '38px', margin: '0 auto 18px' }}
-              />
+            <div className="card predict-loading-card">
+              <div className="pulse-spinner" style={{ width: '38px', height: '38px', margin: '0 auto 18px' }} />
               <h3 style={{ font: "800 18px 'Manrope', sans-serif", margin: '0 0 6px' }}>
                 {isEn ? 'Analyzing Parameters & Computing SHAP Values...' : 'Đang Phân Tích Thông Số & Tính Toán SHAP Values...'}
               </h3>
               <p style={{ color: 'var(--muted)', fontSize: '12px' }}>
-                {isEn ? 'Calling FastAPI Backend (Port 8000), retrieving weights and isolating feature contributions.' : 'Đang gọi API Backend FastAPI (Port 8000), truy xuất trọng số và phân tách đóng góp từng đặc trưng.'}
+                {propertyType === 'apartment'
+                  ? isEn
+                    ? 'Calling FastAPI Apartment pipeline, computing HistGradientBoosting and SHAP Permutation values.'
+                    : 'Đang gọi API Backend FastAPI (Port 8000), truy xuất mô hình Căn hộ HGBoost và tính toán giải thích SHAP.'
+                  : isEn
+                    ? 'Calling FastAPI Backend (Port 8000), retrieving weights and isolating feature contributions.'
+                    : 'Đang gọi API Backend FastAPI (Port 8000), truy xuất mô hình Phòng trọ CatBoost và phân tách đóng góp từng đặc trưng.'}
               </p>
             </div>
           )}
 
           {/* State 3: Prediction Results Rendered */}
-          {prediction && !loading && (prediction.price_million_vnd !== undefined || prediction.predicted_price_vnd !== undefined) && (
-            <>
-              {/* Result Hero Display */}
-              <div className="result-hero-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
-                  <div>
-                    <span className="eyebrow" style={{ color: 'var(--blue)', marginBottom: '4px' }}>
-                      {isEn ? 'AI MODEL VALUATION RESULT' : 'KẾT QUẢ ĐỊNH GIÁ MÔ HÌNH AI'}
-                    </span>
-                    <div className="price-main-display">
-                      <span className="price-main-number">
-                        {formatPriceMillion(prediction?.price_million_vnd)}
+          {prediction &&
+            !loading &&
+            (prediction.price_million_vnd !== undefined || prediction.predicted_price_vnd !== undefined) && (
+              <>
+                {/* Result Hero Display */}
+                <div className="result-hero-card">
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      flexWrap: 'wrap',
+                      gap: '8px'
+                    }}
+                  >
+                    <div>
+                      <span className="eyebrow" style={{ color: 'var(--blue)', marginBottom: '4px' }}>
+                        {propertyType === 'apartment'
+                          ? isEn
+                            ? 'APARTMENT VALUATION RESULT (AI MODEL)'
+                            : `KẾT QUẢ ĐỊNH GIÁ CĂN HỘ / CHUNG CƯ (${rooms} PHÒNG NGỦ)`
+                          : isEn
+                            ? 'AI MODEL VALUATION RESULT'
+                            : 'KẾT QUẢ ĐỊNH GIÁ PHÒNG TRỌ (AI MODEL)'}
                       </span>
-                      <span className="price-main-unit">{isEn ? 'M VND / mo' : 'triệu VND / tháng'}</span>
+                      <div className="price-main-display">
+                        <span className="price-main-number">{formatPriceMillion(prediction?.price_million_vnd)}</span>
+                        <span className="price-main-unit">{isEn ? 'M VND / mo' : 'triệu VND / tháng'}</span>
+                      </div>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--muted)', marginBottom: '8px' }}>
+                        {isEn ? 'Equivalent to: ' : 'Tương đương: '}
+                        <strong style={{ color: 'var(--ink)' }}>
+                          {formatMoney(
+                            prediction?.predicted_price_vnd || (prediction?.price_million_vnd || 0) * 1000000
+                          )}
+                        </strong>
+                        <span style={{ margin: '0 8px', color: 'var(--line)' }}>|</span>
+                        <span>
+                          {isEn ? 'Unit rate: ' : 'Đơn giá: '}
+                          <strong style={{ color: 'var(--blue)' }}>
+                            {Math.round(
+                              ((prediction?.price_million_vnd || 0) * 1000000) / (sizeM2 || 1)
+                            ).toLocaleString(isEn ? 'en-US' : 'vi-VN')}{' '}
+                            {isEn ? 'VND/m²' : 'đ/m²'}
+                          </strong>
+                        </span>
+                        {propertyType === 'apartment' && (
+                          <>
+                            <span style={{ margin: '0 8px', color: 'var(--line)' }}>|</span>
+                            <span>
+                              {isEn ? 'Layout: ' : 'Quy mô: '}
+                              <strong style={{ color: '#16a34a' }}>
+                                {rooms} {isEn ? 'Bedroom(s)' : 'Phòng ngủ'}
+                              </strong>
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--muted)', marginBottom: '8px' }}>
-                      {isEn ? 'Equivalent to: ' : 'Tương đương: '}<strong style={{ color: 'var(--ink)' }}>{formatMoney(prediction?.predicted_price_vnd || ((prediction?.price_million_vnd || 0) * 1000000))}</strong>
-                      <span style={{ margin: '0 8px', color: 'var(--line)' }}>|</span>
-                      <span>{isEn ? 'Unit rate: ' : 'Đơn giá: '}<strong style={{ color: 'var(--blue)' }}>{Math.round(((prediction?.price_million_vnd || 0) * 1000000) / (sizeM2 || 1)).toLocaleString(isEn ? 'en-US' : 'vi-VN')} {isEn ? 'VND/m²' : 'đ/m²'}</strong></span>
-                    </div>
+
+                    {prediction.is_simulation && (
+                      <span className="simulation-pill">
+                        {isEn ? 'UI Simulation / Demo Mode' : 'Chế độ mô phỏng kiểm tra UI'}
+                      </span>
+                    )}
                   </div>
 
-                  {prediction.is_simulation && (
-                    <span
-                      className="simulation-pill"
-                    >
-                      {isEn ? 'UI Simulation / Demo Mode' : 'Chế độ mô phỏng kiểm tra UI'}
-                    </span>
+                  {/* Range Estimate */}
+                  {formattedRange && (
+                    <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px solid var(--line)' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          fontSize: '12px'
+                        }}
+                      >
+                        <span style={{ color: 'var(--muted)', fontWeight: 600 }}>
+                          {isEn ? 'Estimated confidence range:' : 'Khoảng giá tham khảo ước tính:'}
+                        </span>
+                        <strong style={{ color: 'var(--ink)' }}>{formattedRange}</strong>
+                      </div>
+                      <div className="range-indicator">
+                        <div className="range-fill" style={{ width: '100%' }} />
+                      </div>
+                    </div>
                   )}
                 </div>
 
-                {/* Range Estimate */}
-                {formattedRange && (
-                  <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px solid var(--line)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
-                      <span style={{ color: 'var(--muted)', fontWeight: 600 }}>
-                        {isEn ? 'Estimated confidence range:' : 'Khoảng giá tham khảo ước tính:'}
-                      </span>
-                      <strong style={{ color: 'var(--ink)' }}>{formattedRange}</strong>
-                    </div>
-                    <div className="range-indicator">
-                      <div className="range-fill" style={{ width: '100%' }} />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* 3 Metric Cards for SHAP Overview */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: '12px',
-                  marginTop: '16px'
-                }}
-              >
-                <div className="card metric-card" style={{ padding: '14px 16px' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>
-                    {isEn ? 'Market Base Value' : 'Giá cơ sở thị trường (Base)'}
-                  </span>
-                  <strong style={{ font: "800 18px 'Manrope', sans-serif", color: 'var(--ink)' }}>
-                    {formatMoney(prediction.explanation?.base_value_vnd || 2850000)}
-                  </strong>
-                  <small style={{ fontSize: '10px' }}>{isEn ? 'Da Nang overall benchmark' : 'Điểm chuẩn trung bình toàn Đà Nẵng'}</small>
-                </div>
-
-                <div className="card metric-card" style={{ padding: '14px 16px' }}>
-                  <span className="metric-tag-positive" style={{ fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <TrendingUp size={13} /> {isEn ? 'Total positive impact' : 'Tổng tác động tăng giá'}
-                  </span>
-                  <strong className="metric-val-positive" style={{ font: "800 18px 'Manrope', sans-serif" }}>
-                    +{formatMoney(impactSummary.positiveVnd)}
-                  </strong>
-                  <small style={{ fontSize: '10px' }}>{isEn ? 'From location advantages & amenities' : 'Từ các ưu thế vị trí & tiện ích'}</small>
-                </div>
-
-                <div className="card metric-card" style={{ padding: '14px 16px' }}>
-                  <span className="metric-tag-negative" style={{ fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <TrendingDown size={13} /> {isEn ? 'Total negative impact' : 'Tổng tác động giảm giá'}
-                  </span>
-                  <strong className="metric-val-negative" style={{ font: "800 18px 'Manrope', sans-serif" }}>
-                    -{formatMoney(impactSummary.negativeVnd)}
-                  </strong>
-                  <small style={{ fontSize: '10px' }}>{isEn ? 'From distance or missing amenities' : 'Do xa trung tâm hoặc thiếu tiện nghi'}</small>
-                </div>
-              </div>
-
-              {/* ============================================================= */}
-              {/* HORIZONTAL BAR CHART: SHAP Feature Impact                     */}
-              {/* ============================================================= */}
-              <div className="shap-chart-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
-                  <div>
-                    <h3 style={{ font: "800 16px 'Manrope', sans-serif", margin: '0 0 4px', color: 'var(--ink)' }}>
-                      {isEn ? 'SHAP Feature Impact Horizontal Bar Chart' : 'Biểu Đồ Cột Ngang Tác Động SHAP (Feature Impact)'}
-                    </h3>
-                    <p style={{ margin: 0, fontSize: '11px', color: 'var(--muted)' }}>
-                      {isEn ? 'Real impact of each feature increasing (green) or decreasing (red) rent vs. the baseline.' : 'Mức độ ảnh hưởng thực tế từng yếu tố làm tăng (xanh) hoặc giảm (đỏ) giá thuê so với mức cơ sở.'}
-                    </p>
-                  </div>
-
-                  {/* Filter Pills */}
-                  <div className="chart-filter-pills" style={{ margin: 0 }}>
-                    <button
-                      type="button"
-                      className={`pill-filter-btn ${shapFilter === 'all' ? 'active' : ''}`}
-                      onClick={() => setShapFilter('all')}
-                    >
-                      {isEn ? `All (${contributionsList.length})` : `Tất cả (${contributionsList.length})`}
-                    </button>
-                    <button
-                      type="button"
-                      className={`pill-filter-btn ${shapFilter === 'positive' ? 'active' : ''}`}
-                      onClick={() => setShapFilter('positive')}
-                    >
-                      {isEn ? 'Positive (+)' : 'Tăng giá (+)'}
-                    </button>
-                    <button
-                      type="button"
-                      className={`pill-filter-btn ${shapFilter === 'negative' ? 'active' : ''}`}
-                      onClick={() => setShapFilter('negative')}
-                    >
-                      {isEn ? 'Negative (-)' : 'Giảm giá (-)'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Chart Header Axis */}
+                {/* 3 Metric Cards for SHAP Overview */}
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '190px 1fr 130px',
-                    gap: '14px',
-                    padding: '14px 0 8px',
-                    borderBottom: '1px solid var(--line)',
-                    fontSize: '10px',
-                    fontWeight: 700,
-                    color: '#94a3b8',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px'
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '12px',
+                    marginTop: '16px'
                   }}
                 >
-                  <span>{isEn ? 'Feature & Value' : 'Đặc trưng & Giá trị thực'}</span>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#ef4444' }}>{isEn ? '← Negative impact' : '← Giảm giá (Chiết khấu)'}</span>
-                    <span style={{ color: '#64748b' }}>{isEn ? 'Zero Axis' : 'Trục 0'}</span>
-                    <span style={{ color: '#10b981' }}>{isEn ? 'Positive impact →' : 'Tăng giá (Phụ trội) →'}</span>
+                  <div className="card metric-card" style={{ padding: '14px 16px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>
+                      {isEn ? 'Market Base Value' : 'Giá cơ sở thị trường (Base)'}
+                    </span>
+                    <strong style={{ font: "800 18px 'Manrope', sans-serif", color: 'var(--ink)' }}>
+                      {formatMoney(
+                        prediction.explanation?.base_value_vnd || (propertyType === 'apartment' ? 7500000 : 2850000)
+                      )}
+                    </strong>
+                    <small style={{ fontSize: '10px' }}>
+                      {propertyType === 'apartment'
+                        ? isEn
+                          ? 'Da Nang apartment baseline'
+                          : 'Điểm chuẩn căn hộ chung cư ĐN'
+                        : isEn
+                          ? 'Da Nang room benchmark'
+                          : 'Điểm chuẩn phòng trọ Đà Nẵng'}
+                    </small>
                   </div>
-                  <span style={{ textAlign: 'right' }}>{isEn ? 'Impact (VND / %)' : 'Ảnh hưởng (VND / %)'}</span>
-                </div>
 
-                {/* Chart Rows */}
-                <div style={{ marginTop: '6px' }}>
-                  {filteredContributions.map((item, idx) => {
-                    const isPositive =
-                      item.direction === 'tăng giá' || (typeof item.vnd_effect === 'number' && item.vnd_effect > 0)
-                    const isNegative =
-                      item.direction === 'giảm giá' || (typeof item.vnd_effect === 'number' && item.vnd_effect < 0)
-                    const absVnd = Math.abs(item.vnd_effect || 0)
-                    const barWidthPct = Math.min(100, Math.max(4, (absVnd / maxVndEffect) * 48))
+                  <div className="card metric-card" style={{ padding: '14px 16px' }}>
+                    <span
+                      className="metric-tag-positive"
+                      style={{ fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <TrendingUp size={13} /> {isEn ? 'Total positive impact' : 'Tổng tác động tăng giá'}
+                    </span>
+                    <strong
+                      className="metric-val-positive"
+                      style={{ font: "800 18px 'Manrope', sans-serif" }}
+                    >
+                      +{formatMoney(impactSummary.positiveVnd)}
+                    </strong>
+                    <small style={{ fontSize: '10px' }}>
+                      {isEn ? 'From location advantages & amenities' : 'Từ các ưu thế vị trí & tiện ích'}
+                    </small>
+                  </div>
 
-                    return (
-                      <div key={idx} className="shap-bar-row">
-                        <div className="shap-label-col">
-                          <strong>{translateFeatureLabel(item.label, isEn)}</strong>
-                          <small>{formatContributionValue(item.value)}</small>
-                        </div>
-
-                        {/* Center-zero Diverging Horizontal Bar */}
-                        <div className="shap-track-col">
-                          <div className="shap-center-axis" />
-                          {isPositive && (
-                            <div
-                              className="shap-bar positive"
-                              style={{ width: `${barWidthPct}%` }}
-                              title={`${item.label}: +${formatMoney(item.vnd_effect)} (${item.pct_effect})`}
-                            />
-                          )}
-                          {isNegative && (
-                            <div
-                              className="shap-bar negative"
-                              style={{
-                                width: `${barWidthPct}%`,
-                                marginLeft: `calc(50% - ${barWidthPct}%)`
-                              }}
-                              title={`${item.label}: ${formatMoney(item.vnd_effect)} (${item.pct_effect})`}
-                            />
-                          )}
-                          {!isPositive && !isNegative && (
-                            <div
-                              style={{
-                                width: '6px',
-                                height: '6px',
-                                borderRadius: '50%',
-                                background: '#94a3b8',
-                                position: 'absolute',
-                                left: 'calc(50% - 3px)'
-                              }}
-                            />
-                          )}
-                        </div>
-
-                        <div className="shap-stat-col">
-                          <strong className={isPositive ? 'positive' : isNegative ? 'negative' : ''}>
-                            {item.vnd_effect > 0 ? `+${formatMoney(item.vnd_effect)}` : formatMoney(item.vnd_effect)}
-                          </strong>
-                          <small>{String(item.pct_effect)}</small>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* ============================================================= */}
-              {/* BREAKDOWN TABLE: Itemized Contributions                       */}
-              {/* ============================================================= */}
-              <div className="breakdown-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <h3 style={{ font: "800 16px 'Manrope', sans-serif", margin: '0 0 4px', color: 'var(--ink)' }}>
-                      {isEn ? 'Itemized Price Contribution Breakdown Table' : 'Bảng Chi Tiết Đóng Góp Giá (Breakdown Table)'}
-                    </h3>
-                    <p style={{ margin: 0, fontSize: '11px', color: 'var(--muted)' }}>
-                      {isEn ? 'Cumulative waterfall sum from base price to final predicted rent.' : 'Cộng dồn từng thành phần từ mức giá gốc cơ sở đến mức giá dự đoán cuối cùng.'}
-                    </p>
+                  <div className="card metric-card" style={{ padding: '14px 16px' }}>
+                    <span
+                      className="metric-tag-negative"
+                      style={{ fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <TrendingDown size={13} /> {isEn ? 'Total negative impact' : 'Tổng tác động giảm giá'}
+                    </span>
+                    <strong
+                      className="metric-val-negative"
+                      style={{ font: "800 18px 'Manrope', sans-serif" }}
+                    >
+                      -{formatMoney(impactSummary.negativeVnd)}
+                    </strong>
+                    <small style={{ fontSize: '10px' }}>
+                      {isEn ? 'From distance or missing amenities' : 'Do xa trung tâm hoặc thiếu tiện nghi'}
+                    </small>
                   </div>
                 </div>
 
-                <div style={{ overflowX: 'auto' }}>
-                  <table className="breakdown-table">
-                    <thead>
-                      <tr>
-                        <th>{isEn ? 'Contribution Factor' : 'Yếu tố đóng góp'}</th>
-                        <th>{isEn ? 'Input Value' : 'Giá trị nhập liệu'}</th>
-                        <th>{isEn ? 'Direction' : 'Chiều hướng'}</th>
-                        <th>{isEn ? 'Impact Ratio (%)' : 'Tỷ lệ tác động (%)'}</th>
-                        <th style={{ textAlign: 'right' }}>{isEn ? 'Monetary Impact (VND)' : 'Ảnh hưởng bằng tiền (VND)'}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {/* Base Value Row */}
-                      <tr className="highlight-base">
-                        <td>
-                          <strong>{isEn ? 'Base Room Value' : 'Giá phòng cơ sở (Base Value)'}</strong>
-                        </td>
-                        <td>{isEn ? 'Da Nang benchmark' : 'Điểm chuẩn Đà Nẵng'}</td>
-                        <td>
-                          <span className="direction-badge neutral">{isEn ? 'Baseline' : 'Cơ sở chuẩn'}</span>
-                        </td>
-                        <td>0.0%</td>
-                        <td style={{ textAlign: 'right', fontWeight: 700 }}>
-                          {formatMoney(prediction.explanation?.base_value_vnd || 2850000)}
-                        </td>
-                      </tr>
+                {/* ============================================================= */}
+                {/* HORIZONTAL BAR CHART: SHAP Feature Impact                     */}
+                {/* ============================================================= */}
+                <div className="shap-chart-card">
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      flexWrap: 'wrap',
+                      gap: '10px'
+                    }}
+                  >
+                    <div>
+                      <h3 style={{ font: "800 16px 'Manrope', sans-serif", margin: '0 0 4px', color: 'var(--ink)' }}>
+                        {isEn ? 'SHAP Feature Impact Horizontal Bar Chart' : 'Biểu Đồ Cột Ngang Tác Động SHAP (Feature Impact)'}
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '11px', color: 'var(--muted)' }}>
+                        {isEn
+                          ? 'Real impact of each feature increasing (green) or decreasing (red) rent vs. the baseline.'
+                          : 'Mức độ ảnh hưởng thực tế từng yếu tố làm tăng (xanh) hoặc giảm (đỏ) giá thuê so với mức cơ sở.'}
+                      </p>
+                    </div>
 
-                      {/* Contribution Rows */}
-                      {contributionsList.map((item, idx) => {
-                        const isPositive =
-                          item.direction === 'tăng giá' || (typeof item.vnd_effect === 'number' && item.vnd_effect > 0)
-                        const isNegative =
-                          item.direction === 'giảm giá' || (typeof item.vnd_effect === 'number' && item.vnd_effect < 0)
+                    {/* Filter Pills */}
+                    <div className="chart-filter-pills" style={{ margin: 0 }}>
+                      <button
+                        type="button"
+                        className={`pill-filter-btn ${shapFilter === 'all' ? 'active' : ''}`}
+                        onClick={() => setShapFilter('all')}
+                      >
+                        {isEn ? `All (${contributionsList.length})` : `Tất cả (${contributionsList.length})`}
+                      </button>
+                      <button
+                        type="button"
+                        className={`pill-filter-btn ${shapFilter === 'positive' ? 'active' : ''}`}
+                        onClick={() => setShapFilter('positive')}
+                      >
+                        {isEn ? 'Positive (+)' : 'Tăng giá (+)'}
+                      </button>
+                      <button
+                        type="button"
+                        className={`pill-filter-btn ${shapFilter === 'negative' ? 'active' : ''}`}
+                        onClick={() => setShapFilter('negative')}
+                      >
+                        {isEn ? 'Negative (-)' : 'Giảm giá (-)'}
+                      </button>
+                    </div>
+                  </div>
 
-                        return (
-                          <tr key={idx}>
-                            <td>
-                              <strong>{translateFeatureLabel(item.label, isEn)}</strong>
-                            </td>
-                            <td>{formatContributionValue(item.value)}</td>
-                            <td>
-                              {isPositive && (
-                                <span className="direction-badge increase">
-                                  <TrendingUp size={11} /> {isEn ? 'Positive' : 'Tăng giá'}
-                                </span>
-                              )}
-                              {isNegative && (
-                                <span className="direction-badge decrease">
-                                  <TrendingDown size={11} /> {isEn ? 'Negative' : 'Giảm giá'}
-                                </span>
-                              )}
-                              {!isPositive && !isNegative && (
-                                <span className="direction-badge neutral">{isEn ? 'Neutral' : 'Trung lập'}</span>
-                              )}
-                            </td>
-                            <td style={{ fontWeight: 600, color: isPositive ? 'var(--positive-text, #15803d)' : isNegative ? 'var(--negative-text, #b91c1c)' : 'inherit' }}>
-                              {String(item.pct_effect)}
-                            </td>
-                            <td
-                              style={{
-                                textAlign: 'right',
-                                fontWeight: 700,
-                                color: isPositive ? 'var(--positive-text, #15803d)' : isNegative ? 'var(--negative-text, #b91c1c)' : 'inherit'
-                              }}
-                            >
+                  {/* Chart Header Axis */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '190px 1fr 130px',
+                      gap: '14px',
+                      padding: '14px 0 8px',
+                      borderBottom: '1px solid var(--line)',
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      color: '#94a3b8',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}
+                  >
+                    <span>{isEn ? 'Feature & Value' : 'Đặc trưng & Giá trị thực'}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#ef4444' }}>{isEn ? '← Negative impact' : '← Giảm giá (Chiết khấu)'}</span>
+                      <span style={{ color: '#64748b' }}>{isEn ? 'Zero Axis' : 'Trục 0'}</span>
+                      <span style={{ color: '#10b981' }}>{isEn ? 'Positive impact →' : 'Tăng giá (Phụ trội) →'}</span>
+                    </div>
+                    <span style={{ textAlign: 'right' }}>{isEn ? 'Impact (VND / %)' : 'Ảnh hưởng (VND / %)'}</span>
+                  </div>
+
+                  {/* Chart Rows */}
+                  <div style={{ marginTop: '6px' }}>
+                    {filteredContributions.map((item, idx) => {
+                      const isPositive =
+                        item.direction === 'tăng giá' || (typeof item.vnd_effect === 'number' && item.vnd_effect > 0)
+                      const isNegative =
+                        item.direction === 'giảm giá' || (typeof item.vnd_effect === 'number' && item.vnd_effect < 0)
+                      const absVnd = Math.abs(item.vnd_effect || 0)
+                      const barWidthPct = Math.min(100, Math.max(4, (absVnd / maxVndEffect) * 48))
+
+                      return (
+                        <div key={idx} className="shap-bar-row">
+                          <div className="shap-label-col">
+                            <strong>{translateFeatureLabel(item.label, isEn)}</strong>
+                            <small>{formatContributionValue(item.value)}</small>
+                          </div>
+
+                          {/* Center-zero Diverging Horizontal Bar */}
+                          <div className="shap-track-col">
+                            <div className="shap-center-axis" />
+                            {isPositive && (
+                              <div
+                                className="shap-bar positive"
+                                style={{ width: `${barWidthPct}%` }}
+                                title={`${item.label}: +${formatMoney(item.vnd_effect)} (${item.pct_effect})`}
+                              />
+                            )}
+                            {isNegative && (
+                              <div
+                                className="shap-bar negative"
+                                style={{
+                                  width: `${barWidthPct}%`,
+                                  marginLeft: `calc(50% - ${barWidthPct}%)`
+                                }}
+                                title={`${item.label}: ${formatMoney(item.vnd_effect)} (${item.pct_effect})`}
+                              />
+                            )}
+                            {!isPositive && !isNegative && (
+                              <div
+                                style={{
+                                  width: '6px',
+                                  height: '6px',
+                                  borderRadius: '50%',
+                                  background: '#94a3b8',
+                                  position: 'absolute',
+                                  left: 'calc(50% - 3px)'
+                                }}
+                              />
+                            )}
+                          </div>
+
+                          <div className="shap-stat-col">
+                            <strong className={isPositive ? 'positive' : isNegative ? 'negative' : ''}>
                               {item.vnd_effect > 0 ? `+${formatMoney(item.vnd_effect)}` : formatMoney(item.vnd_effect)}
-                            </td>
-                          </tr>
-                        )
-                      })}
-
-                      {/* Final Predicted Price Row */}
-                      <tr className="highlight-total">
-                        <td>
-                          <strong style={{ color: 'var(--blue)' }}>{isEn ? 'FINAL PREDICTED RENT' : 'GIÁ DỰ ĐOÁN CUỐI CÙNG'}</strong>
-                        </td>
-                        <td colSpan={2}>
-                          {prediction?.model_metadata?.model_name || 'Machine Learning (CatBoost / LightGBM)'}
-                        </td>
-                        <td style={{ color: 'var(--blue)', fontWeight: 800 }}>
-                          {formatPriceMillion(prediction?.price_million_vnd)} {isEn ? 'M VND / mo' : 'triệu/tháng'}
-                        </td>
-                        <td style={{ textAlign: 'right', color: 'var(--blue)', font: "800 15px 'Manrope', sans-serif" }}>
-                          {formatMoney(prediction?.predicted_price_vnd || ((prediction?.price_million_vnd || 0) * 1000000))}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                            </strong>
+                            <small>{String(item.pct_effect)}</small>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
 
-                <div className="predict-info-banner">
-                  <Info size={15} style={{ color: 'var(--blue)', flexShrink: 0 }} />
-                  <span>
-                    {isEn
-                      ? 'SHAP Additive Attribution Formula: Predicted Price = Base Value + Σ(Feature Impact). Each feature is calculated independently to explain why the property is priced above or below the market average, conforming to XAI standards.'
-                      : 'Công thức SHAP Additive Attribution: Giá dự đoán = Giá cơ sở + ∑(Ảnh hưởng từng biến). Mỗi đặc trưng giải thích rõ tại sao căn phòng có giá cao hơn hay thấp hơn mặt bằng chung.'}
-                  </span>
+                {/* ============================================================= */}
+                {/* BREAKDOWN TABLE: Itemized Contributions                       */}
+                {/* ============================================================= */}
+                <div className="breakdown-card">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ font: "800 16px 'Manrope', sans-serif", margin: '0 0 4px', color: 'var(--ink)' }}>
+                        {isEn ? 'Itemized Price Contribution Breakdown Table' : 'Bảng Chi Tiết Đóng Góp Giá (Breakdown Table)'}
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '11px', color: 'var(--muted)' }}>
+                        {isEn
+                          ? 'Cumulative waterfall sum from base price to final predicted rent.'
+                          : 'Cộng dồn từng thành phần từ mức giá gốc cơ sở đến mức giá dự đoán cuối cùng.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className="breakdown-table">
+                      <thead>
+                        <tr>
+                          <th>{isEn ? 'Contribution Factor' : 'Yếu tố đóng góp'}</th>
+                          <th>{isEn ? 'Input Value' : 'Giá trị nhập liệu'}</th>
+                          <th>{isEn ? 'Direction' : 'Chiều hướng'}</th>
+                          <th>{isEn ? 'Impact Ratio (%)' : 'Tỷ lệ tác động (%)'}</th>
+                          <th style={{ textAlign: 'right' }}>
+                            {isEn ? 'Monetary Impact (VND)' : 'Ảnh hưởng bằng tiền (VND)'}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {/* Base Value Row */}
+                        <tr className="highlight-base">
+                          <td>
+                            <strong>
+                              {propertyType === 'apartment'
+                                ? isEn
+                                  ? 'Base Apartment Value'
+                                  : 'Giá căn hộ cơ sở (Base Value)'
+                                : isEn
+                                  ? 'Base Room Value'
+                                  : 'Giá phòng cơ sở (Base Value)'}
+                            </strong>
+                          </td>
+                          <td>
+                            {propertyType === 'apartment'
+                              ? isEn
+                                ? 'Da Nang Apt baseline'
+                                : 'Điểm chuẩn Căn hộ Đà Nẵng'
+                              : isEn
+                                ? 'Da Nang Room benchmark'
+                                : 'Điểm chuẩn Phòng trọ Đà Nẵng'}
+                          </td>
+                          <td>
+                            <span className="direction-badge neutral">{isEn ? 'Baseline' : 'Cơ sở chuẩn'}</span>
+                          </td>
+                          <td>0.0%</td>
+                          <td style={{ textAlign: 'right', fontWeight: 700 }}>
+                            {formatMoney(
+                              prediction.explanation?.base_value_vnd ||
+                                (propertyType === 'apartment' ? 7500000 : 2850000)
+                            )}
+                          </td>
+                        </tr>
+
+                        {/* Contribution Rows */}
+                        {contributionsList.map((item, idx) => {
+                          const isPositive =
+                            item.direction === 'tăng giá' || (typeof item.vnd_effect === 'number' && item.vnd_effect > 0)
+                          const isNegative =
+                            item.direction === 'giảm giá' || (typeof item.vnd_effect === 'number' && item.vnd_effect < 0)
+
+                          return (
+                            <tr key={idx}>
+                              <td>
+                                <strong>{translateFeatureLabel(item.label, isEn)}</strong>
+                              </td>
+                              <td>{formatContributionValue(item.value)}</td>
+                              <td>
+                                {isPositive && (
+                                  <span className="direction-badge increase">
+                                    <TrendingUp size={11} /> {isEn ? 'Positive' : 'Tăng giá'}
+                                  </span>
+                                )}
+                                {isNegative && (
+                                  <span className="direction-badge decrease">
+                                    <TrendingDown size={11} /> {isEn ? 'Negative' : 'Giảm giá'}
+                                  </span>
+                                )}
+                                {!isPositive && !isNegative && (
+                                  <span className="direction-badge neutral">{isEn ? 'Neutral' : 'Trung lập'}</span>
+                                )}
+                              </td>
+                              <td
+                                style={{
+                                  fontWeight: 600,
+                                  color: isPositive
+                                    ? 'var(--positive-text, #15803d)'
+                                    : isNegative
+                                      ? 'var(--negative-text, #b91c1c)'
+                                      : 'inherit'
+                                }}
+                              >
+                                {String(item.pct_effect)}
+                              </td>
+                              <td
+                                style={{
+                                  textAlign: 'right',
+                                  fontWeight: 700,
+                                  color: isPositive
+                                    ? 'var(--positive-text, #15803d)'
+                                    : isNegative
+                                      ? 'var(--negative-text, #b91c1c)'
+                                      : 'inherit'
+                                }}
+                              >
+                                {item.vnd_effect > 0 ? `+${formatMoney(item.vnd_effect)}` : formatMoney(item.vnd_effect)}
+                              </td>
+                            </tr>
+                          )
+                        })}
+
+                        {/* Final Predicted Price Row */}
+                        <tr className="highlight-total">
+                          <td>
+                            <strong style={{ color: 'var(--blue)' }}>
+                              {isEn ? 'FINAL PREDICTED RENT' : 'GIÁ DỰ ĐOÁN CUỐI CÙNG'}
+                            </strong>
+                          </td>
+                          <td colSpan={2}>
+                            {prediction?.model_metadata?.model_name ||
+                              (propertyType === 'apartment'
+                                ? 'HistGradientBoostingRegressor (Căn hộ / Chung cư)'
+                                : 'CatBoost Regressor (Phòng trọ)')}
+                          </td>
+                          <td style={{ color: 'var(--blue)', fontWeight: 800 }}>
+                            {formatPriceMillion(prediction?.price_million_vnd)}{' '}
+                            {isEn ? 'M VND / mo' : 'triệu/tháng'}
+                          </td>
+                          <td
+                            style={{
+                              textAlign: 'right',
+                              color: 'var(--blue)',
+                              font: "800 15px 'Manrope', sans-serif"
+                            }}
+                          >
+                            {formatMoney(
+                              prediction?.predicted_price_vnd || (prediction?.price_million_vnd || 0) * 1000000
+                            )}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="predict-info-banner">
+                    <Info size={15} style={{ color: 'var(--blue)', flexShrink: 0 }} />
+                    <span>
+                      {isEn
+                        ? 'SHAP Additive Attribution Formula: Predicted Price = Base Value + Σ(Feature Impact). Each feature is calculated independently to explain why the property is priced above or below the market average, conforming to XAI standards.'
+                        : 'Công thức SHAP Additive Attribution: Giá dự đoán = Giá cơ sở + ∑(Ảnh hưởng từng biến). Mỗi đặc trưng giải thích rõ tại sao căn phòng / căn hộ có giá cao hơn hay thấp hơn mặt bằng chung.'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </>
-          )}
+              </>
+            )}
         </div>
       </div>
     </div>
