@@ -52,13 +52,13 @@ export default function LocationMapView({
           <span className="eyebrow">GIS SPATIAL INTELLIGENCE · RENTIQ DA NANG</span>
           <h2>
             {isEn
-              ? 'Coordinate Distribution & Citywide Flood Hazard Map'
-              : 'Bản Đồ Phân Bố Toạ Độ & Lớp Cảnh Báo Ngập Lụt Toàn Thành Phố'}
+              ? 'Coordinate Distribution & Citywide Rental Map'
+              : 'Bản Đồ Phân Bố Toạ Độ & Tin Cho Thuê Toàn Thành Phố'}
           </h2>
           <p>
             {isEn
-              ? 'Visualizes live listing coordinates from Gold schema, integrated with district boundaries and historical flood alerts.'
-              : 'Hiển thị trực quan toàn bộ toạ độ tin đăng thực tế từ tầng Gold, tích hợp lớp ranh giới Quận/Huyện và cảnh báo ngập lụt lịch sử.'}
+              ? 'Visualizes live listing coordinates from Gold schema across Da Nang.'
+              : 'Hiển thị trực quan toàn bộ toạ độ tin đăng thực tế từ tầng Gold trên địa bàn TP. Đà Nẵng.'}
           </p>
         </div>
         <span className="analysis-status">

@@ -4,9 +4,8 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import MapboxMap, { Layer, Marker, NavigationControl, Source, type LayerProps, type MapRef } from 'react-map-gl/mapbox'
 import type { FeatureCollection, Point as GeoJSONPoint } from 'geojson'
 import type { GeoJSONSource, MapLayerMouseEvent } from 'mapbox-gl'
-import { Layers, MapPin, Maximize2, Minus, Plus, ShieldAlert, Sparkles } from 'lucide-react'
+import { Layers, MapPin, Maximize2, Minus, Plus, Sparkles } from 'lucide-react'
 import { MapRentalPoint } from '@/lib/goldQueryService'
-import { DA_NANG_DISTRICTS_GEOJSON, DA_NANG_FLOOD_ZONES_GEOJSON } from '@/app/data/daNangGeoJson'
 import MapMarkerPopup, { getPriceTierTheme } from './MapMarkerPopup'
 
 interface RentalMapboxProps {
@@ -67,51 +66,7 @@ const unclusteredLayer: LayerProps = {
   }
 }
 
-const districtFillLayer: LayerProps = {
-  id: 'district-fill',
-  type: 'fill',
-  paint: {
-    'fill-color': ['coalesce', ['get', 'color'], '#3b82f6'],
-    'fill-opacity': 0.08
-  }
-}
 
-const districtOutlineLayer: LayerProps = {
-  id: 'district-outline',
-  type: 'line',
-  paint: {
-    'line-color': ['coalesce', ['get', 'color'], '#3b82f6'],
-    'line-width': 2,
-    'line-dasharray': [2, 2]
-  }
-}
-
-const districtLabelLayer: LayerProps = {
-  id: 'district-label',
-  type: 'symbol',
-  layout: {
-    'text-field': ['get', 'name'],
-    'text-size': 11,
-    'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold']
-  },
-  paint: {
-    'text-color': '#1e293b',
-    'text-halo-color': '#fff',
-    'text-halo-width': 1.5
-  }
-}
-
-const floodFillLayer: LayerProps = {
-  id: 'flood-fill',
-  type: 'fill',
-  paint: { 'fill-color': '#ef4444', 'fill-opacity': 0.22 }
-}
-
-const floodOutlineLayer: LayerProps = {
-  id: 'flood-outline',
-  type: 'line',
-  paint: { 'line-color': '#dc2626', 'line-width': 2.5, 'line-dasharray': [2, 2] }
-}
 
 function formatBadgePrice(priceVnd: number | null, isEn = false): string {
   if (!priceVnd || priceVnd <= 0) return isEn ? 'Negotiable' : 'Thỏa thuận'
@@ -156,8 +111,6 @@ export default function RentalMapbox({
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
   const mapRef = useRef<MapRef>(null)
   const [showPropertyPins, setShowPropertyPins] = useState(true)
-  const [showDistricts, setShowDistricts] = useState(true)
-  const [showFloodZones, setShowFloodZones] = useState(true)
   const [clustering, setClustering] = useState(true)
   const [layerMenuOpen, setLayerMenuOpen] = useState(false)
   const [activePopupPoint, setActivePopupPoint] = useState<MapRentalPoint | null>(null)
@@ -297,21 +250,6 @@ export default function RentalMapbox({
           </Source>
         )}
 
-        {showDistricts && (
-          <Source id="district-boundaries" type="geojson" data={DA_NANG_DISTRICTS_GEOJSON}>
-            <Layer {...districtFillLayer} />
-            <Layer {...districtOutlineLayer} />
-            <Layer {...districtLabelLayer} />
-          </Source>
-        )}
-
-        {showFloodZones && (
-          <Source id="historical-flood-zones" type="geojson" data={DA_NANG_FLOOD_ZONES_GEOJSON}>
-            <Layer {...floodFillLayer} />
-            <Layer {...floodOutlineLayer} />
-          </Source>
-        )}
-
         {detailedMarkers.map((point) => {
           const theme = getPriceTierTheme(point.price_vnd)
           return (
@@ -362,7 +300,7 @@ export default function RentalMapbox({
         >
           <Layers size={15} color="#3078f0" /> {lang === 'en' ? 'Map Layers' : 'Lớp bản đồ'}
           <span className="layer-count-badge" style={{ background: '#eaf1ff', borderRadius: 99, color: '#3078f0', fontSize: 10, padding: '2px 7px' }}>
-            {[showPropertyPins, showDistricts, showFloodZones].filter(Boolean).length} {lang === 'en' ? 'active' : 'bật'}
+            {showPropertyPins ? (lang === 'en' ? '1 active' : '1 bật') : (lang === 'en' ? '0 active' : '0 bật')}
           </span>
         </button>
 
@@ -373,21 +311,10 @@ export default function RentalMapbox({
               <span style={{ alignItems: 'center', display: 'flex', gap: 7 }}><MapPin size={14} color="#3078f0" /> {lang === 'en' ? 'Rental Listings' : 'Tin cho thuê'} ({points.length.toLocaleString(lang === 'en' ? 'en-US' : 'vi-VN')})</span>
               <input type="checkbox" checked={showPropertyPins} onChange={(event) => setShowPropertyPins(event.target.checked)} />
             </label>
-            <label className="mapbox-layer-toggle-item" style={toggleStyle}>
-              <span style={{ alignItems: 'center', display: 'flex', gap: 7 }}><Layers size={14} color="#3b82f6" /> {lang === 'en' ? 'District Boundaries*' : 'Ranh giới Quận/Huyện*'}</span>
-              <input type="checkbox" checked={showDistricts} onChange={(event) => setShowDistricts(event.target.checked)} />
-            </label>
-            <label className="mapbox-layer-toggle-item" style={toggleStyle}>
-              <span style={{ alignItems: 'center', display: 'flex', gap: 7 }}><ShieldAlert size={14} color="#ef4444" /> {lang === 'en' ? 'Historical Flood Zones' : 'Vùng ngập lịch sử'}</span>
-              <input type="checkbox" checked={showFloodZones} onChange={(event) => setShowFloodZones(event.target.checked)} />
-            </label>
             <label className="mapbox-layer-toggle-item layer-divider" style={{ ...toggleStyle, borderTop: '1px solid #eef2f7', paddingTop: 10 }}>
               <span style={{ alignItems: 'center', display: 'flex', gap: 7 }}><Sparkles size={14} color="#8b5cf6" /> Native clustering</span>
               <input type="checkbox" checked={clustering} onChange={(event) => setClustering(event.target.checked)} />
             </label>
-            <small style={{ color: '#64748b', lineHeight: 1.4 }}>
-              {lang === 'en' ? '* GeoJSON currently approximates district boundaries, not official ward boundaries.' : '* GeoJSON hiện có là ranh giới Quận/Huyện dạng xấp xỉ, chưa phải ranh giới Phường chính thức.'}
-            </small>
           </div>
         )}
       </div>

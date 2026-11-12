@@ -216,14 +216,11 @@ interface KpiData {
   avg_price_million: number
   avg_size_m2: number
   flood_risk_low_percentage: number
-  apartment_percentage: number
-  room_percentage: number
 }
 
 export default function DashboardPage() {
   const [activeNav, setActiveNav] = useState('Tổng quan')
   const [filterOpen, setFilterOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState('Tổng quan')
   const [darkMode, setDarkMode] = useState(false)
   const [autoRefresh, setAutoRefresh] = useState(true)
   const [settingsLoaded, setSettingsLoaded] = useState(false)
@@ -1553,41 +1550,6 @@ export default function DashboardPage() {
           {activeNav === 'Tổng quan' && (
             <>
               <div className="toolbar">
-                <div className="tabs" role="tablist" aria-label="Các góc nhìn phân tích">
-                  <button
-                    className={`tab ${activeTab === 'Tổng quan' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('Tổng quan')}
-                    role="tab"
-                    aria-selected={activeTab === 'Tổng quan'}
-                  >
-                    {lang === 'en' ? 'Overview' : 'Tổng quan'}
-                  </button>
-                  <button
-                    className={`tab ${activeTab === 'Thị trường' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('Thị trường')}
-                    role="tab"
-                    aria-selected={activeTab === 'Thị trường'}
-                  >
-                    {lang === 'en' ? 'Market' : 'Thị trường'}
-                  </button>
-                  <button
-                    className={`tab ${activeTab === 'Nguồn cung' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('Nguồn cung')}
-                    role="tab"
-                    aria-selected={activeTab === 'Nguồn cung'}
-                  >
-                    {lang === 'en' ? 'Supply' : 'Nguồn cung'}
-                  </button>
-                  <button
-                    className={`tab ${activeTab === 'Dự đoán giá AI' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('Dự đoán giá AI')}
-                    role="tab"
-                    aria-selected={activeTab === 'Dự đoán giá AI'}
-                  >
-                    {lang === 'en' ? 'AI Price Prediction' : 'Dự đoán giá AI'}
-                  </button>
-                </div>
-
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ fontSize: '11px', color: 'var(--muted)' }}>
                     {lang === 'en' ? 'Sort by:' : 'Sắp xếp:'}
@@ -1615,21 +1577,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {activeTab === 'Dự đoán giá AI' && (
-                <PricePredictionView lang={lang} />
-              )}
-
-              {activeTab !== 'Tổng quan' && activeTab !== 'Dự đoán giá AI' && (
-                <AnalysisTab
-                  tab={activeTab}
-                  kpiData={kpiData}
-                  wards={wards}
-                  priceDistribution={priceDistribution}
-                />
-              )}
-
-              {activeTab === 'Tổng quan' && (
-                <>
+              <>
                   {/* KPI CARDS */}
                   <section className="kpi-grid">
                     <Kpi
@@ -1883,8 +1831,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </section>
-                </>
-              )}
+              </>
             </>
           )}
           
@@ -1978,136 +1925,6 @@ function Legend({ color, label, value }: { color: string; label: string; value: 
       <i style={{ background: color }} />
       <span>{label}</span>
       <strong>{value}</strong>
-    </div>
-  )
-}
-
-function AnalysisTab({
-  tab,
-  kpiData,
-  wards,
-  priceDistribution
-}: {
-  tab: string
-  kpiData: KpiData | null
-  wards: WardData[]
-  priceDistribution: PriceDistribution[]
-}) {
-  const { lang } = useTranslation()
-  const isEn = lang === 'en'
-  const market = tab === 'Thị trường'
-  const maxWardCount = wards.length > 0 ? Math.max(...wards.map((w) => w.count), 1) : 1
-
-  return (
-    <section className="analysis-tab" role="tabpanel">
-      <div className="analysis-intro">
-        <div>
-          <span className="eyebrow">{market ? 'MARKET SIGNALS' : 'SUPPLY INTELLIGENCE'}</span>
-          <h2>{market ? (isEn ? 'Rental market trends' : 'Nhịp chuyển động của thị trường') : (isEn ? 'Rental supply overview' : 'Bức tranh nguồn cung chi tiết')}</h2>
-          <p>
-            {market
-              ? (isEn ? 'Track demand, rental prices and emerging trends by area using rental market data.' : 'Theo dõi nhu cầu, mặt bằng giá và các tín hiệu đang thay đổi theo khu vực từ kho dữ liệu gold.rental_room.')
-              : (isEn ? 'Explore listing coverage, property types and supply gaps across Da Nang in real time.' : 'Đánh giá độ phủ tin đăng, loại hình và khoảng trống nguồn cung tại Đà Nẵng theo thời gian thực.')}
-          </p>
-        </div>
-        <span className="analysis-status">
-          <span className="live-dot" /> {isEn ? 'Data synced from Gold schema' : 'Dữ liệu đã đồng bộ từ Schema Gold'}
-        </span>
-      </div>
-
-      <div className="analysis-cards">
-        <MetricCard
-          label={market ? (isEn ? 'Total matching listings' : 'Tổng quy mô mẫu lọc') : (isEn ? 'Listings tracked' : 'Tin đăng đang theo dõi')}
-          value={kpiData?.total_listings.toLocaleString(isEn ? 'en-US' : 'vi-VN') || '0'}
-          note={isEn ? 'From rental market data' : 'Từ kho dữ liệu gold.rental_room'}
-          tone="blue"
-        />
-        <MetricCard
-          label={market ? (isEn ? 'Average rent' : 'Giá thuê trung bình') : (isEn ? 'Apartment share' : 'Tỷ lệ căn hộ')}
-          value={market ? `${kpiData?.avg_price_million.toFixed(2) || '0'} ${isEn ? 'M VND' : 'tr'}` : `${kpiData?.apartment_percentage || 0}%`}
-          note={market ? (isEn ? 'Average across all matching listings' : 'Mặt bằng giá chung toàn bộ mẫu lọc') : (isEn ? 'Share of matching supply' : 'Trong tổng số nguồn cung lọc')}
-          tone="orange"
-        />
-        <MetricCard
-          label={market ? (isEn ? 'Flood safety rate' : 'Tỷ lệ an toàn ngập') : (isEn ? 'Rental room share' : 'Tỷ lệ phòng trọ')}
-          value={market ? `${kpiData?.flood_risk_low_percentage || 0}%` : `${kpiData?.room_percentage || 0}%`}
-          note={market ? (isEn ? 'Listings in low flood-risk areas' : 'Phân khúc an toàn ngập úng') : (isEn ? 'Share of matching supply' : 'Trong tổng số nguồn cung lọc')}
-          tone="purple"
-        />
-      </div>
-
-      {/* Dynamic Supply / Market Breakdown */}
-      <div className="analysis-lower" style={{ marginTop: '16px' }}>
-        <div className="card recommendation-card">
-          <CardHeader
-            title={market ? (isEn ? 'Key market insights' : 'Tín hiệu trọng điểm theo dữ liệu thực') : (isEn ? 'Supply by area' : 'Phân bổ nguồn cung theo khu vực')}
-            subtitle={market ? (isEn ? 'Insights generated from matching listings' : 'Insight tự động phân tích từ tập dữ liệu đang lọc') : (isEn ? 'Areas with the most listings' : 'Top khu vực có mật độ tin đăng cao nhất')}
-            action=""
-          />
-          <div className="recommendation-list">
-            {wards.slice(0, 3).map((w) => (
-              <div className="insight-row" key={w.name}>
-                <div className="insight-icon">
-                  <MapPin size={16} />
-                </div>
-                <div>
-                  <strong>{w.name}: {w.count} {isEn ? 'listings' : 'bài đăng'}</strong>
-                  <p>
-                    {isEn ? 'Average rent:' : 'Giá thuê trung bình:'} {(w.avgPrice / 1000000).toFixed(1)} {isEn ? 'M VND/month · Share:' : 'tr/tháng · Tỷ trọng:'} {kpiData && kpiData.total_listings > 0 ? Math.round((w.count / kpiData.total_listings) * 100) : 0}% {isEn ? 'of total supply.' : 'tổng nguồn cung.'}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="card mini-summary">
-          <CardHeader
-            title={isEn ? 'Supply share' : 'Tỷ trọng nguồn cung'}
-            subtitle={isEn ? 'By leading areas' : 'Phân theo khu vực dẫn đầu'}
-            action=""
-          />
-          <div className="summary-bars">
-            {wards.slice(0, 4).map((w) => {
-              const pct = Math.round((w.count / maxWardCount) * 100)
-              return (
-                <div className="summary-bar" key={w.name}>
-                  <div>
-                    <span>{w.name}</span>
-                    <strong>{w.count} {isEn ? 'listings' : 'tin'}</strong>
-                  </div>
-                  <div className="summary-track">
-                    <span style={{ width: `${pct}%` }} />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-
-
-function MetricCard({
-  label,
-  value,
-  note,
-  tone
-}: {
-  label: string
-  value: string
-  note: string
-  tone: string
-}) {
-  return (
-    <div className="card metric-card">
-      <div className={`kpi-icon ${tone}`}><Activity size={17} /></div>
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <small>{note}</small>
     </div>
   )
 }
