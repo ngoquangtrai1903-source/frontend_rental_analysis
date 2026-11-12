@@ -270,3 +270,36 @@ test('map coordinate limit caps fetched rows without losing matching total', asy
   assert.equal(result.points.length, 1500)
   assert.equal(result.total, 2500)
 })
+
+
+test('map coordinates select and return the nearest beach and university from the database', async () => {
+  let selectedColumns
+  const rows = [
+    { list_id: 'place-1', latitude: 16.061, longitude: 108.22, nearest_beach_code: 'MyKhe', nearest_uni_code: 'DUT' },
+    { list_id: 'place-2', latitude: 16.071, longitude: 108.23, nearest_beach_code: null, nearest_uni_code: null }
+  ]
+  const client = {
+    schema() { return this },
+    from() {
+      return {
+        select(columns) {
+          selectedColumns = columns.split(', ')
+          return {
+            order() { return this },
+            range() { return this },
+            then(resolve, reject) {
+              return Promise.resolve({ data: rows, count: rows.length, error: null }).then(resolve, reject)
+            }
+          }
+        }
+      }
+    }
+  }
+  const result = await fetchGoldMapCoordinates({}, undefined, client)
+  assert.ok(selectedColumns.includes('nearest_beach_code'))
+  assert.ok(selectedColumns.includes('nearest_uni_code'))
+  assert.equal(result.points[0].nearest_beach_code, 'MyKhe')
+  assert.equal(result.points[0].nearest_uni_code, 'DUT')
+  assert.equal(result.points[1].nearest_beach_code, null)
+  assert.equal(result.points[1].nearest_uni_code, null)
+})

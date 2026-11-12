@@ -522,8 +522,10 @@ export interface MapRentalPoint {
   longitude: number
   flood_risk_label: number | null
   dist_to_beach: number | null
+  nearest_beach_code: string | null
   dist_to_cbd: number | null
   dist_to_nearest_uni: number | null
+  nearest_uni_code: string | null
   dist_to_airport: number | null
   furnishing_status: string | null
   rooms: string | null
@@ -551,7 +553,7 @@ export async function fetchGoldMapCoordinates(
   client: any = supabaseGold
 ): Promise<MapCoordinatesResult> {
   const selectColumns =
-    'list_id, ward_name, category_name, price_vnd, size_m2, price_per_m2_vnd, latitude, longitude, flood_risk_label, dist_to_beach, dist_to_cbd, dist_to_nearest_uni, dist_to_airport, furnishing_status, rooms, has_balcony, has_elevator, private_bathroom, has_parking, wifi, free_hours, has_mezzanine'
+    'list_id, ward_name, category_name, price_vnd, size_m2, price_per_m2_vnd, latitude, longitude, flood_risk_label, dist_to_beach, nearest_beach_code, dist_to_cbd, dist_to_nearest_uni, nearest_uni_code, dist_to_airport, furnishing_status, rooms, has_balcony, has_elevator, private_bathroom, has_parking, wifi, free_hours, has_mezzanine'
 
   const CHUNK_SIZE = 1000
   const firstPage = await buildGoldQuery(
@@ -622,8 +624,10 @@ export async function fetchGoldMapCoordinates(
       longitude: r.longitude,
       flood_risk_label: r.flood_risk_label,
       dist_to_beach: r.dist_to_beach,
+      nearest_beach_code: r.nearest_beach_code,
       dist_to_cbd: r.dist_to_cbd,
       dist_to_nearest_uni: r.dist_to_nearest_uni,
+      nearest_uni_code: r.nearest_uni_code,
       dist_to_airport: r.dist_to_airport,
       furnishing_status: r.furnishing_status,
       rooms: r.rooms,

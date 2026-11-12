@@ -407,7 +407,7 @@ export default function RentalMapbox({
       )}
 
       {activePopupPoint && (
-        <div style={{ bottom: 18, maxWidth: 'calc(100% - 36px)', position: 'absolute', right: 18, zIndex: 2 }}>
+        <div style={{ bottom: 18, maxHeight: 'calc(100% - 36px)', maxWidth: 'calc(100% - 36px)', overflowY: 'auto', position: 'absolute', right: 18, zIndex: 2 }}>
           <MapMarkerPopup
             point={activePopupPoint}
             onClose={() => setActivePopupPoint(null)}
