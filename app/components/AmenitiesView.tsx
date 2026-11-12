@@ -29,18 +29,18 @@ interface AmenityLiftItem {
 
 interface AmenitiesViewProps {
   filterQueryString?: string
+  onCategoryChange: (category: string) => void
   lang?: 'vi' | 'en'
 }
 
-export default function AmenitiesView({ filterQueryString = '', lang = 'vi' }: AmenitiesViewProps) {
+export default function AmenitiesView({ filterQueryString = '', onCategoryChange, lang = 'vi' }: AmenitiesViewProps) {
   const isEn = lang === 'en'
-  const [filterCategory, setFilterCategory] = useState<string>('all')
+  const filterCategory = new URLSearchParams(filterQueryString).get('category_name') || 'all'
   const query = useQuery({
     queryKey: ['amenities', filterCategory, filterQueryString],
     queryFn: async ({ signal }) => {
       const params = new URLSearchParams(filterQueryString)
       params.set('mode', 'amenities')
-      if (filterCategory !== 'all') params.set('category', filterCategory)
 
       const baselineParams = new URLSearchParams(filterQueryString)
       baselineParams.set('mode', 'baselines')
@@ -145,19 +145,19 @@ export default function AmenitiesView({ filterQueryString = '', lang = 'vi' }: A
         <div className="tabs">
           <button
             className={`tab ${filterCategory === 'all' ? 'active' : ''}`}
-            onClick={() => setFilterCategory('all')}
+            onClick={() => onCategoryChange('')}
           >
             {isEn ? 'Entire Market' : 'Toàn bộ thị trường'}
           </button>
           <button
             className={`tab ${filterCategory === 'Căn hộ/Chung cư' ? 'active' : ''}`}
-            onClick={() => setFilterCategory('Căn hộ/Chung cư')}
+            onClick={() => onCategoryChange('Căn hộ/Chung cư')}
           >
             {isEn ? 'Apartments Deep-dive' : 'Chuyên sâu Căn hộ'}
           </button>
           <button
             className={`tab ${filterCategory === 'Phòng trọ' ? 'active' : ''}`}
-            onClick={() => setFilterCategory('Phòng trọ')}
+            onClick={() => onCategoryChange('Phòng trọ')}
           >
             {isEn ? 'Rental Rooms Deep-dive' : 'Chuyên sâu Phòng trọ'}
           </button>

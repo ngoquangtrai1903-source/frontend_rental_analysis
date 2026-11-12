@@ -23,6 +23,9 @@ import {
   Bed,
   Users
 } from 'lucide-react'
+import { BEACH_CODE_TO_LABEL, BEACH_LABEL_TO_CODE, UNI_LABELS, UNI_LABELS_EN } from '../../lib/locationPlaces'
+
+export { BEACH_CODE_TO_LABEL, BEACH_LABEL_TO_CODE, UNI_LABELS, UNI_LABELS_EN } from '../../lib/locationPlaces'
 
 // Standard Ward list for Da Nang (11 wards according to requirement)
 export const STANDARD_WARDS = [
@@ -68,38 +71,6 @@ export const STANDARD_BEACHES: BeachOption[] = [
   { label: 'Tiên Sa', code: 'TienSa' },
   { label: 'Xuân Thiều', code: 'XuanThieu' }
 ]
-
-export const BEACH_CODE_TO_LABEL: Record<string, string> = {
-  BacMyAn: 'Bắc Mỹ An',
-  BaiBac: 'Bãi Bắc',
-  BaiBut_BaiRang: 'Bãi Bụt - Bãi Rạng',
-  LangVan: 'Làng Vân',
-  MyKhe: 'Mỹ Khê',
-  NamO: 'Nam Ô',
-  NonNuoc: 'Non Nước',
-  PhamVanDong: 'Phạm Văn Đồng',
-  SonThuy: 'Sơn Thủy',
-  TanTra: 'Tân Trà',
-  ThanhBinh: 'Thanh Bình',
-  TienSa: 'Tiên Sa',
-  XuanThieu: 'Xuân Thiều'
-}
-
-export const BEACH_LABEL_TO_CODE: Record<string, string> = {
-  'Bắc Mỹ An': 'BacMyAn',
-  'Bãi Bắc': 'BaiBac',
-  'Bãi Bụt - Bãi Rạng': 'BaiBut_BaiRang',
-  'Làng Vân': 'LangVan',
-  'Mỹ Khê': 'MyKhe',
-  'Nam Ô': 'NamO',
-  'Non Nước': 'NonNuoc',
-  'Phạm Văn Đồng': 'PhamVanDong',
-  'Sơn Thủy': 'SonThuy',
-  'Tân Trà': 'TanTra',
-  'Thanh Bình': 'ThanhBinh',
-  'Tiên Sa': 'TienSa',
-  'Xuân Thiều': 'XuanThieu'
-}
 
 export interface WardGeoProfile {
   group: 'central' | 'coastal' | 'north' | 'southeast'
@@ -286,24 +257,86 @@ export const WARD_PROFILES: Record<string, WardGeoProfile> = {
   }
 }
 
-// Dictionary of University names for user clarity
-export const UNI_LABELS: Record<string, string> = {
-  DUT: 'DUT - ĐH Bách Khoa (Đà Nẵng)',
-  DUE: 'DUE - ĐH Kinh Tế (Đà Nẵng)',
-  UED: 'UED - ĐH Sư Phạm (Đà Nẵng)',
-  UFLS: 'UFLS - ĐH Ngoại Ngữ (Đà Nẵng)',
-  UTE: 'UTE - ĐH Sư Phạm Kỹ Thuật (Đà Nẵng)',
-  VKU: 'VKU - ĐH CNTT & Truyền Thông Việt - Hàn',
-  VNUK: 'VNUK - Viện NC & Đào Tạo Việt - Anh',
-  DAU: 'DAU - ĐH Kiến Trúc Đà Nẵng',
-  DTU_HK: 'DTU_HK - ĐH Duy Tân (Cơ sở Hòa Khánh)',
-  DTU_NVL: 'DTU_NVL - ĐH Duy Tân (Nguyễn Văn Linh)',
-  FPTU: 'FPTU - ĐH FPT Đà Nẵng (Ngũ Hành Sơn)',
-  UDA: 'UDA - ĐH Đông Á (Hải Châu)',
-  SMP: 'SMP - Khoa Y Dược (ĐH Đà Nẵng)',
-  UPES3: 'UPES3 - ĐH Thể Dục Thể Thao Đà Nẵng',
-  PU: 'Học Viện Chính Trị Khu Vực III',
-  UPU: 'UPU - Học Viện Chính Trị Khu Vực III'
+export interface PricePredictionViewProps {
+  lang?: 'vi' | 'en'
+}
+
+
+export const WARD_GEO_PROFILES_EN: Record<string, { groupName: string; hint: string }> = {
+  'Hải Châu': {
+    groupName: 'Central District (CBD)',
+    hint: 'Administrative & commercial center of Da Nang, adjacent to Dragon Bridge / Han River'
+  },
+  'Thanh Khê': {
+    groupName: 'Central District',
+    hint: 'Vibrant residential area, near Da Nang station, Tech Univ. & Thanh Binh beach'
+  },
+  'An Khê': {
+    groupName: 'Thanh Khe District (West)',
+    hint: 'Western Thanh Khe, near Da Nang airport & Dien Bien Phu artery'
+  },
+  'Hòa Cường': {
+    groupName: 'Central Campus Cluster (South Hai Chau)',
+    hint: 'Major university cluster: Architecture (DAU), Dong A (UDA), Foreign Lang.'
+  },
+  'Cẩm Lệ': {
+    groupName: 'Cam Le District (South of Center)',
+    hint: 'South of center, near Cam Le bridge, market & Architecture Univ.'
+  },
+  'An Hải': {
+    groupName: 'Coastal / Tourism Ward (Son Tra)',
+    hint: 'Pham Van Dong beach hotel & tourism zone, along Han River near Dragon Bridge'
+  },
+  'Sơn Trà': {
+    groupName: 'Coastal / Son Tra Peninsula District',
+    hint: 'My Khe / Pham Van Dong tourist coastline & Son Tra peninsula'
+  },
+  'Hòa Khánh': {
+    groupName: 'Northern Area / PolyTech Univ. Cluster',
+    hint: 'Student rental hub: near PolyTech Univ. (DUT), Pedagogical Univ. (UED)'
+  },
+  'Liên Chiểu': {
+    groupName: 'Northern District (Northwest Gateway)',
+    hint: 'Near Da Nang Bay, Xuan Thieu beach, Nam O & PolyTech Univ.'
+  },
+  'Ngũ Hành Sơn': {
+    groupName: 'Southeastern Area / Economics Univ. & FPT',
+    hint: 'Economics Univ. (DUE), FPT Univ., VKU & Non Nuoc beach'
+  },
+  'Hòa Xuân': {
+    groupName: 'South Cam Le Eco-Urban / Hoa Xuan',
+    hint: 'Eco-urban zone South of Cam Le bridge, convenient link to Ngu Hanh Son'
+  }
+}
+
+export function translateFeatureLabel(label: string, isEn = false): string {
+  if (!label) return label
+  if (label === 'rooms' || label.toLowerCase().includes('phòng ngủ') || label.toLowerCase().includes('số phòng')) {
+    return isEn ? 'Bedrooms / Rooms' : 'Số phòng ngủ / Không gian'
+  }
+  if (!isEn) return label
+  const l = label.toLowerCase()
+  if (l.includes('diện tích')) return 'Property Size'
+  if (l.includes('nội thất')) return 'Furnishing & Interior'
+  if (l.includes('khu vực') || l.includes('phường')) return 'Ward / District'
+  if (l.includes('khoảng cách đến cbd') || l.includes('cbd')) return 'Distance to CBD'
+  if (l.includes('thang máy')) return 'Elevator'
+  if (l.includes('biển')) return 'Distance to Beach'
+  if (l.includes('ban công')) return 'Balcony'
+  if (l.includes('đại học') || l.includes('trường')) return 'Distance to University'
+  if (l.includes('cửa sổ')) return 'Window'
+  if (l.includes('bãi biển')) return 'Nearest Beach'
+  if (l.includes('thuộc tính')) return 'Feature'
+  return label
+}
+
+export function translateFurnishing(status: string, isEn = false): string {
+  if (!isEn) return status
+  if (status.includes('Không')) return 'Unfurnished'
+  if (status.includes('cơ bản')) return 'Semi-furnished'
+  if (status.includes('Đầy đủ')) return 'Fully furnished'
+  if (status.includes('cao cấp')) return 'Luxury furnishing'
+  return status
 }
 
 export interface PricePredictionViewProps {
