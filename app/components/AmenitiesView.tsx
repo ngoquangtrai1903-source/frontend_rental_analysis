@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Home, Sliders } from 'lucide-react'
+import { Home } from 'lucide-react'
 
 const amenityLabelsEn: Record<string, string> = {
   has_balcony: 'Balcony',
@@ -37,72 +36,26 @@ export default function AmenitiesView({ filterQueryString = '', onCategoryChange
   const isEn = lang === 'en'
   const filterCategory = new URLSearchParams(filterQueryString).get('category_name') || 'all'
   const query = useQuery({
-    queryKey: ['amenities', filterCategory, filterQueryString],
+    queryKey: ['amenity-lifts', filterCategory, filterQueryString],
     queryFn: async ({ signal }) => {
       const params = new URLSearchParams(filterQueryString)
       params.set('mode', 'amenities')
 
-      const baselineParams = new URLSearchParams(filterQueryString)
-      baselineParams.set('mode', 'baselines')
-      const [amenitiesRes, baselinesRes] = await Promise.all([
-        fetch(`/api/gold-query?${params.toString()}`, { signal }),
-        fetch(`/api/gold-query?${baselineParams.toString()}`, { signal })
-      ])
+      const amenitiesRes = await fetch(`/api/gold-query?${params.toString()}`, { signal })
       const readResponse = async (res: Response) => {
         if (res.ok) return res.json()
         const response = await res.json().catch(() => ({}))
         throw new Error(response.message || response.error || (isEn ? `Server error (${res.status})` : `Lỗi máy chủ (${res.status})`))
       }
-      const [amenitiesJson, baselinesJson] = await Promise.all([
-        readResponse(amenitiesRes),
-        readResponse(baselinesRes)
-      ])
-      if (!Array.isArray(amenitiesJson) || !baselinesJson || typeof baselinesJson !== 'object') {
+      const amenitiesJson = await readResponse(amenitiesRes)
+      if (!Array.isArray(amenitiesJson)) {
         throw new Error(isEn ? 'Invalid amenities analysis response.' : 'Dữ liệu phân tích tiện ích trả về không hợp lệ.')
       }
-      return {
-        amenities: amenitiesJson as AmenityLiftItem[],
-        baselines: baselinesJson as { apartmentBaseMillion: number; roomBaseMillion: number; totalApts: number; totalRooms: number }
-      }
+      return amenitiesJson as AmenityLiftItem[]
     }
   })
-  const amenitiesData = query.data?.amenities ?? []
-  const baselines = query.data?.baselines ?? null
+  const amenitiesData = query.data ?? []
   const loading = query.isLoading
-
-  // Amenity Simulator State
-  const [simElevator, setSimElevator] = useState(false)
-  const [simBalcony, setSimBalcony] = useState(false)
-  const [simPrivateBath, setSimPrivateBath] = useState(true)
-  const [simParking, setSimParking] = useState(true)
-  const [simFreeHours, setSimFreeHours] = useState(true)
-  const [simWifi, setSimWifi] = useState(true)
-  const [simMezzanine, setSimMezzanine] = useState(false)
-  const [simRoomType, setSimRoomType] = useState<'room' | 'apartment'>('room')
-
-  // Calculated simulated price strictly from Supabase baselines and marginal lifts
-  const simulatedPrice = useMemo(() => {
-    const baseApt = baselines?.apartmentBaseMillion || 9.5
-    const baseRoom = baselines?.roomBaseMillion || 2.8
-    let current = simRoomType === 'apartment' ? baseApt * 0.75 : baseRoom * 0.8
-
-    const getLift = (k: string, fallback: number) => {
-      const match = amenitiesData.find((a) => a.key === k)
-      if (!match) return fallback
-      const diff = match.avgPriceWithMillion - match.avgPriceWithoutMillion
-      return diff > 0 ? Number(diff.toFixed(2)) : fallback
-    }
-
-    if (simElevator) current += getLift('has_elevator', 1.2)
-    if (simBalcony) current += getLift('has_balcony', 1.4)
-    if (simPrivateBath) current += getLift('private_bathroom', 0.5)
-    if (simParking) current += getLift('has_parking', 0.3)
-    if (simFreeHours) current += getLift('free_hours', 0.2)
-    if (simWifi) current += getLift('wifi', 0.15)
-    if (simMezzanine) current += getLift('has_mezzanine', 0.6)
-
-    return Number(current.toFixed(2))
-  }, [baselines, amenitiesData, simElevator, simBalcony, simPrivateBath, simParking, simFreeHours, simWifi, simMezzanine, simRoomType])
 
   return (
     <div className="workspace-view">
@@ -222,97 +175,6 @@ export default function AmenitiesView({ filterQueryString = '', onCategoryChange
         )}
       </div>
 
-      {/* Interactive Price Simulator for Landlords / Investors */}
-      <div className="card" style={{ padding: '24px', background: 'var(--surface-card)', marginTop: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-          <div className="kpi-icon blue" style={{ margin: 0 }}><Sliders size={18} /></div>
-          <div>
-            <h3 style={{ margin: 0, fontSize: '16px' }}>
-              {isEn ? 'Amenity Pricing Simulator (Landlord Pricing Estimator)' : 'Bộ Mô Phỏng Giá Thuê Theo Tiện Ích (Landlord Pricing Estimator)'}
-            </h3>
-            <p style={{ margin: 0, color: 'var(--muted)', fontSize: '11px' }}>
-              {isEn
-                ? 'Select amenities you plan to equip to calculate the market-standard expected rent in Da Nang.'
-                : 'Chọn các tiện ích bạn dự định đầu tư trang bị để tính toán mức giá thuê kỳ vọng chuẩn thị trường Đà Nẵng.'}
-            </p>
-          </div>
-        </div>
-
-        <div className="amenity-simulator-grid" style={{ gap: '24px', marginTop: '16px' }}>
-          <div>
-            <div style={{ marginBottom: '14px' }}>
-              <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--muted)', display: 'block', marginBottom: '6px' }}>
-                {isEn ? 'DEVELOPMENT MODEL' : 'MÔ HÌNH PHÁT TRIỂN'}
-              </label>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  className={`button ${simRoomType === 'room' ? 'primary' : 'secondary'}`}
-                  style={{ flex: 1 }}
-                  onClick={() => setSimRoomType('room')}
-                >
-                  {isEn ? 'Rental Room' : 'Phòng trọ cho thuê'}
-                </button>
-                <button
-                  className={`button ${simRoomType === 'apartment' ? 'primary' : 'secondary'}`}
-                  style={{ flex: 1 }}
-                  onClick={() => setSimRoomType('apartment')}
-                >
-                  {isEn ? 'Serviced / Mini Apt' : 'Căn hộ dịch vụ / Mini'}
-                </button>
-              </div>
-            </div>
-
-            <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--muted)', display: 'block', marginBottom: '8px' }}>
-              {isEn ? 'PLANNED AMENITIES' : 'TIỆN ÍCH DỰ KIẾN LẮP ĐẶT'}
-            </label>
-            <div className="amenity-simulator-options" style={{ gap: '10px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
-                <input type="checkbox" checked={simBalcony} onChange={(e) => setSimBalcony(e.target.checked)} />
-                {isEn ? 'Private airy balcony' : 'Ban công riêng thoáng'}
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
-                <input type="checkbox" checked={simElevator} onChange={(e) => setSimElevator(e.target.checked)} />
-                {isEn ? 'High-speed elevator' : 'Thang máy tốc độ cao'}
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
-                <input type="checkbox" checked={simPrivateBath} onChange={(e) => setSimPrivateBath(e.target.checked)} />
-                {isEn ? 'Private en-suite bathroom' : 'WC khép kín riêng'}
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
-                <input type="checkbox" checked={simParking} onChange={(e) => setSimParking(e.target.checked)} />
-                {isEn ? 'Secured parking garage' : 'Nhà để xe có bảo vệ'}
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
-                <input type="checkbox" checked={simFreeHours} onChange={(e) => setSimFreeHours(e.target.checked)} />
-                {isEn ? '24/7 Free hours (fingerprint lock)' : 'Giờ giấc tự do (Khóa vân tay)'}
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
-                <input type="checkbox" checked={simWifi} onChange={(e) => setSimWifi(e.target.checked)} />
-                {isEn ? 'Dedicated high-speed Wi-Fi' : 'Wi-Fi cáp quang riêng'}
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
-                <input type="checkbox" checked={simMezzanine} onChange={(e) => setSimMezzanine(e.target.checked)} />
-                {isEn ? 'Solid mezzanine loft' : 'Gác lửng kiên cố'}
-              </label>
-            </div>
-          </div>
-
-          {/* Simulator Result Box */}
-          <div style={{ background: 'var(--surface-subtle)', padding: '20px', borderRadius: '12px', border: '1px solid var(--line)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>
-              {isEn ? 'RECOMMENDED ESTIMATED RENT' : 'GIÁ THUÊ ƯỚC TÍNH KHUYẾN NGHỊ'}
-            </span>
-            <div style={{ font: "800 32px 'Manrope', sans-serif", color: 'var(--blue)', margin: '8px 0' }}>
-              {simulatedPrice.toFixed(1)} {isEn ? 'M VND / mo' : 'tr / tháng'}
-            </div>
-            <p style={{ margin: 0, fontSize: '11px', color: 'var(--muted)', lineHeight: 1.5 }}>
-              {isEn
-                ? 'Based on marginal benefit regression from 3,238 listings in Da Nang. Assures >85% occupancy in 30 days.'
-                : 'Dựa trên mô hình hồi quy biên lợi ích từ dữ liệu 3,238 phòng tại Đà Nẵng. Mức giá này đảm bảo tỷ lệ lấp đầy > 85% trong 30 ngày.'}
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
