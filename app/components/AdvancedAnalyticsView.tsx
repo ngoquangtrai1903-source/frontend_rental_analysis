@@ -67,23 +67,12 @@ export default function AdvancedAnalyticsView({
           <BarChart3 size={22} />
         </div>
         <div>
-          <span className="eyebrow">
-            {isEn ? 'STATISTICAL MODELING & MARKET TRENDS' : 'MÔ HÌNH THỐNG KÊ & XU HƯỚNG THỊ TRƯỜNG'}
-          </span>
           <h2>
             {isEn
-              ? 'Advanced Analytics — Da Nang Rental Market'
-              : 'Phân Tích Nâng Cao — Thị Trường Cho Thuê Đà Nẵng'}
+              ? 'Market analysis'
+              : 'Phân tích thị trường'}
           </h2>
-          <p>
-            {isEn
-              ? 'Real-time rental market trends from Supabase Gold Data Warehouse with AI insights.'
-              : 'Trực quan hóa thời gian thực các xu hướng thị trường từ kho dữ liệu Supabase Gold, tích hợp trợ lý phân tích thông minh.'}
-          </p>
         </div>
-        <span className="analysis-status">
-          <span className="live-dot" /> {isEn ? 'Supabase Gold Connected' : 'Kết nối Supabase Gold'}
-        </span>
       </div>
 
       {/* Overview Stat Badges */}
@@ -98,7 +87,7 @@ export default function AdvancedAnalyticsView({
         >
           <div className="card" style={{ padding: '12px 16px', background: 'var(--surface-card)' }}>
             <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>
-              {isEn ? 'Cleaned Sample Size' : 'Quy mô mẫu sau làm sạch'}
+              {isEn ? 'Valid listings' : 'Tin đủ dữ liệu'}
             </span>
             <div style={{ font: "800 20px 'Manrope', sans-serif", color: 'var(--ink)', marginTop: '4px' }}>
               {data.summary.totalCleaned.toLocaleString()}{' '}
@@ -115,7 +104,7 @@ export default function AdvancedAnalyticsView({
             <div style={{ font: "800 20px 'Manrope', sans-serif", color: '#E07B39', marginTop: '4px' }}>
               {data.summary.roomCount.toLocaleString()}{' '}
               <small style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
-                (Med {data.histPrice.room.median}{isEn ? 'M' : 'tr'})
+                ({isEn ? 'Median' : 'Trung vị'} {data.histPrice.room.median}{isEn ? 'M' : 'tr'})
               </small>
             </div>
           </div>
@@ -127,14 +116,14 @@ export default function AdvancedAnalyticsView({
             <div style={{ font: "800 20px 'Manrope', sans-serif", color: '#2E6F9E', marginTop: '4px' }}>
               {data.summary.aptCount.toLocaleString()}{' '}
               <small style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
-                (Med {data.histPrice.apt.median}{isEn ? 'M' : 'tr'})
+                ({isEn ? 'Median' : 'Trung vị'} {data.histPrice.apt.median}{isEn ? 'M' : 'tr'})
               </small>
             </div>
           </div>
 
           <div className="card" style={{ padding: '12px 16px', background: 'var(--surface-card)' }}>
             <span style={{ fontSize: '11px', color: '#dc2626', fontWeight: 600 }}>
-              {isEn ? 'Citywide Median Unit Price' : 'Median đơn giá toàn TP'}
+              {isEn ? 'Median unit price' : 'Đơn giá trung vị'}
             </span>
             <div style={{ font: "800 20px 'Manrope', sans-serif", color: '#dc2626', marginTop: '4px' }}>
               {data.summary.cityMedianPpm2}{' '}
@@ -159,7 +148,7 @@ export default function AdvancedAnalyticsView({
           onClick={() => setActiveTab('dist')}
         >
           <DollarSign size={16} />
-          <span><strong>{isEn ? 'Price & Size' : 'Giá thuê & Diện tích'}</strong></span>
+          <span><strong>{isEn ? 'Price & Size' : 'Giá thuê & diện tích'}</strong></span>
         </button>
 
         <button
@@ -169,7 +158,7 @@ export default function AdvancedAnalyticsView({
           onClick={() => setActiveTab('location')}
         >
           <MapPin size={16} />
-          <span><strong>{isEn ? 'Area & Location' : 'Khu vực & Vị trí'}</strong></span>
+          <span><strong>{isEn ? 'Area & Location' : 'Khu vực & vị trí'}</strong></span>
         </button>
 
         <button
@@ -179,7 +168,7 @@ export default function AdvancedAnalyticsView({
           onClick={() => setActiveTab('matrix')}
         >
           <Layers size={16} />
-          <span><strong>{isEn ? 'Furnishing & Correlation' : 'Nội thất & Tương quan'}</strong></span>
+          <span><strong>{isEn ? 'Furnishing & Correlation' : 'Nội thất & tương quan'}</strong></span>
         </button>
       </div>
 
@@ -200,8 +189,8 @@ export default function AdvancedAnalyticsView({
           <div className="pulse-spinner" style={{ width: '28px', height: '28px', marginBottom: '12px' }} />
           <span>
             {isEn
-              ? 'Querying Supabase Gold data warehouse & computing market analytics…'
-              : 'Đang truy vấn kho dữ liệu Supabase Gold & tổng hợp chỉ số phân tích…'}
+              ? 'Loading charts…'
+              : 'Đang tải biểu đồ…'}
           </span>
         </div>
       )}
@@ -216,24 +205,16 @@ export default function AdvancedAnalyticsView({
               {/* HISTOGRAM PHÂN PHỐI GIÁ THUÊ THEO LOẠI HÌNH */}
               <div className="card" style={{ padding: '24px', background: 'var(--surface-card)' }}>
                 <div style={{ marginBottom: '14px' }}>
-                  <span className="eyebrow">
-                    {isEn ? 'FREQUENCY & MEDIAN DISTRIBUTION' : 'PHÂN PHỐI TẦN SUẤT & TRUNG VỊ'}
-                  </span>
                   <h3 style={{ margin: '4px 0', fontSize: '17px' }}>
                     {isEn
-                      ? 'Rental Price Distribution by Property Category'
-                      : 'Phân Phối Giá Thuê Theo Loại Hình'}
+                      ? 'Rent by property type'
+                      : 'Giá thuê theo loại hình'}
                   </h3>
-                  <p style={{ margin: 0, color: 'var(--muted)', fontSize: '11px' }}>
-                    {isEn
-                      ? '(Solid line = Median, Dashed line = Mean)'
-                      : '(Đường liền = Median trung vị, Đường đứt = Mean trung bình)'}
-                  </p>
                 </div>
                 <HistPriceByCategoryChart data={data.histPrice} lang={lang} />
                 <ChartAIExplainer
                   chartId="3.1"
-                  chartTitle={isEn ? 'Rental Price Distribution by Property Category' : 'Phân phối giá thuê theo loại hình'}
+                  chartTitle={isEn ? 'Rent by property type' : 'Phân phối giá thuê theo loại hình'}
                   summaryData={data.histPrice}
                   lang={lang}
                 />
@@ -242,22 +223,19 @@ export default function AdvancedAnalyticsView({
               {/* SCATTER: DIỆN TÍCH VS GIÁ THUÊ + HỒI QUY */}
               <div className="card" style={{ padding: '24px', background: 'var(--surface-card)' }}>
                 <div style={{ marginBottom: '14px' }}>
-                  <span className="eyebrow">
-                    {isEn ? 'SIZE CORRELATION & PRICE SENSITIVITY' : 'TƯƠNG QUAN DIỆN TÍCH & ĐỘ NHẠY GIÁ'}
-                  </span>
                   <h3 style={{ margin: '4px 0', fontSize: '17px' }}>
-                    {isEn ? 'Property Size vs Monthly Rent' : 'Diện Tích vs Giá Thuê'}
+                    {isEn ? 'Size & rent' : 'Diện tích & giá thuê'}
                   </h3>
                   <p style={{ margin: 0, color: 'var(--muted)', fontSize: '11px' }}>
                     {isEn
-                      ? 'Linear regression and Pearson correlation coefficient (r) for each property category.'
-                      : 'Đường hồi quy tuyến tính và hệ số tương quan Pearson (r) cho từng loại hình BĐS.'}
+                      ? 'Trend line and Pearson correlation (r) by property type.'
+                      : 'Đường xu hướng và hệ số tương quan (r) theo loại hình.'}
                   </p>
                 </div>
                 <ScatterSizePriceChart data={data.scatterSizePrice} lang={lang} />
                 <ChartAIExplainer
                   chartId="3.4"
-                  chartTitle={isEn ? 'Property Size vs Monthly Rent' : 'Diện tích vs Giá thuê'}
+                  chartTitle={isEn ? 'Size & rent' : 'Diện tích vs Giá thuê'}
                   summaryData={data.scatterSizePrice}
                   lang={lang}
                 />
@@ -273,18 +251,15 @@ export default function AdvancedAnalyticsView({
               {/* BOXPLOT GIÁ/M2 THEO PHƯỜNG (SẮP XẾP THEO MEDIAN) */}
               <div className="card" style={{ padding: '24px', background: 'var(--surface-card)' }}>
                 <div style={{ marginBottom: '14px' }}>
-                  <span className="eyebrow">
-                    {isEn ? 'UNIT PRICE DISTRIBUTION BY WARD' : 'PHÂN PHỐI ĐƠN GIÁ THEO KHU VỰC'}
-                  </span>
                   <h3 style={{ margin: '4px 0', fontSize: '17px' }}>
                     {isEn
-                      ? 'Unit Rent by Ward (Sorted by Median, n ≥ 30)'
-                      : 'Giá Thuê/m² Theo Phường (Sắp xếp theo Median)'}
+                      ? 'Rent per m² by ward'
+                      : 'Giá thuê/m² theo phường'}
                   </h3>
                   <p style={{ margin: 0, color: 'var(--muted)', fontSize: '11px' }}>
                     {isEn
-                      ? 'Wards with sample size ≥ 30; red dashed line marks citywide median.'
-                      : 'Chỉ bao gồm các phường có tối thiểu 30 tin đăng; đường nét đứt đỏ là mức trung vị toàn thành phố.'}
+                      ? 'Wards with 30+ listings. Red dashed line: filtered median.'
+                      : 'Phường có từ 30 tin. Nét đứt đỏ: trung vị của các tin đã lọc.'}
                   </p>
                 </div>
                 <WardPpm2BoxPlotChart
@@ -303,18 +278,15 @@ export default function AdvancedAnalyticsView({
               {/* VỊ TRÍ: KHOẢNG CÁCH -> GIÁ/M2 (4 SCATTER + HỒI QUY) */}
               <div className="card" style={{ padding: '24px', background: 'var(--surface-card)' }}>
                 <div style={{ marginBottom: '14px' }}>
-                  <span className="eyebrow">
-                    {isEn ? 'SPATIAL DISTANCE DECAY TO HOTSPOTS' : 'QUY LUẬT SUY GIẢM THEO KHOẢNG CÁCH'}
-                  </span>
                   <h3 style={{ margin: '4px 0', fontSize: '17px' }}>
                     {isEn
-                      ? 'Spatial Decay: Distance to Hotspots vs Unit Price/m²'
-                      : 'Ảnh Hưởng Của Vị Trí Đến Giá/m²'}
+                      ? 'Location & rent per m²'
+                      : 'Vị trí & giá thuê/m²'}
                   </h3>
                   <p style={{ margin: 0, color: 'var(--muted)', fontSize: '11px' }}>
                     {isEn
-                      ? '4 Hotspots: CBD, Beach, Airport, and Nearest University Hub (r coefficient indicated).'
-                      : 'Lưới 4 điểm nóng: Trung tâm CBD, Bãi biển, Sân bay Quốc tế và Cụm Đại học (kèm hệ số tương quan r).'}
+                      ? 'Distance to the centre, beach, airport and nearest university.'
+                      : 'Khoảng cách đến trung tâm, biển, sân bay và đại học gần nhất.'}
                   </p>
                 </div>
                 <ScatterLocationGridChart data={data.scatterLocation} lang={lang} />
@@ -336,18 +308,15 @@ export default function AdvancedAnalyticsView({
               {/* TÌNH TRẠNG NỘI THẤT X LOẠI HÌNH (BOX GIÁ/M2) */}
               <div className="card" style={{ padding: '24px', background: 'var(--surface-card)' }}>
                 <div style={{ marginBottom: '14px' }}>
-                  <span className="eyebrow">
-                    {isEn ? 'FURNISHING LEVERAGE & CAPEX' : 'ĐÒN BẨY NỘI THẤT & CHI PHÍ ĐẦU TƯ'}
-                  </span>
                   <h3 style={{ margin: '4px 0', fontSize: '17px' }}>
                     {isEn
-                      ? 'Unit Price/m² by Furnishing Level & Property Category'
-                      : 'Giá/m² Theo Tình Trạng Nội Thất và Loại Hình'}
+                      ? 'Furnishing & rent per m²'
+                      : 'Nội thất & giá thuê/m²'}
                   </h3>
                   <p style={{ margin: 0, color: 'var(--muted)', fontSize: '11px' }}>
                     {isEn
-                      ? 'Box plot distribution across 5 furnishing tiers (including Unspecified).'
-                      : 'Phân bố hộp IQR qua 5 mức trang bị nội thất (bao gồm cả phân nhóm Không xác định).'}
+                      ? 'Compare furnishing levels by property type.'
+                      : 'So sánh các mức nội thất theo loại hình.'}
                   </p>
                 </div>
                 <BoxFurnishingCategoryChart data={data.boxFurnishingCategory} lang={lang} />
@@ -362,16 +331,13 @@ export default function AdvancedAnalyticsView({
               {/* MA TRẬN TƯƠNG QUAN SPEARMAN */}
               <div className="card" style={{ padding: '24px', background: 'var(--surface-card)' }}>
                 <div style={{ marginBottom: '14px' }}>
-                  <span className="eyebrow">
-                    {isEn ? 'SPEARMAN MULTIVARIATE CORRELATION MATRIX' : 'MA TRẬN TƯƠNG QUAN ĐA BIẾN SPEARMAN'}
-                  </span>
                   <h3 style={{ margin: '4px 0', fontSize: '17px' }}>
-                    {isEn ? 'Spearman Rank Correlation Matrix' : 'Ma Trận Tương Quan Spearman'}
+                    {isEn ? 'Spearman correlation' : 'Tương quan giữa các yếu tố'}
                   </h3>
                   <p style={{ margin: 0, color: 'var(--muted)', fontSize: '11px' }}>
                     {isEn
-                      ? 'Comprehensive 18×18 rank correlation across price, size, distance metrics, and 9 property amenities.'
-                      : 'Ma trận tương quan phi tham số 18×18 giữa đơn giá, diện tích, các cự ly không gian và 9 tiện ích phòng.'}
+                      ? 'Relationships between price, size, location and amenities.'
+                      : 'Mối liên hệ giữa giá, diện tích, vị trí và tiện ích (Spearman).'}
                   </p>
                 </div>
                 <SpearmanCorrelationHeatmap
@@ -381,7 +347,7 @@ export default function AdvancedAnalyticsView({
                 />
                 <ChartAIExplainer
                   chartId="3.9"
-                  chartTitle={isEn ? 'Spearman Rank Correlation Matrix' : 'Ma trận tương quan Spearman'}
+                  chartTitle={isEn ? 'Spearman correlation' : 'Ma trận tương quan Spearman'}
                   summaryData={{
                     columns: data.corrHeatmap.columns.map((c) => c.label),
                     matrixSample: data.corrHeatmap.matrix.slice(0, 5).map((r) => r.slice(0, 5))

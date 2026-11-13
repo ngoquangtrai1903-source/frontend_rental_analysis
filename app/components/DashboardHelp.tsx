@@ -8,104 +8,94 @@ interface GuideItem {
 
 const guidesVi: GuideItem[] = [
   {
-    id: 'overview',
-    title: 'Tổng quan',
-    steps: [
-      'Xem số tin, giá thuê và diện tích trung bình để nắm thị trường trong phạm vi bộ lọc.',
-      'Chuyển giữa Tổng quan, Thị trường và Nguồn cung để xem các góc nhìn phân tích. Đọc biểu đồ cùng số lượng tin trong mẫu.',
-      'Dùng bảng tin đăng để xem kết quả cụ thể, đổi thứ tự sắp xếp và chuyển trang.'
+    "id": "overview",
+    "title": "Tổng quan",
+    "steps": [
+      "Xem số tin, giá thuê và diện tích trong bộ lọc hiện tại.",
+      "Xem biến động giá theo thời gian và so sánh các khu vực.",
+      "Sắp xếp, chuyển trang hoặc xuất danh sách tin đăng."
     ]
   },
   {
-    id: 'location',
-    title: 'Vị trí & khu vực',
-    steps: [
-      'Bản đồ tải dữ liệu theo khung nhìn hiện tại, hiển thị tối đa 1.500 tọa độ mỗi lượt và gom điểm gần nhau thành cụm. Bấm cụm để phóng to, hoặc kéo bản đồ để tải khu vực khác.',
-      'Bật lớp Giá thuê theo phường trong menu Lớp bản đồ. Rê chuột lên vùng nhiệt để xem giá trung bình, trung vị và số tin có tọa độ trong dữ liệu đang tải.',
-      'Bấm điểm đã phóng to để xem thông tin của tin đăng.',
-      'Kết hợp bộ lọc khu vực và giá để thu hẹp phạm vi tìm kiếm.',
-      'Số điểm trên bản đồ có thể ít hơn số tin trong bảng nếu tin thiếu tọa độ hợp lệ.'
+    "id": "location",
+    "title": "Vị trí & khu vực",
+    "steps": [
+      "Bấm cụm trên bản đồ để phóng to, rồi chọn một tin để xem chi tiết.",
+      "Dùng bộ lọc khu vực và giá để thu hẹp kết quả.",
+      "Chọn Chỉ đường để mở vị trí trên Google Maps. Tin thiếu tọa độ sẽ không xuất hiện trên bản đồ."
     ]
   },
   {
-    id: 'amenities',
-    title: 'Tiện ích',
-    steps: [
-      'So sánh giá của nhóm có và không có từng tiện ích, như ban công, thang máy hoặc chỗ để xe.',
-      'Thử các tiện ích trong bộ mô phỏng định giá để tham khảo mức giá gợi ý.',
-      'Chênh lệch giá giữa hai nhóm không chứng minh riêng tiện ích đó làm tăng giá; vị trí và diện tích cũng có ảnh hưởng.'
+    "id": "amenities",
+    "title": "Tiện ích",
+    "steps": [
+      "So sánh giá thuê trung bình giữa nhóm có và không có từng tiện ích.",
+      "Chọn Căn hộ hoặc Phòng trọ để xem riêng từng loại.",
+      "Chênh lệch giá còn phụ thuộc vị trí, diện tích và nội thất."
     ]
   },
   {
-    id: 'floodRisk',
-    title: 'Rủi ro ngập lụt',
-    steps: [
-      'Xem phân bố mức rủi ro và các thông tin ngập lịch sử để so sánh khu vực.',
-      'Dùng bộ lọc Rủi ro ngập để chọn mức thấp, trung bình hoặc cao.',
-      'Dữ liệu lịch sử không phải dự báo ngập hiện tại. Nên kiểm tra thực địa trước khi quyết định thuê.'
+    "id": "floodRisk",
+    "title": "Rủi ro ngập lụt",
+    "steps": [
+      "So sánh mức rủi ro theo phường và ghi nhận ngập năm 2022, 2025.",
+      "Dữ liệu lịch sử không phải dự báo hiện tại. Hãy kiểm tra thêm tại nơi định thuê."
     ]
   },
   {
-    id: 'analytics',
-    title: 'Phân tích nâng cao',
-    steps: [
-      'Trong box plot giá thuê, rê chuột hoặc dùng phím Tab để xem số tin, giá thấp nhất, Q1, trung vị, Q3 và giá cao nhất theo từng phường.',
-      'Trong bản đồ nhiệt giá thuê (nhóm Khu vực & vị trí), rê chuột hoặc dùng phím Tab vào từng ô để xem chi tiết giá trung vị, số tin và phân khúc theo phường và loại hình.',
-      'So sánh giá theo khoảng cách tới các điểm quan tâm và theo mức nội thất.',
-      'Dùng ma trận cơ hội và gợi ý chiến lược để tham khảo, đối chiếu với nguồn cung và giá của khu vực.',
-      'Điểm xếp hạng và ước tính hoàn vốn phụ thuộc dữ liệu, giả định đang sử dụng; không phải cam kết lợi nhuận.'
+    "id": "analytics",
+    "title": "Phân tích nâng cao",
+    "steps": [
+      "Chọn nhóm Giá thuê & diện tích, Khu vực & vị trí hoặc Nội thất & tương quan.",
+      "Rê chuột lên biểu đồ để xem số liệu; các ô có hỗ trợ bàn phím có thể chọn bằng Tab.",
+      "Bấm Đọc biểu đồ để xem tóm tắt. Tương quan không chứng minh quan hệ nhân quả."
     ]
   }
 ]
 
 const guidesEn: GuideItem[] = [
   {
-    id: 'overview',
-    title: 'Overview',
-    steps: [
-      'Review listing counts, average rents, and sizes to grasp market conditions within current filter parameters.',
-      'Switch between Overview, Market, and Supply perspectives. Compare charts with sample size counts.',
-      'Use the listings data table to inspect individual properties, adjust sorting orders, and paginate.'
+    "id": "overview",
+    "title": "Overview",
+    "steps": [
+      "Review listing counts, rents and sizes within your filters.",
+      "Compare rents over time and across areas.",
+      "Sort, page through or export the listings."
     ]
   },
   {
-    id: 'location',
-    title: 'Location & Area',
-    steps: [
-      'The map loads data based on current viewport bounds (up to 1,500 coordinates per query) and clusters nearby points. Click clusters to zoom in, or drag the map to explore other districts.',
-      'Enable the Ward Rental Price layer in the Map Layers menu. Hover over heatmap zones to view average rent, median price, and coordinate coverage.',
-      'Click individual property pins to view price, size, and address details.',
-      'Combine ward and price filters to narrow down geographic focus areas.',
-      'Map points count may be lower than table listings if certain records lack valid geographic coordinates.'
+    "id": "location",
+    "title": "Location & Area",
+    "steps": [
+      "Click a cluster to zoom in, then select a listing for details.",
+      "Use area and price filters to narrow the results.",
+      "Choose Directions to open Google Maps. Listings without coordinates are not shown on the map."
     ]
   },
   {
-    id: 'amenities',
-    title: 'Amenities',
-    steps: [
-      'Compare rental premiums across properties with and without key amenities like elevator, balcony, or private parking.',
-      'Use the amenity price simulation calculator to estimate rental value premiums.',
-      'Price differences reflect market correlation and are influenced by location and property size.'
+    "id": "amenities",
+    "title": "Amenities",
+    "steps": [
+      "Compare average rents with and without each amenity.",
+      "Select Apartments or Rental rooms to compare one property type.",
+      "Price differences also reflect location, size and furnishing."
     ]
   },
   {
-    id: 'floodRisk',
-    title: 'Flood Risk',
-    steps: [
-      'Examine flood risk distributions and historical inundation records to evaluate area safety.',
-      'Apply the Flood Risk filter to filter by Low, Medium, or High risk categories.',
-      'Historical inundation maps serve as strategic references; on-site inspection is recommended before leasing.'
+    "id": "floodRisk",
+    "title": "Flood Risk",
+    "steps": [
+      "Compare risk by ward and recorded floods in 2022 and 2025.",
+      "Historical data is not a current forecast. Check the property before renting."
     ]
   },
   {
-    id: 'analytics',
-    title: 'Advanced Analytics',
-    steps: [
-      'In the rental price box plot, hover or press Tab to view listing count, minimum, Q1, median, Q3, and maximum prices by ward.',
-      'In the ward price heatmap, inspect median prices, sample volume, and property category breakdown.',
-      'Evaluate price variations relative to proximity to key hotspots and furnishing grades.',
-      'Leverage investment opportunity matrices and strategic recommendations for market insights.',
-      'Investment scores and payback estimations depend on current sample assumptions and do not guarantee returns.'
+    "id": "analytics",
+    "title": "Advanced Analytics",
+    "steps": [
+      "Choose Price & Size, Area & Location, or Furnishing & Correlation.",
+      "Hover over charts for details; use Tab for cells with keyboard support.",
+      "Select Read chart for a summary. Correlation does not establish causation."
     ]
   }
 ]

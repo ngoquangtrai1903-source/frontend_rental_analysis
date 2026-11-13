@@ -49,25 +49,19 @@ export default function LocationMapView({
           <MapPin size={22} />
         </div>
         <div>
-          <span className="eyebrow">GIS SPATIAL INTELLIGENCE · RENTIQ DA NANG</span>
           <h2>
             {isEn
-              ? 'Coordinate Distribution & Citywide Rental Map'
-              : 'Bản Đồ Phân Bố Toạ Độ & Tin Cho Thuê Toàn Thành Phố'}
+              ? 'Rental map'
+              : 'Bản đồ cho thuê'}
           </h2>
-          <p>
-            {isEn
-              ? 'Visualizes live listing coordinates from Gold schema across Da Nang.'
-              : 'Hiển thị trực quan toàn bộ toạ độ tin đăng thực tế từ tầng Gold trên địa bàn TP. Đà Nẵng.'}
-          </p>
         </div>
         <span className="analysis-status">
           <span className="live-dot" />{' '}
           {loading
-            ? isEn ? 'Querying coordinates...' : 'Đang truy vấn toạ độ...'
+            ? isEn ? 'Loading map…' : 'Đang tải bản đồ…'
             : isEn
-              ? `Displaying ${points.length.toLocaleString()} / ${totalCount.toLocaleString()} coordinates`
-              : `Đang hiển thị ${points.length.toLocaleString()} / ${totalCount.toLocaleString()} toạ độ`}
+              ? `${points.length.toLocaleString()} / ${totalCount.toLocaleString()} listings`
+              : `${points.length.toLocaleString()} / ${totalCount.toLocaleString()} tin`}
         </span>
       </div>
 
@@ -84,29 +78,29 @@ export default function LocationMapView({
       <div className="analysis-cards" style={{ marginTop: '0px' }}>
         <div className="card metric-card">
           <div className="kpi-icon blue"><Navigation size={17} /></div>
-          <span>{isEn ? 'TOTAL VISUALIZED POINTS' : 'TỔNG TOẠ ĐỘ HIỂN THỊ'}</span>
+          <span>{isEn ? 'Listings on map' : 'Tin trên bản đồ'}</span>
           <strong>{points.length.toLocaleString()} {isEn ? 'listings' : 'tin'}</strong>
           <small>
             {activeFiltersCount > 0
               ? isEn
-                ? `Filtered by ${activeFiltersCount} criteria from top filter bar`
-                : `Lọc theo ${activeFiltersCount} tiêu chí từ thanh bộ lọc trên cùng`
+                ? `${activeFiltersCount} active filters`
+                : `${activeFiltersCount} bộ lọc đang áp dụng`
               : isEn
-                ? 'Displaying 100% available coordinates from Gold store'
-                : 'Tải toàn bộ 100% dữ liệu toạ độ sẵn có từ kho gold'}
+                ? 'Listings with coordinates'
+                : 'Các tin có tọa độ'}
           </small>
         </div>
 
         <div className="card metric-card">
           <div className="kpi-icon orange"><DollarSign size={17} /></div>
-          <span>{isEn ? 'Average rent of listings on the map' : 'Giá thuê trung bình các tin trên bản đồ'}</span>
+          <span>{isEn ? 'Average rent on map' : 'Giá thuê trung bình'}</span>
           <strong>{stats.avgPriceMillion} {isEn ? 'M / mo' : 'tr / tháng'}</strong>
-          <small>{isEn ? `Unit rate: ${stats.avgPpm2.toLocaleString()} VND/m²` : `Đơn giá diện tích: ${stats.avgPpm2.toLocaleString()} đ/m²`}</small>
+          <small>{isEn ? `Unit rate: ${stats.avgPpm2.toLocaleString()} VND/m²` : `Đơn giá: ${stats.avgPpm2.toLocaleString()} đ/m²`}</small>
         </div>
 
         <div className="card metric-card">
           <div className="kpi-icon purple"><Home size={17} /></div>
-          <span>{isEn ? 'SUPPLY BREAKDOWN' : 'CƠ CẤU NGUỒN CUNG'}</span>
+          <span>{isEn ? 'Property types' : 'Loại hình'}</span>
           <strong>
             {points.length > 0
               ? `${Math.round((stats.apartmentCount / points.length) * 100)}% ${isEn ? 'Apartments' : 'Căn hộ'}`
@@ -144,16 +138,11 @@ export default function LocationMapView({
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <span className="eyebrow">
-                {isEn
-                  ? `SELECTED PROPERTY DETAILS (ID: ${selectedPoint.list_id})`
-                  : `CHI TIẾT PHÒNG TRỌ ĐANG CHỌN (ID: ${selectedPoint.list_id})`}
-              </span>
               <h3 style={{ margin: '4px 0 2px', fontSize: '19px', fontWeight: 800, color: 'var(--ink)' }}>
                 {translateCategoryName(selectedPoint.category_name, isEn)} {isEn ? 'in' : 'tại'} {selectedPoint.ward_name}, TP. Đà Nẵng
               </h3>
               <div style={{ fontSize: '11px', color: 'var(--muted)' }}>
-                {isEn ? 'GPS WGS84 Coordinates:' : 'Toạ độ GPS WGS84:'} {selectedPoint.latitude.toFixed(5)}, {selectedPoint.longitude.toFixed(5)}
+                {isEn ? 'Coordinates:' : 'Tọa độ:'} {selectedPoint.latitude.toFixed(5)}, {selectedPoint.longitude.toFixed(5)}
               </div>
             </div>
             <button
@@ -169,14 +158,14 @@ export default function LocationMapView({
 
           <div className="selected-property-metrics" style={{ display: 'grid', gap: '16px', marginTop: '16px' }}>
             <div>
-              <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>{isEn ? 'LISTED RENT' : 'GIÁ THUÊ NIÊM YẾT'}</span>
+              <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>{isEn ? 'Monthly rent' : 'Giá thuê'}</span>
               <div style={{ font: "800 22px 'Manrope', sans-serif", color: getPriceTierTheme(selectedPoint.price_vnd, isEn).color, marginTop: '3px' }}>
                 {formatVndPrice(selectedPoint.price_vnd, isEn)}
               </div>
             </div>
 
             <div>
-              <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>{isEn ? 'SIZE & RATE' : 'DIỆN TÍCH & ĐƠN GIÁ'}</span>
+              <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>{isEn ? 'Size & unit price' : 'Diện tích & đơn giá'}</span>
               <div style={{ font: "700 16px 'Manrope', sans-serif", color: 'var(--ink)', marginTop: '4px' }}>
                 {selectedPoint.size_m2 ? `${Math.round(selectedPoint.size_m2)} m²` : (isEn ? 'N/A' : 'Chưa rõ DT')} ({selectedPoint.price_per_m2_vnd ? `${selectedPoint.price_per_m2_vnd.toLocaleString()} ${isEn ? 'VND/m²' : 'đ/m²'}` : 'N/A'})
               </div>
@@ -192,7 +181,7 @@ export default function LocationMapView({
             </div>
 
             <div>
-              <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>{isEn ? 'RISK & AMENITIES' : 'ĐÁNH GIÁ RỦI RO & TIỆN ÍCH'}</span>
+              <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>{isEn ? 'Flood risk & furnishing' : 'Rủi ro ngập & nội thất'}</span>
               <div style={{ marginTop: '4px' }}>
                 <span
                   style={{
@@ -209,8 +198,8 @@ export default function LocationMapView({
                   }}
                 >
                   {selectedPoint.flood_risk_label === 0
-                    ? (isEn ? '🟢 High ground · Safe' : '🟢 Cốt nền cao an toàn')
-                    : (isEn ? '🔴 Flood caution' : '🔴 Cần lưu ý ngập')}
+                    ? (isEn ? 'Low flood risk' : 'Rủi ro ngập thấp')
+                    : (isEn ? 'Check flood risk' : 'Cần kiểm tra ngập')}
                 </span>
                 <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '2px' }}>
                   {isEn ? 'Furnishing: ' : 'Nội thất: '}

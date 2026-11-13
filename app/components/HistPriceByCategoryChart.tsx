@@ -110,7 +110,7 @@ export default function HistPriceByCategoryChart({ data, lang = 'vi' }: HistPric
             <strong>{isEn ? 'Rental Room' : 'Phòng trọ'}</strong>
             <span style={{ color: 'var(--muted, #64748b)' }}>(n = {room.count.toLocaleString()})</span>
             <span style={{ marginLeft: '4px', fontSize: '11px', color: room.color }}>
-              Median: <strong>{room.median}{isEn ? 'M' : 'tr'}</strong> | Mean: <strong>{room.mean}{isEn ? 'M' : 'tr'}</strong>
+              {isEn ? 'Median' : 'Trung vị'}: <strong>{room.median}{isEn ? 'M' : 'tr'}</strong> | {isEn ? 'Mean' : 'Trung bình'}: <strong>{room.mean}{isEn ? 'M' : 'tr'}</strong>
             </span>
           </div>
 
@@ -130,14 +130,14 @@ export default function HistPriceByCategoryChart({ data, lang = 'vi' }: HistPric
             <strong>{isEn ? 'Apartment' : 'Căn hộ/Chung cư'}</strong>
             <span style={{ color: 'var(--muted, #64748b)' }}>(n = {apt.count.toLocaleString()})</span>
             <span style={{ marginLeft: '4px', fontSize: '11px', color: apt.color }}>
-              Median: <strong>{apt.median}{isEn ? 'M' : 'tr'}</strong> | Mean: <strong>{apt.mean}{isEn ? 'M' : 'tr'}</strong>
+              {isEn ? 'Median' : 'Trung vị'}: <strong>{apt.median}{isEn ? 'M' : 'tr'}</strong> | {isEn ? 'Mean' : 'Trung bình'}: <strong>{apt.mean}{isEn ? 'M' : 'tr'}</strong>
             </span>
           </div>
         </div>
 
         <div style={{ fontSize: '11px', color: 'var(--muted, #64748b)' }}>
-          <span style={{ borderBottom: '2px solid var(--muted, #64748b)', marginRight: '6px' }}>—</span> {isEn ? 'Solid = Median' : 'Đường liền = Median'}
-          <span style={{ borderBottom: '2px dashed var(--muted, #64748b)', margin: '0 6px 0 10px' }}>---</span> {isEn ? 'Dashed = Mean' : 'Đường đứt = Mean'}
+          <span style={{ borderBottom: '2px solid var(--muted, #64748b)', marginRight: '6px' }}>—</span> {isEn ? 'Solid = Median' : 'Nét liền: trung vị'}
+          <span style={{ borderBottom: '2px dashed var(--muted, #64748b)', margin: '0 6px 0 10px' }}>---</span> {isEn ? 'Dashed = Mean' : 'Nét đứt: trung bình'}
         </div>
       </div>
 

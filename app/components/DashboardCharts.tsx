@@ -57,8 +57,8 @@ export default function DashboardCharts({ trend, distribution, total, lang = 'vi
       <div className="card trend-card">
         <div className="card-header">
           <div>
-            <h2>{isEn ? 'Temporal Trends & Cycles' : 'Xu hướng theo chu kỳ thời gian'}</h2>
-            <p>{isEn ? 'Listing volume and average monthly rental rates' : 'Số lượng tin đăng và giá thuê trung bình'}</p>
+            <h2>{isEn ? 'Rent over time' : 'Giá thuê theo thời gian'}</h2>
+            <p>{isEn ? 'Listings and average rent' : 'Số lượng tin đăng và giá thuê trung bình'}</p>
           </div>
         </div>
         <div className="chart-legend" aria-label={isEn ? 'Chart Legend' : 'Chú giải biểu đồ'}>
@@ -189,13 +189,6 @@ export default function DashboardCharts({ trend, distribution, total, lang = 'vi
             </div>
           )}
         </div>
-        {hasDistribution && pie[0] && (
-          <p className="chart-insight">
-            {isEn
-              ? `${pie[0].label} tier accounts for ${pie[0].percentage}% of filtered listings.`
-              : `Phân khúc ${pie[0].label} chiếm ${pie[0].percentage}% lượng tin đăng sau khi lọc.`}
-          </p>
-        )}
       </div>
     </section>
   )

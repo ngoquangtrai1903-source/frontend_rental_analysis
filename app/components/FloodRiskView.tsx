@@ -37,23 +37,22 @@ export default function FloodRiskView({ filterQueryString = '', lang = 'vi' }: F
           <ShieldAlert size={22} />
         </div>
         <div>
-          <span className="eyebrow">FLOOD RISK & DISASTER RESILIENCE AUDIT (LIVE DATA)</span>
           <h2>
-            {isEn ? 'Flood Risk Monitoring & Real Estate Safety Audit' : 'Giám Sát Rủi Ro Ngập Lụt & An Toàn Bất Động Sản'}
+            {isEn ? 'Flood risk' : 'Rủi ro ngập lụt'}
           </h2>
           <p>
             {isEn
-              ? 'Real-time telemetry directly queried from gold.rental_room, audited against historic 2022 and 2025 flood events.'
-              : 'Dữ liệu thời gian thực truy vấn trực tiếp từ bảng gold.rental_room, kiểm toán thực địa qua các đợt ngập 2022 và 2025.'}
+              ? 'Based on recorded floods in 2022 and 2025; not a current forecast.'
+              : 'Dựa trên ghi nhận ngập năm 2022 và 2025, không phải dự báo hiện tại.'}
           </p>
         </div>
         <span className="analysis-status">
           <span className="live-dot" />{' '}
           {loading
-            ? isEn ? 'Auditing...' : 'Đang kiểm toán...'
+            ? isEn ? 'Loading…' : 'Đang tải…'
             : auditData
-              ? isEn ? `${auditData.safePercentage}% in Safe Zone` : `${auditData.safePercentage}% Thuộc Vùng An Toàn`
-              : isEn ? 'No audit data' : 'Chưa có dữ liệu kiểm toán'}
+              ? isEn ? `${auditData.safePercentage}% low risk` : `${auditData.safePercentage}% rủi ro thấp`
+              : isEn ? 'No data' : 'Chưa có dữ liệu'}
         </span>
       </div>
 
@@ -70,13 +69,13 @@ export default function FloodRiskView({ filterQueryString = '', lang = 'vi' }: F
       <div className="analysis-cards">
         <div className="card metric-card">
           <div className="kpi-icon green"><CheckCircle size={17} /></div>
-          <span>{isEn ? 'Citywide Safety Ratio' : 'Tỷ lệ An toàn Toàn bộ'}</span>
+          <span>{isEn ? 'Low-risk listings' : 'Tin có rủi ro thấp'}</span>
           <strong>{auditData ? `${auditData.safePercentage}%` : loading ? '...' : '—'}</strong>
           <small>
             {auditData
               ? isEn
-                ? `${auditData.safeCount.toLocaleString()} / ${auditData.totalListings.toLocaleString()} safe properties (Level 0)`
-                : `${auditData.safeCount.toLocaleString()} / ${auditData.totalListings.toLocaleString()} tin an toàn (Mức 0)`
+                ? `${auditData.safeCount.toLocaleString()} / ${auditData.totalListings.toLocaleString()} low-risk listings`
+                : `${auditData.safeCount.toLocaleString()} / ${auditData.totalListings.toLocaleString()} tin rủi ro thấp`
               : loading
                 ? isEn ? 'Calculating...' : 'Đang tính toán...'
                 : query.isError
@@ -86,13 +85,13 @@ export default function FloodRiskView({ filterQueryString = '', lang = 'vi' }: F
         </div>
         <div className="card metric-card">
           <div className="kpi-icon blue"><Droplets size={17} /></div>
-          <span>{isEn ? 'Historical 2022/2025 Audit' : 'Kiểm toán Đợt ngập 2022/2025'}</span>
-          <strong>{auditData ? `${auditData.flood2022Count + auditData.flood2025Count} ${isEn ? 'listings' : 'tin'}` : loading ? '...' : '—'}</strong>
-          <small>{isEn ? 'Properties situated in historically flooded zones' : 'Số tin thực tế có ghi nhận ảnh hưởng ngập trong lịch sử'}</small>
+          <span>{isEn ? 'Flood records · 2022 & 2025' : 'Ghi nhận ngập · 2022 & 2025'}</span>
+          <strong>{auditData ? `${auditData.flood2022Count + auditData.flood2025Count} ${isEn ? 'records' : 'lượt'}` : loading ? '...' : '—'}</strong>
+          <small>{isEn ? 'Counted separately for each year' : 'Mỗi năm được tính riêng'}</small>
         </div>
         <div className="card metric-card">
           <div className="kpi-icon orange"><TrendingUp size={17} /></div>
-          <span>{isEn ? 'Lowland Rent Discount' : 'Mức chiết khấu vùng trũng'}</span>
+          <span>{isEn ? 'Rent difference' : 'Chênh lệch giá thuê'}</span>
           <strong>{auditData ? `-${auditData.floodDiscountPct}%` : loading ? '...' : '—'}</strong>
           <small>{isEn ? 'Average rent discount compared to safe zones' : 'Chênh lệch giá thuê trung bình so với vùng an toàn'}</small>
         </div>
@@ -103,23 +102,23 @@ export default function FloodRiskView({ filterQueryString = '', lang = 'vi' }: F
         <div className="flood-panel-header">
           <div>
             <h3 style={{ margin: '0 0 4px', fontSize: '15px' }}>
-              {isEn ? 'Topographical Drainage & Safety Assessment by Ward' : 'Đánh Giá An Toàn Địa Hình Thoát Nước Từng Quận/Huyện'}
+              {isEn ? 'Flood risk by ward' : 'Rủi ro ngập theo phường'}
             </h3>
             <p style={{ margin: 0, color: 'var(--muted)', fontSize: '11px' }}>
               {isEn
-                ? 'Aggregated from all active listings belonging to each district in Gold Data Warehouse.'
-                : 'Dữ liệu tổng hợp từ toàn bộ các tin đăng thuộc từng phường/quận trong tầng Gold Data Warehouse.'}
+                ? 'Based on listings matching your filters.'
+                : 'Theo các tin đăng trong bộ lọc hiện tại.'}
             </p>
           </div>
           <button className="clear-filter" onClick={() => void query.refetch()} disabled={query.isFetching}>
-            <RotateCcw size={14} /> {isEn ? 'Refresh Audit' : 'Làm mới kiểm toán'}
+            <RotateCcw size={14} /> {isEn ? 'Refresh' : 'Làm mới'}
           </button>
         </div>
 
         <div style={{ marginTop: '16px', display: 'grid', gap: '10px' }}>
           {loading ? (
             <div style={{ padding: '30px', textAlign: 'center', color: 'var(--muted)' }}>
-              {isEn ? 'Analyzing topographical drainage metrics from Supabase...' : 'Đang phân tích dữ liệu địa hình từ Supabase...'}
+              {isEn ? 'Loading ward data…' : 'Đang tải dữ liệu theo phường…'}
             </div>
           ) : query.isError ? null : auditData?.wardDetails.length ? (
             auditData.wardDetails.map((zone) => (
@@ -160,14 +159,14 @@ export default function FloodRiskView({ filterQueryString = '', lang = 'vi' }: F
                         borderRadius: '4px',
                       }}
                     >
-                      {zone.riskTier}
+                      {zone.status === 'safe' ? (isEn ? 'Low risk' : 'Rủi ro thấp') : zone.status === 'alert' ? (isEn ? 'Recorded flooding' : 'Có ghi nhận ngập') : (isEn ? 'Check locally' : 'Cần kiểm tra thêm')}
                     </span>
                     <span style={{ fontSize: '10px', color: 'var(--muted)' }}>
                       ({zone.totalRooms} {isEn ? 'listings' : 'tin đăng'})
                     </span>
                   </div>
                   <p className="flood-zone-note" style={{ margin: '3px 0 0', fontSize: '11px', lineHeight: 1.4 }}>
-                    {zone.note} {isEn ? 'Avg Rent: ' : 'Giá thuê TB: '}<strong>{zone.avgPriceMillion} {isEn ? 'M/mo' : 'tr/tháng'}</strong> ({zone.avgPpm2.toLocaleString()} {isEn ? 'VND/m²' : 'đ/m²'}).
+                    {isEn ? 'Average rent: ' : 'Giá thuê TB: '}<strong>{zone.avgPriceMillion} {isEn ? 'M/mo' : 'tr/tháng'}</strong> ({zone.avgPpm2.toLocaleString()} {isEn ? 'VND/m²' : 'đ/m²'}).
                   </p>
                 </div>
 
@@ -175,7 +174,7 @@ export default function FloodRiskView({ filterQueryString = '', lang = 'vi' }: F
                   <div className={`flood-score ${zone.status}`} style={{ font: "800 16px 'Manrope', sans-serif" }}>
                     {zone.safeScore}%
                   </div>
-                  <small style={{ fontSize: '9px', color: 'var(--muted)' }}>{isEn ? 'Safety Score' : 'Chỉ số an toàn'}</small>
+                  <small style={{ fontSize: '9px', color: 'var(--muted)' }}>{isEn ? 'Low-risk listings' : 'Tin rủi ro thấp'}</small>
                 </div>
               </div>
             ))
@@ -184,39 +183,6 @@ export default function FloodRiskView({ filterQueryString = '', lang = 'vi' }: F
               {isEn ? 'No data for the selected area and filter conditions.' : 'Chưa có dữ liệu theo khu vực và điều kiện lọc đã chọn.'}
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Strategic Flood Defense Recommendations */}
-      <div className="card flood-recommendations" style={{ padding: '20px', marginTop: '14px', border: '1px solid var(--line)' }}>
-        <h4 style={{ margin: '0 0 10px', fontSize: '13px', color: 'var(--ink)' }}>
-          {isEn ? 'DATA-BACKED INVESTMENT & SAFE LEASING RECOMMENDATIONS IN DA NANG' : 'KHUYẾN NGHỊ ĐẦU TƯ & THUÊ AN TOÀN TẠI ĐÀ NẴNG DỰA TRÊN DỮ LIỆU'}
-        </h4>
-        <div className="flood-recommendation-grid" style={{ fontSize: '11px', lineHeight: 1.5 }}>
-          <div>
-            <strong>{isEn ? '1. Ground Floor Elevation:' : '1. Nâng cao cốt nền tầng 1:'}</strong>
-            <p style={{ margin: '4px 0 0', color: 'var(--muted)' }}>
-              {isEn
-                ? 'For properties located in low alleys near drainage canals, elevate ground floor by at least 50cm above alley level to avoid overflow.'
-                : 'Nếu xây dựng nhà trọ tại các kiệt thấp gần kênh thoát nước, khuyến nghị nâng cốt nền tối thiểu 50cm so với mặt đường kiệt để tránh nước tràn ngược.'}
-            </p>
-          </div>
-          <div>
-            <strong>{isEn ? '2. Flood-Guarded Parking:' : '2. Ưu tiên bãi xe có gờ ngăn nước:'}</strong>
-            <p style={{ margin: '4px 0 0', color: 'var(--muted)' }}>
-              {isEn
-                ? 'Tenants in Da Nang are willing to pay an extra 200k — 300k VND/month for elevated parking garages with anti-flood barriers.'
-                : 'Khách thuê xe máy tại Đà Nẵng sẵn sàng trả thêm 200k — 300k/tháng cho các phòng trọ có hầm để xe cao ráo, trang bị cửa van chống ngập.'}
-            </p>
-          </div>
-          <div>
-            <strong>{isEn ? '3. Most Resilient Coastal Zones:' : '3. Khu vực giữ giá bền vững nhất:'}</strong>
-            <p style={{ margin: '4px 0 0', color: 'var(--muted)' }}>
-              {isEn
-                ? 'An Hai, Phuoc My, My An (Son Tra & Ngu Hanh Son) feature fast sand-permeable drainage and maintain >92% occupancy year-round.'
-                : 'An Hải, Phước Mỹ, Mỹ An (Sơn Trà & Ngũ Hành Sơn) vừa kề biển vừa có nền địa chất cát pha thoát nước cực nhanh, duy trì tỷ lệ kín phòng quanh năm > 92%.'}
-            </p>
-          </div>
         </div>
       </div>
     </div>

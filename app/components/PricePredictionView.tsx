@@ -319,7 +319,7 @@ export function translateFeatureLabel(label: string, isEn = false): string {
   if (l.includes('diện tích')) return 'Property Size'
   if (l.includes('nội thất')) return 'Furnishing & Interior'
   if (l.includes('khu vực') || l.includes('phường')) return 'Ward / District'
-  if (l.includes('khoảng cách đến cbd') || l.includes('cbd')) return 'Distance to CBD'
+  if (l.includes('khoảng cách đến cbd') || l.includes('cbd')) return 'Distance to centre'
   if (l.includes('thang máy')) return 'Elevator'
   if (l.includes('biển')) return 'Distance to Beach'
   if (l.includes('ban công')) return 'Balcony'
@@ -631,7 +631,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
 
   const beachError = useMemo(() => {
     if (distToBeach < 0) return isEn ? 'Distance cannot be negative.' : 'Khoảng cách không thể là số âm.'
-    if (distToBeach > 12) return isEn ? 'Distance to beach exceeds Da Nang bounds (max ~12km).' : 'Khoảng cách tới biển vượt quá giới hạn địa lý Đà Nẵng (tối đa ~12km).'
+    if (distToBeach > 12) return isEn ? 'Distance to beach exceeds Da Nang bounds (max ~12km).' : 'Cách biển vượt quá giới hạn địa lý Đà Nẵng (tối đa ~12km).'
     return null
   }, [distToBeach, isEn])
 
@@ -826,15 +826,15 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
       setHasElevator(1)
       setSmartNotice(
         isEn
-          ? 'Switched to Apartment / Condo valuation mode (Model CanHo HGBoost)'
-          : 'Đã chuyển sang chế độ Dự đoán Căn hộ / Chung cư (Model CanHo HGBoost)'
+          ? 'Apartment selected'
+          : 'Đã chọn căn hộ'
       )
     } else {
       if (sizeM2 > 50) setSizeM2(25)
       setSmartNotice(
         isEn
-          ? 'Switched to Room rental valuation mode (Model Tro CatBoost)'
-          : 'Đã chuyển sang chế độ Dự đoán Phòng trọ (Model Tro CatBoost / ExtraTrees)'
+          ? 'Rental room selected'
+          : 'Đã chọn phòng trọ'
       )
     }
 
@@ -1011,8 +1011,8 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
           data.detail ||
             data.message ||
             (isEn
-              ? 'Backend response does not match expected price structure.'
-              : 'Dữ liệu phản hồi từ Backend không đúng cấu trúc giá dự đoán.')
+              ? 'Could not read the estimate. Please try again.'
+              : 'Chưa đọc được kết quả. Vui lòng thử lại.')
         )
       }
 
@@ -1027,8 +1027,8 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
       setErrorMsg(
         err?.message ||
           (isEn
-            ? 'Unable to connect to FastAPI backend at http://localhost:8000. You can click "Run UI simulation" below.'
-            : 'Không thể kết nối đến Backend FastAPI tại http://localhost:8000. Bạn có thể bấm nút "Mô phỏng thử nghiệm" bên dưới để kiểm tra giao diện.')
+            ? 'The prediction service is unavailable. You can try a sample estimate below.'
+            : 'Dịch vụ dự đoán chưa kết nối. Bạn có thể xem kết quả mô phỏng bên dưới.')
       )
     } finally {
       setLoading(false)
@@ -1120,19 +1120,14 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
           {propertyType === 'apartment' ? <Building2 size={24} /> : <Sparkles size={24} />}
         </div>
         <div>
-          <span className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Activity size={13} style={{ color: '#3078f0' }} />
-            AI RENTAL & APARTMENT VALUATION ENGINE (FASTAPI 2026)
-            
-          </span>
-          <h2 style={{ fontSize: '23px', margin: '6px 0 4px' }}>
+          <h2>
             {propertyType === 'apartment'
               ? isEn
-                ? 'AI Apartment / Condo Valuation & SHAP Explainability Engine'
-                : 'Triển Khai Model Dự Đoán Giá Căn Hộ / Chung Cư & Giải Thích SHAP'
+                ? 'Estimate apartment rent'
+                : 'Ước tính giá thuê căn hộ'
               : isEn
-                ? 'AI Rental Room Valuation & SHAP Explainability Engine'
-                : 'Triển Khai Model Dự Đoán Giá Phòng Trọ & Giải Thích SHAP'}
+                ? 'Estimate room rent'
+                : 'Ước tính giá thuê phòng trọ'}
           </h2>
         </div>
 
@@ -1149,7 +1144,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
               }}
             />
             <span>
-              {isBackendOnline ? 'FastAPI Online (Port 8000)' : isEn ? 'Backend Disconnected' : 'Backend Chưa Kết Nối'}
+              {checkingBackend ? (isEn ? 'Checking…' : 'Đang kiểm tra…') : isBackendOnline ? (isEn ? 'Available' : 'Sẵn sàng') : (isEn ? 'Temporarily unavailable' : 'Tạm thời chưa kết nối')}
             </span>
             <button
               onClick={() => fetchMetadata(propertyType)}
@@ -1178,11 +1173,11 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
         <div className="predict-form-card">
           <div className="predict-form-header">
             <div>
-              <h3>{isEn ? 'Property Specifications' : 'Thông Số Bất Động Sản'}</h3>
+              <h3>{isEn ? 'Property details' : 'Thông tin nhà thuê'}</h3>
               <p>
                 {isEn
-                  ? 'Select property type, input parameters or choose a quick sample'
-                  : 'Chọn loại hình bất động sản và nhập thông số để dự đoán giá'}
+                  ? 'Enter the details or try a sample.'
+                  : 'Nhập thông tin hoặc chọn một mẫu có sẵn.'}
               </p>
             </div>
             <button
@@ -1314,11 +1309,11 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
               <Maximize2 size={13} style={{ color: 'var(--blue)' }} />
               {propertyType === 'apartment'
                 ? isEn
-                  ? '1. Size, Rooms & Commute Distances'
-                  : '1. Diện tích, Số phòng ngủ & Cự ly di chuyển'
+                  ? '1. Size & distance'
+                  : '1. Diện tích & khoảng cách'
                 : isEn
-                  ? '1. Size & Commute Distances'
-                  : '1. Diện tích & Khoảng cách di chuyển'}
+                  ? '1. Size & distance'
+                  : '1. Diện tích & khoảng cách'}
             </div>
 
             {/* ONLY FOR APARTMENT: Strictly 1, 2, or 3 Rooms */}
@@ -1403,7 +1398,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
 
               <div className="form-field">
                 <label>
-                  <span>{isEn ? 'Distance to CBD' : 'Khoảng cách tới CBD'}</span>
+                  <span>{isEn ? 'Distance to centre' : 'Cách trung tâm'}</span>
                   <span className="unit">(0 - 20 km)</span>
                 </label>
                 <div className="form-input-wrap">
@@ -1437,7 +1432,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
             <div className="form-row">
               <div className="form-field">
                 <label>
-                  <span>{isEn ? 'Distance to beach' : 'Khoảng cách tới biển'}</span>
+                  <span>{isEn ? 'Distance to beach' : 'Cách biển'}</span>
                   <span className="unit">(0 - 12 km)</span>
                 </label>
                 <div className="form-input-wrap">
@@ -1469,7 +1464,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
 
               <div className="form-field">
                 <label>
-                  <span>{isEn ? 'Distance to university' : 'Cự ly tới ĐH gần nhất'}</span>
+                  <span>{isEn ? 'Distance to university' : 'Cách đại học gần nhất'}</span>
                   <span className="unit">(0 - 10 km)</span>
                 </label>
                 <div className="form-input-wrap">
@@ -1497,7 +1492,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
             {/* GROUP 2: Geographic Ward & Hotspot Anchor Codes */}
             <div className="form-group-title">
               <MapPin size={13} style={{ color: 'var(--blue)' }} />
-              {isEn ? '2. Location & Nearby Anchors' : '2. Khu vực & Điểm quy chiếu lân cận'}
+              {isEn ? '2. Location' : '2. Vị trí'}
             </div>
 
             {/* Smart Default Notification Banner */}
@@ -1632,7 +1627,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
             {/* GROUP 3: Furnishing & Interior Amenities */}
             <div className="form-group-title">
               <Armchair size={13} style={{ color: 'var(--blue)' }} />
-              {isEn ? '3. Furnishing & Amenities' : '3. Tình trạng nội thất & Tiện nghi'}
+              {isEn ? '3. Furnishing & amenities' : '3. Nội thất & tiện ích'}
             </div>
 
             <div className="form-field" style={{ marginBottom: '14px' }}>
@@ -1710,7 +1705,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                       onClick={() => handlePredict(undefined, true)}
                       className="predict-error-btn"
                     >
-                      {isEn ? '⚡ Run UI simulation test (Demo Mode)' : '⚡ Chạy mô phỏng kiểm tra UI ngay (Demo Mode)'}
+                      {isEn ? 'Try a sample estimate' : 'Xem kết quả mô phỏng'}
                     </button>
                   )}
                 </div>
@@ -1735,7 +1730,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
               {loading ? (
                 <>
                   <div className="pulse-spinner" style={{ width: '18px', height: '18px' }} />
-                  <span>{isEn ? 'Computing AI & SHAP model...' : 'Đang tính toán mô hình AI & SHAP...'}</span>
+                  <span>{isEn ? 'Estimating rent…' : 'Đang ước tính…'}</span>
                 </>
               ) : (
                 <>
@@ -1743,11 +1738,11 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                   <span>
                     {propertyType === 'apartment'
                       ? isEn
-                        ? 'Predict Apartment Price'
-                        : 'Dự đoán giá Căn hộ / Chung cư'
+                        ? 'Estimate rent'
+                        : 'Dự đoán giá'
                       : isEn
-                        ? 'Predict Room Rental Price'
-                        : 'Dự đoán giá phòng trọ'}
+                        ? 'Estimate rent'
+                        : 'Dự đoán giá'}
                   </span>
                 </>
               )}
@@ -1766,16 +1761,16 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                 <Calculator size={28} />
               </div>
               <h3 style={{ font: "800 18px 'Manrope', sans-serif", margin: '0 0 8px', color: 'var(--ink)' }}>
-                {isEn ? 'Ready to Value Rent & Visualize SHAP' : 'Sẵn Sàng Dự Đoán Giá Thuê & Trực Quan Hóa SHAP'}
+                {isEn ? 'Your estimate will appear here' : 'Kết quả sẽ hiển thị ở đây'}
               </h3>
               <p style={{ maxWidth: '440px', margin: '0 auto 20px', color: 'var(--muted)', fontSize: '13px' }}>
                 {propertyType === 'apartment'
                   ? isEn
-                    ? 'Enter apartment parameters on the left or select a Quick Preset to run the apartment valuation pipeline.'
-                    : 'Điền các thông số căn hộ/chung cư ở cột bên trái hoặc bấm vào một trong các Mẫu nhanh để kích hoạt mô hình dự đoán căn hộ.'
+                    ? 'Enter apartment details, then select Estimate rent.'
+                    : 'Nhập thông tin căn hộ rồi bấm Dự đoán giá.'
                   : isEn
-                    ? 'Enter property parameters on the left or select a Quick Preset to activate the room valuation model.'
-                    : 'Điền các thông số căn phòng trọ ở cột bên trái hoặc bấm vào một trong các Mẫu nhanh để kích hoạt mô hình dự đoán phòng trọ.'}
+                    ? 'Enter room details, then select Estimate rent.'
+                    : 'Nhập thông tin phòng trọ rồi bấm Dự đoán giá.'}
               </p>
               <button
                 type="button"
@@ -1787,10 +1782,10 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                 {propertyType === 'apartment'
                   ? isEn
                     ? 'Try with 1-Bed Beach Apt preset'
-                    : 'Thử ngay với mẫu Căn 1PN Biển'
+                    : 'Thử mẫu căn hộ ven biển'
                   : isEn
                     ? 'Try with Beach Studio preset'
-                    : 'Thử ngay với mẫu Studio Biển'}
+                    : 'Thử mẫu phòng ven biển'}
               </button>
             </div>
           )}
@@ -1800,16 +1795,16 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
             <div className="card predict-loading-card">
               <div className="pulse-spinner" style={{ width: '38px', height: '38px', margin: '0 auto 18px' }} />
               <h3 style={{ font: "800 18px 'Manrope', sans-serif", margin: '0 0 6px' }}>
-                {isEn ? 'Analyzing Parameters & Computing SHAP Values...' : 'Đang Phân Tích Thông Số & Tính Toán SHAP Values...'}
+                {isEn ? 'Estimating rent…' : 'Đang ước tính giá thuê…'}
               </h3>
               <p style={{ color: 'var(--muted)', fontSize: '12px' }}>
                 {propertyType === 'apartment'
                   ? isEn
-                    ? 'Calling FastAPI Apartment pipeline, computing HistGradientBoosting and SHAP Permutation values.'
-                    : 'Đang gọi API Backend FastAPI (Port 8000), truy xuất mô hình Căn hộ HGBoost và tính toán giải thích SHAP.'
+                    ? 'Calculating the estimate from your apartment details.'
+                    : 'Đang tính giá từ thông tin căn hộ bạn đã nhập.'
                   : isEn
-                    ? 'Calling FastAPI Backend (Port 8000), retrieving weights and isolating feature contributions.'
-                    : 'Đang gọi API Backend FastAPI (Port 8000), truy xuất mô hình Phòng trọ CatBoost và phân tách đóng góp từng đặc trưng.'}
+                    ? 'Calculating the estimate from your room details.'
+                    : 'Đang tính giá từ thông tin phòng trọ bạn đã nhập.'}
               </p>
             </div>
           )}
@@ -1834,11 +1829,11 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                       <span className="eyebrow" style={{ color: 'var(--blue)', marginBottom: '4px' }}>
                         {propertyType === 'apartment'
                           ? isEn
-                            ? 'APARTMENT VALUATION RESULT (AI MODEL)'
-                            : `KẾT QUẢ ĐỊNH GIÁ CĂN HỘ / CHUNG CƯ (${rooms} PHÒNG NGỦ)`
+                            ? 'Estimated apartment rent'
+                            : `Giá thuê căn hộ ${rooms} phòng ngủ`
                           : isEn
-                            ? 'AI MODEL VALUATION RESULT'
-                            : 'KẾT QUẢ ĐỊNH GIÁ PHÒNG TRỌ (AI MODEL)'}
+                            ? 'Estimated room rent'
+                            : 'Giá thuê phòng trọ ước tính'}
                       </span>
                       <div className="price-main-display">
                         <span className="price-main-number">{formatPriceMillion(prediction?.price_million_vnd)}</span>
@@ -1877,7 +1872,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
 
                     {prediction.is_simulation && (
                       <span className="simulation-pill">
-                        {isEn ? 'UI Simulation / Demo Mode' : 'Chế độ mô phỏng kiểm tra UI'}
+                        {isEn ? 'Sample estimate' : 'Kết quả mô phỏng'}
                       </span>
                     )}
                   </div>
@@ -1885,7 +1880,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                   {/* Range Estimate */}
                   {formattedRange && (
                     <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px solid var(--line)' }}>
-                      <div
+                      <div className="prediction-range-summary"
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
@@ -1894,7 +1889,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                         }}
                       >
                         <span style={{ color: 'var(--muted)', fontWeight: 600 }}>
-                          {isEn ? 'Estimated confidence range:' : 'Khoảng giá tham khảo ước tính:'}
+                          {isEn ? 'Estimated range:' : 'Khoảng giá tham khảo:'}
                         </span>
                         <strong style={{ color: 'var(--ink)' }}>{formattedRange}</strong>
                       </div>
@@ -1906,17 +1901,10 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                 </div>
 
                 {/* 3 Metric Cards for SHAP Overview */}
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: '12px',
-                    marginTop: '16px'
-                  }}
-                >
+                <div className="prediction-stats">
                   <div className="card metric-card" style={{ padding: '14px 16px' }}>
                     <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>
-                      {isEn ? 'Market Base Value' : 'Giá cơ sở thị trường (Base)'}
+                      {isEn ? 'Market Base Value' : 'Giá cơ sở'}
                     </span>
                     <strong style={{ font: "800 18px 'Manrope', sans-serif", color: 'var(--ink)' }}>
                       {formatMoney(
@@ -1927,10 +1915,10 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                       {propertyType === 'apartment'
                         ? isEn
                           ? 'Da Nang apartment baseline'
-                          : 'Điểm chuẩn căn hộ chung cư ĐN'
+                          : 'Mức tham chiếu của mô hình'
                         : isEn
                           ? 'Da Nang room benchmark'
-                          : 'Điểm chuẩn phòng trọ Đà Nẵng'}
+                          : 'Mức tham chiếu của mô hình'}
                     </small>
                   </div>
 
@@ -1986,7 +1974,7 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                   >
                     <div>
                       <h3 style={{ font: "800 16px 'Manrope', sans-serif", margin: '0 0 4px', color: 'var(--ink)' }}>
-                        {isEn ? 'SHAP Feature Impact Horizontal Bar Chart' : 'Biểu Đồ Cột Ngang Tác Động SHAP (Feature Impact)'}
+                        {isEn ? 'What affects the estimate' : 'Các yếu tố ảnh hưởng đến giá'}
                       </h3>
                       <p style={{ margin: 0, fontSize: '11px', color: 'var(--muted)' }}>
                         {isEn
@@ -2023,10 +2011,8 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
 
                   {/* Chart Header Axis */}
                   <div
+                    className="shap-axis-header"
                     style={{
-                      display: 'grid',
-                      gridTemplateColumns: '190px 1fr 130px',
-                      gap: '14px',
                       padding: '14px 0 8px',
                       borderBottom: '1px solid var(--line)',
                       fontSize: '10px',
@@ -2036,11 +2022,11 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                       letterSpacing: '0.5px'
                     }}
                   >
-                    <span>{isEn ? 'Feature & Value' : 'Đặc trưng & Giá trị thực'}</span>
+                    <span>{isEn ? 'Factor' : 'Yếu tố'}</span>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#ef4444' }}>{isEn ? '← Negative impact' : '← Giảm giá (Chiết khấu)'}</span>
-                      <span style={{ color: '#64748b' }}>{isEn ? 'Zero Axis' : 'Trục 0'}</span>
-                      <span style={{ color: '#10b981' }}>{isEn ? 'Positive impact →' : 'Tăng giá (Phụ trội) →'}</span>
+                      <span style={{ color: '#ef4444' }}>{isEn ? '← Decrease' : '← Giảm'}</span>
+                      <span style={{ color: '#64748b' }}>0</span>
+                      <span style={{ color: '#10b981' }}>{isEn ? 'Increase →' : 'Tăng →'}</span>
                     </div>
                     <span style={{ textAlign: 'right' }}>{isEn ? 'Impact (VND / %)' : 'Ảnh hưởng (VND / %)'}</span>
                   </div>
@@ -2115,12 +2101,12 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <h3 style={{ font: "800 16px 'Manrope', sans-serif", margin: '0 0 4px', color: 'var(--ink)' }}>
-                        {isEn ? 'Itemized Price Contribution Breakdown Table' : 'Bảng Chi Tiết Đóng Góp Giá (Breakdown Table)'}
+                        {isEn ? 'Price breakdown' : 'Chi tiết giá ước tính'}
                       </h3>
                       <p style={{ margin: 0, fontSize: '11px', color: 'var(--muted)' }}>
                         {isEn
-                          ? 'Cumulative waterfall sum from base price to final predicted rent.'
-                          : 'Cộng dồn từng thành phần từ mức giá gốc cơ sở đến mức giá dự đoán cuối cùng.'}
+                          ? 'Baseline plus the contribution of each factor.'
+                          : 'Giá cơ sở cộng với phần tăng, giảm của từng yếu tố.'}
                       </p>
                     </div>
                   </div>
@@ -2238,10 +2224,9 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                             </strong>
                           </td>
                           <td colSpan={2}>
-                            {prediction?.model_metadata?.model_name ||
-                              (propertyType === 'apartment'
-                                ? 'HistGradientBoostingRegressor (Căn hộ / Chung cư)'
-                                : 'CatBoost Regressor (Phòng trọ)')}
+                            {propertyType === 'apartment'
+                              ? (isEn ? 'Apartment' : 'Căn hộ')
+                              : (isEn ? 'Rental room' : 'Phòng trọ')}
                           </td>
                           <td style={{ color: 'var(--blue)', fontWeight: 800 }}>
                             {formatPriceMillion(prediction?.price_million_vnd)}{' '}
@@ -2267,8 +2252,8 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
                     <Info size={15} style={{ color: 'var(--blue)', flexShrink: 0 }} />
                     <span>
                       {isEn
-                        ? 'SHAP Additive Attribution Formula: Predicted Price = Base Value + Σ(Feature Impact). Each feature is calculated independently to explain why the property is priced above or below the market average, conforming to XAI standards.'
-                        : 'Công thức SHAP Additive Attribution: Giá dự đoán = Giá cơ sở + ∑(Ảnh hưởng từng biến). Mỗi đặc trưng giải thích rõ tại sao căn phòng / căn hộ có giá cao hơn hay thấp hơn mặt bằng chung.'}
+                        ? 'SHAP explains how each factor raises or lowers the estimate relative to the model baseline.'
+                        : 'SHAP cho biết từng yếu tố làm tăng hay giảm giá so với mức cơ sở của mô hình.'}
                     </span>
                   </div>
                 </div>
