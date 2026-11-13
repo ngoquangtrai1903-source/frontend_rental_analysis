@@ -3,7 +3,7 @@ import './globals.css'
 import Providers from './providers'
 
 export const metadata: Metadata = {
-  title: 'RentIQ — Da Nang Market Intelligence',
+  title: 'RentIQ — Thị trường thuê Đà Nẵng',
   description: 'Dashboard phân tích thị trường cho thuê bất động sản Đà Nẵng',
 }
 

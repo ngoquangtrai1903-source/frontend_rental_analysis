@@ -55,20 +55,20 @@ export function getFloodRiskBadge(riskLabel: number | null, isEn = false) {
   if (riskLabel === 0) {
     return {
       icon: <ShieldCheck size={13} className="text-emerald-600" />,
-      text: isEn ? 'High ground · Safe' : 'Cốt nền cao · An toàn',
+      text: isEn ? 'Low flood risk' : 'Rủi ro ngập thấp',
       className: 'bg-emerald-50 text-emerald-700 border-emerald-200'
     }
   }
   if (riskLabel === 1) {
     return {
       icon: <AlertTriangle size={13} className="text-amber-600" />,
-      text: isEn ? 'Mild flood in storms' : 'Ngập nhẹ khi bão lớn',
+      text: isEn ? 'Moderate flood risk' : 'Rủi ro ngập trung bình',
       className: 'bg-amber-50 text-amber-700 border-amber-200'
     }
   }
   return {
     icon: <ShieldAlert size={13} className="text-rose-600" />,
-    text: isEn ? 'Lowland · High risk' : 'Vùng trũng · Nguy cơ cao',
+    text: isEn ? 'High flood risk' : 'Rủi ro ngập cao',
     className: 'bg-rose-50 text-rose-700 border-rose-200'
   }
 }

@@ -64,14 +64,13 @@ export default function AmenitiesView({ filterQueryString = '', onCategoryChange
           <Home size={22} />
         </div>
         <div>
-          <span className="eyebrow">AMENITY PREMIUM & VALUE LIFT ANALYSIS</span>
           <h2>
             {isEn ? 'Value-Add Amenities & Pricing Premium Analysis' : 'Phân tích Giá trị Gia tăng theo Tiện ích Phòng trọ'}
           </h2>
           <p>
             {isEn
-              ? 'Measures rental rate appreciation and VND/m² premium across 9 real-world amenities in Data Warehouse.'
-              : 'Đo lường mức tăng giá thuê và giá/m² dựa trên 9 tiện ích thực tế trong Data Warehouse.'}
+              ? 'Average rent with and without each amenity.'
+              : 'So sánh giá thuê trung bình giữa nhóm có và không có tiện ích.'}
           </p>
         </div>
         <span className="analysis-status">
@@ -80,7 +79,7 @@ export default function AmenitiesView({ filterQueryString = '', onCategoryChange
             ? isEn ? 'Loading data…' : 'Đang tải dữ liệu…'
             : query.isError
               ? isEn ? 'Failed to load' : 'Tải dữ liệu thất bại'
-              : isEn ? 'Calibrated data' : 'Dữ liệu đã hiệu chỉnh'}
+              : isEn ? `${amenitiesData.length} amenities` : `${amenitiesData.length} tiện ích`}
         </span>
       </div>
 
@@ -100,19 +99,19 @@ export default function AmenitiesView({ filterQueryString = '', onCategoryChange
             className={`tab ${filterCategory === 'all' ? 'active' : ''}`}
             onClick={() => onCategoryChange('')}
           >
-            {isEn ? 'Entire Market' : 'Toàn bộ thị trường'}
+            {isEn ? 'All types' : 'Tất cả'}
           </button>
           <button
             className={`tab ${filterCategory === 'Căn hộ/Chung cư' ? 'active' : ''}`}
             onClick={() => onCategoryChange('Căn hộ/Chung cư')}
           >
-            {isEn ? 'Apartments Deep-dive' : 'Chuyên sâu Căn hộ'}
+            {isEn ? 'Apartments' : 'Căn hộ'}
           </button>
           <button
             className={`tab ${filterCategory === 'Phòng trọ' ? 'active' : ''}`}
             onClick={() => onCategoryChange('Phòng trọ')}
           >
-            {isEn ? 'Rental Rooms Deep-dive' : 'Chuyên sâu Phòng trọ'}
+            {isEn ? 'Rental rooms' : 'Phòng trọ'}
           </button>
         </div>
       </div>
@@ -122,9 +121,9 @@ export default function AmenitiesView({ filterQueryString = '', onCategoryChange
         {amenitiesData.map((item) => (
           <div className="lift-card" key={item.key}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <strong style={{ fontSize: '13px' }}>{isEn ? (amenityLabelsEn[item.key] ?? 'Other amenity') : item.label}</strong>
+              <strong style={{ fontSize: '13px' }}>{isEn ? (amenityLabelsEn[item.key] ?? 'Other amenity') : ({ has_balcony: 'Ban công', has_parking: 'Chỗ để xe', free_hours: 'Giờ tự do', has_window: 'Cửa sổ', wifi: 'Wi-Fi' } as Record<string, string>)[item.key] || item.label}</strong>
               <span className={`lift-badge ${item.liftPct > 0 ? 'positive' : 'neutral'}`}>
-                {item.liftPct > 0 ? `+${item.liftPct}% ${isEn ? 'lift' : 'giá'}` : `${item.liftPct}%`}
+                {item.liftPct > 0 ? `+${item.liftPct}%` : `${item.liftPct}%`}
               </span>
             </div>
 
@@ -153,7 +152,7 @@ export default function AmenitiesView({ filterQueryString = '', onCategoryChange
             {/* Coverage bar */}
             <div style={{ marginTop: '10px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginBottom: '4px', color: 'var(--muted)' }}>
-                <span>{isEn ? `Prevalence: ${item.countWith} listings` : `Độ phổ biến: ${item.countWith} tin`}</span>
+                <span>{isEn ? `${item.countWith} listings with this amenity` : `${item.countWith} tin có tiện ích`}</span>
                 <span>{item.countWith + item.countWithout > 0 ? Math.round((item.countWith / (item.countWith + item.countWithout)) * 100) : 0}%</span>
               </div>
               <div className="summary-track">

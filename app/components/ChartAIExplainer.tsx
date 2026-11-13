@@ -30,6 +30,7 @@ export default function ChartAIExplainer({
   const [isLive, setIsLive] = useState(false)
   const [provider, setProvider] = useState<string>('')
   const [copied, setCopied] = useState(false)
+  const [error, setError] = useState(false)
 
   // Re-fetch in new language if already open when language toggles
   const prevLangRef = useRef(lang)
@@ -56,6 +57,9 @@ export default function ChartAIExplainer({
   const handleFetchInsight = async (overrideData?: any) => {
     setLoading(true)
     setIsOpen(true)
+    setError(false)
+    setExplanation(null)
+    setRawText(null)
     try {
       const isEvent = overrideData && (typeof overrideData !== 'object' || 'nativeEvent' in overrideData || 'target' in overrideData)
       const dataToSend = (!overrideData || isEvent) ? summaryData : overrideData
@@ -87,6 +91,7 @@ export default function ChartAIExplainer({
       setProvider(json.provider || '')
     } catch (err) {
       console.error('Failed to get AI insight:', err)
+      setError(true)
     } finally {
       setLoading(false)
     }
@@ -125,7 +130,7 @@ export default function ChartAIExplainer({
           ) : (
             <>
               <Sparkles size={13} className="ai-btn-sparkle" />
-              <span>{isEn ? 'Explain with AI' : 'Giải thích biểu đồ bằng AI'}</span>
+              <span>{isEn ? 'Read chart' : 'Đọc biểu đồ'}</span>
             </>
           )}
         </button>
@@ -140,7 +145,7 @@ export default function ChartAIExplainer({
                 <Bot size={14} />
               </div>
               <strong className="ai-title">
-                {isEn ? 'AI Market Insights' : 'Nhận định thị trường từ AI'}
+                {isEn ? 'Chart summary' : 'Tóm tắt biểu đồ'}
               </strong>
               <span
                 className={isLive ? 'ai-pill-live' : 'ai-pill-ready'}
@@ -149,10 +154,10 @@ export default function ChartAIExplainer({
                 {isLive ? (
                   <>
                     <span className="ai-live-dot" />
-                    {provider || 'Live LLM'}
+                    {'AI'}
                   </>
                 ) : (
-                  isEn ? 'Ready for API' : 'Sẵn sàng kết nối API'
+                  isEn ? 'Data summary' : 'Tóm tắt dữ liệu'
                 )}
               </span>
             </div>
@@ -197,13 +202,16 @@ export default function ChartAIExplainer({
               <Loader2 size={18} className="spin" style={{ margin: '0 auto 6px' }} />
               <div style={{ fontSize: '12px' }}>
                 {isEn
-                  ? 'AI is analyzing rental market trends from this chart…'
-                  : 'AI đang phân tích xu hướng thị trường từ biểu đồ…'}
+                  ? 'Reading chart data…'
+                  : 'Đang đọc dữ liệu biểu đồ…'}
               </div>
             </div>
           )}
 
           {/* Live LLM Raw Response (Formatted Markdown) */}
+          {!loading && error && (
+            <p role="alert">{isEn ? 'Could not load the summary. Select Refresh to try again.' : 'Chưa tải được tóm tắt. Bấm Làm mới để thử lại.'}</p>
+          )}
           {!loading && rawText && (
             <div className="ai-raw-content">
               {rawText.split('\n').map((line, idx) => {
@@ -286,7 +294,7 @@ export default function ChartAIExplainer({
 
               {explanation.recommendation && (
                 <div className="ai-takeaway">
-                  <strong>💡 {isEn ? 'Strategic Takeaway:' : 'Khuyến nghị chiến lược:'}</strong>{' '}
+                  <strong>{isEn ? 'Note:' : 'Lưu ý:'}</strong>{' '}
                   {explanation.recommendation}
                 </div>
               )}

@@ -201,9 +201,9 @@ export default function RentalMapbox({
     return (
       <div role="alert" style={{ alignItems: 'center', background: '#fff', border: '1px solid #f3d6a1', borderRadius: 14, color: '#7c4a03', display: 'flex', minHeight: 300, padding: 24 }}>
         <div>
-          <strong>Chưa cấu hình Mapbox Access Token</strong>
+          <strong>{lang === 'en' ? 'Map unavailable' : 'Bản đồ chưa sẵn sàng'}</strong>
           <p style={{ lineHeight: 1.6, margin: '8px 0 0' }}>
-            Thêm <code>NEXT_PUBLIC_MAPBOX_TOKEN</code> vào <code>.env.local</code> và tải lại ứng dụng để sử dụng bản đồ Mapbox.
+            {lang === 'en' ? 'Please try again later. You can still view listings in Overview.' : 'Vui lòng thử lại sau. Bạn vẫn có thể xem tin đăng ở Tổng quan.'}
           </p>
         </div>
       </div>
@@ -329,7 +329,7 @@ export default function RentalMapbox({
 
       {(loading || points.length > 0) && (
         <div className="mapbox-status-chip" style={{ background: '#fff', borderRadius: 7, boxShadow: '0 2px 8px #0f172a26', color: '#334155', fontSize: 11, fontWeight: 700, left: 16, padding: '7px 10px', position: 'absolute', top: 68, zIndex: 2 }}>
-          {loading ? (lang === 'en' ? 'Loading coordinates...' : 'Đang tải tọa độ...') : (lang === 'en' ? `${points.length.toLocaleString('en-US')} locations · ${detailedMarkers.length.toLocaleString('en-US')} detailed markers in view` : `${points.length.toLocaleString('vi-VN')} vị trí · ${detailedMarkers.length.toLocaleString('vi-VN')} marker chi tiết trong khung nhìn`)}
+          {loading ? (lang === 'en' ? 'Loading coordinates...' : 'Đang tải tọa độ...') : (lang === 'en' ? `${points.length.toLocaleString('en-US')} listings · Zoom in for details` : `${points.length.toLocaleString('vi-VN')} tin · Phóng to để xem chi tiết`)}
         </div>
       )}
 

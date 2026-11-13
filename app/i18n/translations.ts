@@ -3,10 +3,9 @@ export type Language = 'vi' | 'en'
 export const translations = {
   vi: {
     brand: 'RentIQ',
-    workspaceTitle: 'Da Nang Market',
-    workspaceSub: 'Data Warehouse · gold',
+    workspaceTitle: 'Đà Nẵng',
+    workspaceSub: 'Thị trường cho thuê',
     workspaceInUse: 'Đang sử dụng',
-    liveDataBadge: 'LIVE DATA · SCHEMA GOLD (RENTAL_ROOM)',
     filtering: 'Đang lọc...',
     loadingData: 'Đang làm mới dữ liệu theo bộ lọc hiện tại…',
     normalData: 'Dữ liệu đang hoạt động bình thường.',
@@ -46,7 +45,6 @@ export const translations = {
 
     // Heading Actions
     pageTitle: 'Bảng Điều Khiển Thị Trường Thuê Đà Nẵng',
-    pageSubtitle: 'Dữ liệu tổng hợp từ Data Warehouse tầng Gold với cơ chế Dynamic Query Builder.',
     exportCsv: 'Xuất CSV',
     exporting: 'Đang xuất…',
     filterButton: 'Bộ lọc',
@@ -61,30 +59,30 @@ export const translations = {
       backTo2026: 'Về T1/2026',
       allHistoryTooltip: 'Bỏ mốc tháng 1/2026 để xem toàn bộ dữ liệu lịch sử trước 2026',
       backTo2026Tooltip: 'Khôi phục mốc mặc định từ tháng 1/2026',
-      ward: 'Khu vực (Ward)',
+      ward: 'Khu vực',
       allWards: 'Tất cả khu vực',
-      category: 'Loại hình (Category)',
+      category: 'Loại hình',
       allCategories: 'Tất cả loại hình',
       furnishing: 'Mức nội thất',
       allFurnishings: 'Tất cả mức',
       priceRange: 'Khoảng giá',
       allPrices: 'Tất cả khoảng giá',
-      under3m: 'Dưới 3 triệu (Bình dân / Sinh viên)',
-      range3m5m: '3 — 5 triệu (Phổ thông / Người đi làm)',
-      range5m8m: '5 — 8 triệu (Trung cấp / Căn hộ mini)',
-      range8m15m: '8 — 15 triệu (Cao cấp / 2-3 phòng ngủ)',
-      above15m: 'Trên 15 triệu (Biệt thự / Căn hộ hạng sang)',
+      under3m: 'Dưới 3 triệu',
+      range3m5m: '3 — 5 triệu',
+      range5m8m: '5 — 8 triệu',
+      range8m15m: '8 — 15 triệu',
+      above15m: 'Trên 15 triệu',
       sizeRange: 'Diện tích',
       allSizes: 'Tất cả diện tích',
-      under20m2: 'Dưới 20 m² (Phòng nhỏ / KTX)',
-      range20_35m2: '20 — 35 m² (Studio / 1PN)',
-      range35_50m2: '35 — 50 m² (Rộng / 1-2PN)',
-      above50m2: 'Trên 50 m² (Căn lớn / Nhà riêng)',
+      under20m2: 'Dưới 20 m²',
+      range20_35m2: '20 — 35 m²',
+      range35_50m2: '35 — 50 m²',
+      above50m2: 'Trên 50 m²',
       floodRisk: 'Rủi ro ngập',
       allFloodRisks: 'Tất cả mức rủi ro',
-      lowRisk: '🟢 Rủi ro thấp (An toàn)',
-      mediumRisk: '🟡 Rủi ro trung bình (Ngập nhẹ cục bộ)',
-      highRisk: '🔴 Rủi ro cao (Vùng trũng lịch sử)',
+      lowRisk: 'Rủi ro thấp',
+      mediumRisk: 'Rủi ro trung bình',
+      highRisk: 'Rủi ro cao',
       requiredAmenities: 'Tiện ích bắt buộc',
       elevator: 'Thang máy',
       balcony: 'Ban công',
@@ -105,10 +103,10 @@ export const translations = {
       price: 'Giá:',
       size: 'DT:',
       risk: 'Rủi ro:',
-      elevator: '🛗 Thang máy',
-      balcony: '🌅 Ban công',
-      privateBath: '🚿 Vệ sinh khép kín',
-      parking: '🛵 Chỗ để xe'
+      elevator: 'Thang máy',
+      balcony: 'Ban công',
+      privateBath: 'Vệ sinh khép kín',
+      parking: 'Chỗ để xe'
     },
 
     // KPI Cards
@@ -122,20 +120,20 @@ export const translations = {
       perMonth: 'triệu/tháng',
       squareMeters: 'm²/phòng',
       perSquareMeter: 'triệu/m²',
-      realtimeAgg: 'Tổng hợp thời gian thực',
-      benchmarkAll: 'Benchmark toàn thành phố'
+      realtimeAgg: 'Theo bộ lọc hiện tại',
+      benchmarkAll: 'Toàn thành phố'
     },
 
     // Listings Table
     table: {
-      title: 'Dữ liệu Tin Đăng Thuê Bất Động Sản',
-      subtitle: 'Truy vấn phân trang trực tiếp từ bảng gold.rental_room theo điều kiện lọc.',
+      title: 'Danh sách tin đăng thực tế (gold.rental_room)',
+      subtitle: 'Theo bộ lọc hiện tại.',
       listingCol: 'Tin đăng',
       locationCol: 'Khu vực & vị trí',
       priceSizeCol: 'Giá & diện tích',
       amenitiesRiskCol: 'Tiện ích & rủi ro',
       postedCol: 'Ngày đăng',
-      sortDefault: 'Mặc định (ID)',
+      sortDefault: 'Mặc định',
       sortPriceAsc: 'Giá: Thấp → Cao',
       sortPriceDesc: 'Giá: Cao → Thấp',
       sortSizeAsc: 'Diện tích: Nhỏ → Lớn',
@@ -150,13 +148,13 @@ export const translations = {
       next: 'Sau',
       empty: 'Không có tin đăng nào phù hợp với điều kiện lọc hiện tại.',
       clearToReload: 'Thử xóa bớt bộ lọc để mở rộng kết quả tìm kiếm.',
-      hasMap: 'Có tọa độ map'
+      hasMap: 'Có vị trí trên bản đồ'
     },
 
     // Settings
     settingsModal: {
       workspace: 'WORKSPACE',
-      title: 'Cài đặt dashboard',
+      title: 'Cài đặt',
       subtitle: 'Tùy chỉnh trải nghiệm hiển thị và dữ liệu.',
       appearance: 'Giao diện',
       darkMode: 'Chế độ tối',
@@ -183,7 +181,7 @@ export const translations = {
 
     // Charts
     charts: {
-      trendTitle: 'Xu hướng theo chu kỳ thời gian',
+      trendTitle: 'Giá thuê theo thời gian',
       trendSubtitle: 'Số lượng tin đăng và giá thuê trung bình',
       listingsCount: 'Tin đăng',
       avgPriceLabel: 'Giá TB (triệu VNĐ)',
@@ -216,9 +214,8 @@ export const translations = {
   en: {
     brand: 'RentIQ',
     workspaceTitle: 'Da Nang Market',
-    workspaceSub: 'Data Warehouse · gold',
+    workspaceSub: 'Rental market',
     workspaceInUse: 'In Use',
-    liveDataBadge: 'LIVE DATA · SCHEMA GOLD (RENTAL_ROOM)',
     filtering: 'Filtering...',
     loadingData: 'Refreshing data by current filters…',
     normalData: 'Data is operating normally.',
@@ -258,7 +255,6 @@ export const translations = {
 
     // Heading Actions
     pageTitle: 'Da Nang Rental Market Dashboard',
-    pageSubtitle: 'Aggregated analytics from Gold layer Data Warehouse with Dynamic Query Builder.',
     exportCsv: 'Export CSV',
     exporting: 'Exporting…',
     filterButton: 'Filters',
@@ -281,22 +277,22 @@ export const translations = {
       allFurnishings: 'All furnishings',
       priceRange: 'Price Range',
       allPrices: 'All price ranges',
-      under3m: 'Under 3M VND (Budget / Student)',
-      range3m5m: '3 — 5M VND (Standard / Young pro)',
-      range5m8m: '5 — 8M VND (Mid-range / Studio)',
-      range8m15m: '8 — 15M VND (Premium / 2-3 BR)',
-      above15m: 'Above 15M VND (Luxury / Villa)',
+      under3m: 'Under 3M VND',
+      range3m5m: '3 — 5M VND',
+      range5m8m: '5 — 8M VND',
+      range8m15m: '8 — 15M VND',
+      above15m: 'Above 15M VND',
       sizeRange: 'Area Size',
       allSizes: 'All sizes',
-      under20m2: 'Under 20 m² (Small / Dorm)',
-      range20_35m2: '20 — 35 m² (Studio / 1BR)',
-      range35_50m2: '35 — 50 m² (Spacious / 1-2BR)',
-      above50m2: 'Above 50 m² (Large / House)',
+      under20m2: 'Under 20 m²',
+      range20_35m2: '20 — 35 m²',
+      range35_50m2: '35 — 50 m²',
+      above50m2: 'Above 50 m²',
       floodRisk: 'Flood Risk',
       allFloodRisks: 'All risk levels',
-      lowRisk: '🟢 Low Risk (Safe Zone)',
-      mediumRisk: '🟡 Medium Risk (Localized flood)',
-      highRisk: '🔴 High Risk (Historic lowland)',
+      lowRisk: 'Low Risk',
+      mediumRisk: 'Medium Risk',
+      highRisk: 'High Risk',
       requiredAmenities: 'Required Amenities',
       elevator: 'Elevator',
       balcony: 'Balcony',
@@ -317,10 +313,10 @@ export const translations = {
       price: 'Price:',
       size: 'Size:',
       risk: 'Risk:',
-      elevator: '🛗 Elevator',
-      balcony: '🌅 Balcony',
-      privateBath: '🚿 Private Bath',
-      parking: '🛵 Parking'
+      elevator: 'Elevator',
+      balcony: 'Balcony',
+      privateBath: 'Private Bath',
+      parking: 'Parking'
     },
 
     // KPI Cards
@@ -334,20 +330,20 @@ export const translations = {
       perMonth: 'M VND/mo',
       squareMeters: 'm²/unit',
       perSquareMeter: 'M VND/m²',
-      realtimeAgg: 'Realtime aggregation',
-      benchmarkAll: 'Citywide benchmark'
+      realtimeAgg: 'Matching your filters',
+      benchmarkAll: 'Citywide'
     },
 
     // Listings Table
     table: {
-      title: 'Rental Listings Data',
-      subtitle: 'Paginated direct query from gold.rental_room matching filtered conditions.',
+      title: 'Actual Listings (gold.rental_room)',
+      subtitle: 'Matching your filters.',
       listingCol: 'Listing',
       locationCol: 'Location & Ward',
       priceSizeCol: 'Price & Size',
       amenitiesRiskCol: 'Amenities & Risk',
       postedCol: 'Posted Date',
-      sortDefault: 'Default (ID)',
+      sortDefault: 'Default',
       sortPriceAsc: 'Price: Low → High',
       sortPriceDesc: 'Price: High → Low',
       sortSizeAsc: 'Size: Small → Large',
@@ -362,13 +358,13 @@ export const translations = {
       next: 'Next',
       empty: 'No listings match the current filter criteria.',
       clearToReload: 'Try clearing some filters to expand your search results.',
-      hasMap: 'Map coordinates'
+      hasMap: 'Location available'
     },
 
     // Settings
     settingsModal: {
       workspace: 'WORKSPACE',
-      title: 'Dashboard Settings',
+      title: 'Settings',
       subtitle: 'Customize display preferences and data behavior.',
       appearance: 'Appearance',
       darkMode: 'Dark Mode',
@@ -395,7 +391,7 @@ export const translations = {
 
     // Charts
     charts: {
-      trendTitle: 'Temporal Trends & Cycles',
+      trendTitle: 'Rent over time',
       trendSubtitle: 'Listing volume and average monthly rental rates',
       listingsCount: 'Listings',
       avgPriceLabel: 'Avg Price (M VND)',

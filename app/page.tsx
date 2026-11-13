@@ -35,6 +35,7 @@ const LocationMapView = dynamic(() => import('./components/LocationMapView'), {
   )
 })
 import {
+  User,
   Activity,
   BarChart3,
   Bell,
@@ -128,7 +129,7 @@ function ProfileAvatar({
   }, [url])
 
   if (!url || imgError) {
-    return <span className="avatar-initials">{initials}</span>
+    return <span className="avatar-initials">{email ? initials : <User size={15} aria-hidden="true" />}</span>
   }
 
   return (
@@ -841,12 +842,12 @@ export default function DashboardPage() {
             <div className="brand-mark"><Sparkles size={18} /></div>
             <span>Rent<span className="brand-accent">IQ</span></span>
           </div>
-          <div className="workspace-label">WORKSPACE</div>
+          <div className="workspace-label">{lang === 'en' ? 'RENTAL MARKET' : 'THỊ TRƯỜNG CHO THUÊ'}</div>
           <div className="workspace-select">
             <div className="workspace-avatar">DN</div>
             <div>
-              <strong>Da Nang Market</strong>
-              <small>Gold Data Warehouse</small>
+              <strong>{lang === 'en' ? 'Da Nang' : 'Đà Nẵng'}</strong>
+              <small>{lang === 'en' ? 'Rental market' : 'Thị trường cho thuê'}</small>
             </div>
             <ChevronDown size={15} />
           </div>
@@ -855,7 +856,7 @@ export default function DashboardPage() {
           <div className="page-wrap" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
             <div className="loading-indicator">
               <span className="pulse-spinner" />
-              <span>Đang kết nối Supabase Schema Gold...</span>
+              <span>{lang === 'en' ? 'Loading listings…' : 'Đang tải tin đăng…'}</span>
             </div>
           </div>
         </section>
@@ -871,16 +872,16 @@ export default function DashboardPage() {
           <div className="brand-mark"><Sparkles size={18} /></div>
           <span>Rent<span className="brand-accent">IQ</span></span>
         </div>
-        <div className="workspace-label">WORKSPACE</div>
+        <div className="workspace-label">{lang === 'en' ? 'RENTAL MARKET' : 'THỊ TRƯỜNG CHO THUÊ'}</div>
         <button className={`workspace-select workspace-button ${workspaceMenuOpen ? 'selected' : ''}`} onClick={() => setWorkspaceMenuOpen(!workspaceMenuOpen)}>
           <div className="workspace-avatar">DN</div>
           <div>
-            <strong>Da Nang Market</strong>
-            <small>Data Warehouse · gold</small>
+            <strong>{lang === 'en' ? 'Da Nang' : 'Đà Nẵng'}</strong>
+            <small>{lang === 'en' ? 'Rental market' : 'Thị trường cho thuê'}</small>
           </div>
           <ChevronDown size={15} />
         </button>
-        {workspaceMenuOpen && <div className="sidebar-popover workspace-popover"><strong>Da Nang Market</strong><span>Gold Data Warehouse</span><button onClick={() => setWorkspaceMenuOpen(false)}>Đang sử dụng</button></div>}
+        {workspaceMenuOpen && <div className="sidebar-popover workspace-popover"><strong>{lang === 'en' ? 'Da Nang' : 'Đà Nẵng'}</strong><span>{lang === 'en' ? 'Rental market' : 'Thị trường cho thuê'}</span><button onClick={() => setWorkspaceMenuOpen(false)}>Đang sử dụng</button></div>}
         <nav className="main-nav">
           {navItems.map((item) => {
             const Icon = item.icon
@@ -1004,9 +1005,9 @@ export default function DashboardPage() {
         </header>
 
         {notificationsOpen && <div className="quick-popover notification-popover"><strong>Trạng thái dữ liệu</strong>
-          {filtering ? <p><span className="live-dot" /> Đang làm mới dữ liệu theo bộ lọc hiện tại…</p> : errorMessage ? <p style={{ color: '#c65361' }}>⚠ Không thể tải dữ liệu: {errorMessage}</p> : <p><span className="live-dot" /> Dữ liệu đang hoạt động bình thường.</p>}
+          {filtering ? <p><span className="live-dot" /> Đang làm mới dữ liệu…</p> : errorMessage ? <p style={{ color: '#c65361' }}>⚠ Không thể tải dữ liệu: {errorMessage}</p> : <p><span className="live-dot" /> Dữ liệu đã tải xong.</p>}
           <p>{lastRefreshAt ? `Cập nhật lần cuối: ${lastRefreshAt.toLocaleTimeString('vi-VN')}` : 'Chưa có lần cập nhật thành công.'}</p>
-          {!filtering && !errorMessage && <p>{totalCount.toLocaleString('vi-VN')} tin đăng phù hợp với bộ lọc hiện tại.</p>}
+          {!filtering && !errorMessage && <p>{totalCount.toLocaleString('vi-VN')} tin phù hợp.</p>}
           <button onClick={() => { setNotificationsOpen(false); void fetchDashboardData() }}>Làm mới ngay</button><button onClick={() => setNotificationsOpen(false)}>Đóng</button>
         </div>}
         {mobileNavOpen && <div className="mobile-nav-popover">
@@ -1017,7 +1018,7 @@ export default function DashboardPage() {
         </div>}
         {modalOpen && <div className="modal-backdrop" onClick={closeModal}><div ref={modalRef} className="quick-modal" role="dialog" aria-modal="true" aria-labelledby="dashboard-modal-title" tabIndex={-1} onClick={(e) => e.stopPropagation()}>
           {settingsOpen ? <>
-            <div className="modal-heading"><div><span className="modal-eyebrow">WORKSPACE</span><h3 id="dashboard-modal-title">{lang === 'en' ? 'Dashboard Settings' : 'Cài đặt dashboard'}</h3><p>{lang === 'en' ? 'Customize display preferences and data behavior.' : 'Tùy chỉnh trải nghiệm hiển thị và dữ liệu.'}</p></div><button className="modal-close-button" aria-label="Đóng" title="Đóng cài đặt" onClick={closeModal}><X size={17} /></button></div>
+            <div className="modal-heading"><div><h3 id="dashboard-modal-title">{lang === 'en' ? 'Settings' : 'Cài đặt'}</h3></div><button className="modal-close-button" aria-label="Đóng" title="Đóng cài đặt" onClick={closeModal}><X size={17} /></button></div>
             <div className="settings-group"><span className="settings-group-title">{lang === 'en' ? 'Language' : 'Ngôn ngữ'}</span>
               <label className="setting-row"><span><strong>{lang === 'en' ? 'Display Language' : 'Ngôn ngữ hiển thị'}</strong><small>{lang === 'en' ? 'Switch between Vietnamese and English' : 'Chuyển đổi giữa Tiếng Việt và English'}</small></span>
                 <select className="filter-control" style={{ width: '130px', padding: '6px 8px', fontSize: '12px' }} value={lang} onChange={(e) => setLang(e.target.value as Language)}>
@@ -1077,7 +1078,7 @@ export default function DashboardPage() {
             </div>
             <div className="settings-status"><span className="live-dot" /> {settingsSaved ? (lang === 'en' ? 'Settings saved on this browser' : 'Cài đặt đã lưu trên trình duyệt này') : (lang === 'en' ? 'Settings apply to this session only' : 'Cài đặt chỉ áp dụng trong phiên này; chưa lưu được trên trình duyệt')}</div>
           </> : <>
-            <div className="modal-heading"><div><span className="modal-eyebrow">{lang === 'en' ? 'USER GUIDE' : 'HƯỚNG DẪN'}</span><h3 id="dashboard-modal-title">{lang === 'en' ? 'Help & Documentation' : 'Trợ giúp'}</h3></div><button className="modal-close-button" aria-label="Đóng" title="Đóng hướng dẫn" onClick={closeModal}><X size={17} /></button></div>
+            <div className="modal-heading"><div><span className="modal-eyebrow">{lang === 'en' ? 'USER GUIDE' : 'HƯỚNG DẪN'}</span><h3 id="dashboard-modal-title">{lang === 'en' ? 'Help' : 'Trợ giúp'}</h3></div><button className="modal-close-button" aria-label="Đóng" title="Đóng hướng dẫn" onClick={closeModal}><X size={17} /></button></div>
             <DashboardHelp activeNav={activeNav} lang={lang} />
           </>}
           <button className="button primary modal-action" onClick={closeModal}>{lang === 'en' ? 'Got It' : 'Đã hiểu'}</button>
@@ -1091,15 +1092,12 @@ export default function DashboardPage() {
           </div>}
           <div className="page-heading">
             <div>
-              <div className="eyebrow">
-                <span className="live-dot" /> LIVE DATA · SCHEMA GOLD (RENTAL_ROOM)
-                {filtering && (
-                  <span className="loading-indicator">
-                    <span className="pulse-spinner" /> Đang lọc...
-                  </span>
-                )}
-              </div>
-              <h1>{lang === 'en' ? 'Da Nang Rental Market Dashboard' : 'Bảng Điều Khiển Thị Trường Thuê Đà Nẵng'}</h1>
+              {filtering && (
+                <span className="loading-indicator" role="status">
+                  <span className="pulse-spinner" /> {t('filtering')}
+                </span>
+              )}
+              <h1>{t('pageTitle')}</h1>
             </div>
 
             <div className="heading-actions">
@@ -1324,11 +1322,11 @@ export default function DashboardPage() {
                   }}
                 >
                   <option value="">{lang === 'en' ? 'All price ranges' : 'Tất cả mức giá'}</option>
-                  <option value="under_3m">Dưới 3 triệu (Bình dân)</option>
-                  <option value="3m_5m">3 — 5 triệu (Tiêu chuẩn)</option>
-                  <option value="5m_8m">5 — 8 triệu (Căn hộ dịch vụ)</option>
-                  <option value="8m_15m">8 — 15 triệu (Cao cấp)</option>
-                  <option value="above_15m">Trên 15 triệu (Hạng sang)</option>
+                  <option value="under_3m">{t('filter.under3m')}</option>
+                  <option value="3m_5m">{t('filter.range3m5m')}</option>
+                  <option value="5m_8m">{t('filter.range5m8m')}</option>
+                  <option value="8m_15m">{t('filter.range8m15m')}</option>
+                  <option value="above_15m">{t('filter.above15m')}</option>
                 </select>
               </div>
 
@@ -1343,10 +1341,10 @@ export default function DashboardPage() {
                   }}
                 >
                   <option value="">{lang === 'en' ? 'All sizes' : 'Tất cả diện tích'}</option>
-                  <option value="under_20">Dưới 20 m² (Phòng nhỏ / KTX)</option>
-                  <option value="20_35">20 — 35 m² (Studio / 1PN)</option>
-                  <option value="35_50">35 — 50 m² (Rộng / 1-2PN)</option>
-                  <option value="above_50">Trên 50 m² (Căn lớn / Nhà riêng)</option>
+                  <option value="under_20">{t('filter.under20m2')}</option>
+                  <option value="20_35">{t('filter.range20_35m2')}</option>
+                  <option value="35_50">{t('filter.range35_50m2')}</option>
+                  <option value="above_50">{t('filter.above50m2')}</option>
                 </select>
               </div>
 
@@ -1362,9 +1360,9 @@ export default function DashboardPage() {
                   }}
                 >
                   <option value="">{lang === 'en' ? 'All risk levels' : 'Tất cả cấp độ'}</option>
-                  <option value="0">Thấp / An toàn (0)</option>
-                  <option value="1">Trung bình (1)</option>
-                  <option value="2">Nguy cơ cao (2)</option>
+                  <option value="0">{t('risks.low')}</option>
+                  <option value="1">{t('risks.medium')}</option>
+                  <option value="2">{t('risks.high')}</option>
                 </select>
               </div>
 
@@ -1393,7 +1391,7 @@ export default function DashboardPage() {
                       checked={reqPrivateBath}
                       onChange={(e) => { setReqPrivateBath(e.target.checked); setPage(1) }}
                     />
-                    🚿 Vệ sinh riêng
+                    {t('chips.privateBath')}
                   </label>
                   <label style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', cursor: 'pointer', fontWeight: 500, color: 'var(--ink)' }}>
                     <input
@@ -1401,7 +1399,7 @@ export default function DashboardPage() {
                       checked={reqParking}
                       onChange={(e) => { setReqParking(e.target.checked); setPage(1) }}
                     />
-                    🛵 Bãi đỗ xe
+                    {t('chips.parking')}
                   </label>
                 </div>
               </div>
@@ -1423,7 +1421,7 @@ export default function DashboardPage() {
           {activeFiltersCount > 0 && (
             <div className="active-filters-wrap" aria-label={lang === 'en' ? 'Active filters' : 'Điều kiện lọc đang áp dụng'}>
               <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>
-                {lang === 'en' ? `Active Filters (${activeFiltersCount})` : `Điều kiện đang áp dụng (${activeFiltersCount})`}
+                {lang === 'en' ? `Active Filters (${activeFiltersCount})` : `Đang lọc (${activeFiltersCount})`}
               </span>
               {(startDate || endDate) && (
                 <span className="filter-chip">
@@ -1549,50 +1547,22 @@ export default function DashboardPage() {
 
           {activeNav === 'Tổng quan' && (
             <>
-              <div className="toolbar">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--muted)' }}>
-                    {lang === 'en' ? 'Sort by:' : 'Sắp xếp:'}
-                  </span>
-                  <select
-                    className="filter-control"
-                    style={{ width: 'auto', height: '32px', fontSize: '11px' }}
-                    value={`${sortBy}_${ascending}`}
-                    onChange={(e) => {
-                      const separator = e.target.value.lastIndexOf('_')
-                      const col = e.target.value.slice(0, separator)
-                      const asc = e.target.value.slice(separator + 1)
-                      setSortBy(col)
-                      setAscending(asc === 'true')
-                      setPage(1)
-                    }}
-                  >
-                    <option value="posted_date_false">{lang === 'en' ? 'Newest first' : 'Mới nhất trước'}</option>
-                    <option value="posted_date_true">{lang === 'en' ? 'Oldest first' : 'Cũ nhất trước'}</option>
-                    <option value="price_vnd_false">{lang === 'en' ? 'Price: High to Low' : 'Giá giảm dần'}</option>
-                    <option value="price_vnd_true">{lang === 'en' ? 'Price: Low to High' : 'Giá tăng dần'}</option>
-                    <option value="size_m2_false">{lang === 'en' ? 'Size: Large to Small' : 'Diện tích giảm dần'}</option>
-                    <option value="size_m2_true">{lang === 'en' ? 'Size: Small to Large' : 'Diện tích tăng dần'}</option>
-                  </select>
-                </div>
-              </div>
-
               <>
                   {/* KPI CARDS */}
-                  <section className="kpi-grid">
+                  <section className="kpi-grid overview-kpis">
                     <Kpi
                       icon={<Home size={18} />}
-                      label={lang === 'en' ? 'Listings (Filtered)' : 'Tin đăng (sau lọc)'}
+                      label={lang === 'en' ? 'Listings' : 'Tin đăng'}
                       value={kpiData?.total_listings.toLocaleString() || '0'}
-                      delta={totalCount === 3238 ? (lang === 'en' ? 'All' : 'Toàn bộ') : `${((totalCount / 3238) * 100).toFixed(0)}% ${lang === 'en' ? 'sample' : 'mẫu'}`}
-                      note={lang === 'en' ? 'gold schema' : 'dữ liệu kho gold'}
+
+                      note={lang === 'en' ? 'Matching your filters' : 'Theo bộ lọc hiện tại'}
                       tone="blue"
                     />
                     <Kpi
                       icon={<TrendingUp size={18} />}
                       label={lang === 'en' ? 'Average Rent' : 'Giá thuê trung bình'}
                       value={`${kpiData?.avg_price_million.toFixed(2) || '0'} ${lang === 'en' ? 'M' : 'tr'}`}
-                      delta={kpiData?.avg_price_million && kpiData.avg_price_million > 6 ? (lang === 'en' ? 'Premium' : 'Phân khúc cao') : (lang === 'en' ? 'Budget' : 'Bình dân')}
+
                       note={lang === 'en' ? 'VND / month' : 'VNĐ / tháng'}
                       tone="orange"
                     />
@@ -1600,16 +1570,16 @@ export default function DashboardPage() {
                       icon={<Activity size={18} />}
                       label={lang === 'en' ? 'Average Size' : 'Diện tích trung bình'}
                       value={`${kpiData?.avg_size_m2.toFixed(1) || '0'} m²`}
-                      delta={lang === 'en' ? 'Market standard' : 'Chuẩn thị trường'}
+
                       note={lang === 'en' ? 'm² / unit' : 'm²/phòng'}
                       tone="purple"
                     />
                     <Kpi
                       icon={<ShieldAlert size={18} />}
-                      label={lang === 'en' ? 'Flood Safety Ratio' : 'Tỷ lệ an toàn ngập lụt'}
+                      label={lang === 'en' ? 'Low flood risk' : 'Tỷ lệ rủi ro ngập thấp'}
                       value={`${kpiData?.flood_risk_low_percentage.toFixed(0) || '0'}%`}
-                      delta={kpiData && kpiData.flood_risk_low_percentage > 70 ? (lang === 'en' ? 'Safe' : 'An toàn') : (lang === 'en' ? 'Caution' : 'Cần chú ý')}
-                      note={lang === 'en' ? 'zero risk = 0' : 'khu vực rủi ro = 0'}
+
+                      note={lang === 'en' ? 'Share of matching listings' : 'Trong các tin đã lọc'}
                       tone="green"
                     />
                   </section>
@@ -1622,7 +1592,7 @@ export default function DashboardPage() {
                     <div className="card trend-card">
                       <CardHeader
                         title="Xu hướng theo chu kỳ thời gian"
-                        subtitle="Số lượng tin đăng & giá thuê trung bình (tính toán động từ schema gold)"
+                        subtitle="Số tin đăng và giá thuê trung bình"
                         action=""
                       />
                       <div className="chart-legend">
@@ -1709,8 +1679,8 @@ export default function DashboardPage() {
                     {/* Top Wards */}
                     <div className="card area-card">
                       <CardHeader
-                        title={lang === 'en' ? 'All Areas (Supply)' : 'Tất cả khu vực (Nguồn cung)'}
-                        subtitle={lang === 'en' ? 'All areas with listings, sorted descending by volume' : 'Toàn bộ khu vực có tin đăng, sắp xếp theo số lượng giảm dần'}
+                        title={lang === 'en' ? 'Listings by area' : 'Tin đăng theo khu vực'}
+                        subtitle={lang === 'en' ? 'Ranked by listing count' : 'Theo số lượng tin đăng'}
                         action=""
                       />
                       <div className="ward-list">
@@ -1749,11 +1719,36 @@ export default function DashboardPage() {
 
                     {/* Paginated Listings Table */}
                     <div className="card activity-card">
-                      <CardHeader
-                        title={lang === 'en' ? 'Actual Listings (gold.rental_room)' : 'Danh sách tin đăng thực tế (gold.rental_room)'}
-                        subtitle={lang === 'en' ? `Showing ${records.length} / ${totalCount.toLocaleString('en-US')} results` : `Hiển thị ${records.length} / ${totalCount.toLocaleString('vi-VN')} kết quả`}
-                        action=""
-                      />
+                      <div className="card-header">
+                        <div className="listings-heading">
+                          <h2>{t('table.title')}</h2>
+                          <div className="listings-toolbar">
+                            <p>{lang === 'en' ? `Showing ${records.length} / ${totalCount.toLocaleString('en-US')} results` : `Hiển thị ${records.length} / ${totalCount.toLocaleString('vi-VN')} kết quả`}</p>
+                            <label className="listings-sort">
+                              <span>{lang === 'en' ? 'Sort by:' : 'Sắp xếp:'}</span>
+                              <select
+                                className="filter-control"
+                                value={`${sortBy}_${ascending}`}
+                                onChange={(e) => {
+                                  const separator = e.target.value.lastIndexOf('_')
+                                  const col = e.target.value.slice(0, separator)
+                                  const asc = e.target.value.slice(separator + 1)
+                                  setSortBy(col)
+                                  setAscending(asc === 'true')
+                                  setPage(1)
+                                }}
+                              >
+                                <option value="posted_date_false">{lang === 'en' ? 'Newest first' : 'Mới nhất trước'}</option>
+                                <option value="posted_date_true">{lang === 'en' ? 'Oldest first' : 'Cũ nhất trước'}</option>
+                                <option value="price_vnd_false">{lang === 'en' ? 'Price: High to Low' : 'Giá giảm dần'}</option>
+                                <option value="price_vnd_true">{lang === 'en' ? 'Price: Low to High' : 'Giá tăng dần'}</option>
+                                <option value="size_m2_false">{lang === 'en' ? 'Size: Large to Small' : 'Diện tích giảm dần'}</option>
+                                <option value="size_m2_true">{lang === 'en' ? 'Size: Small to Large' : 'Diện tích tăng dần'}</option>
+                              </select>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
                       <div className="activity-table" aria-busy={filtering}>
                         <div className="table-head">
                           <span>{lang === 'en' ? 'AREA' : 'KHU VỰC'}</span>
@@ -1868,14 +1863,12 @@ function Kpi({
   icon,
   label,
   value,
-  delta,
   note,
   tone
 }: {
   icon: React.ReactNode
   label: string
   value: string
-  delta: string
   note: string
   tone: string
 }) {
@@ -1884,11 +1877,9 @@ function Kpi({
       <div className={`kpi-icon ${tone}`}>{icon}</div>
       <div className="kpi-label">
         {label}
-        <MoreHorizontal size={16} />
       </div>
       <div className="kpi-value">{value}</div>
       <div className="kpi-foot">
-        <span className={delta.startsWith('-') ? 'negative' : 'positive'}>{delta}</span>
         <span>{note}</span>
       </div>
     </div>
