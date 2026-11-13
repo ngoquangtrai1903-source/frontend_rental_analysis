@@ -65,7 +65,7 @@ export default function AmenitiesView({ filterQueryString = '', onCategoryChange
         </div>
         <div>
           <h2>
-            {isEn ? 'Amenities & rent' : 'Tiện ích & giá thuê'}
+            {isEn ? 'Value-Add Amenities & Pricing Premium Analysis' : 'Phân tích Giá trị Gia tăng theo Tiện ích Phòng trọ'}
           </h2>
           <p>
             {isEn

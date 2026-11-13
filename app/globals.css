@@ -3531,6 +3531,12 @@
 .google-maps-link svg { flex-shrink: 0; }
 
 /* Compact headings keep the focus on listings and charts. */
+.overview-kpis { margin-top: 24px; }
+.listings-heading { width: 100%; min-width: 0; }
+.listings-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; margin-top: 10px; }
+.listings-sort { display: flex; align-items: center; gap: 8px; margin-left: auto; color: var(--muted); font-size: 11px; }
+.listings-sort > span { white-space: nowrap; }
+.listings-sort .filter-control { width: auto; max-width: 100%; height: 32px; font-size: 11px; }
 .page-heading { align-items: center; gap: 20px; flex-wrap: wrap; }
 .page-heading h1 { margin: 0; line-height: 1.3; }
 .heading-actions { flex-wrap: wrap; }

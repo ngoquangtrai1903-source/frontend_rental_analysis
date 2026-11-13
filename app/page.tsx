@@ -1097,7 +1097,7 @@ export default function DashboardPage() {
                   <span className="pulse-spinner" /> {t('filtering')}
                 </span>
               )}
-              <h1>{lang === 'en' ? 'Da Nang rental market' : 'Thị trường thuê Đà Nẵng'}</h1>
+              <h1>{t('pageTitle')}</h1>
             </div>
 
             <div className="heading-actions">
@@ -1547,37 +1547,9 @@ export default function DashboardPage() {
 
           {activeNav === 'Tổng quan' && (
             <>
-              <div className="toolbar">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--muted)' }}>
-                    {lang === 'en' ? 'Sort by:' : 'Sắp xếp:'}
-                  </span>
-                  <select
-                    className="filter-control"
-                    style={{ width: 'auto', height: '32px', fontSize: '11px' }}
-                    value={`${sortBy}_${ascending}`}
-                    onChange={(e) => {
-                      const separator = e.target.value.lastIndexOf('_')
-                      const col = e.target.value.slice(0, separator)
-                      const asc = e.target.value.slice(separator + 1)
-                      setSortBy(col)
-                      setAscending(asc === 'true')
-                      setPage(1)
-                    }}
-                  >
-                    <option value="posted_date_false">{lang === 'en' ? 'Newest first' : 'Mới nhất trước'}</option>
-                    <option value="posted_date_true">{lang === 'en' ? 'Oldest first' : 'Cũ nhất trước'}</option>
-                    <option value="price_vnd_false">{lang === 'en' ? 'Price: High to Low' : 'Giá giảm dần'}</option>
-                    <option value="price_vnd_true">{lang === 'en' ? 'Price: Low to High' : 'Giá tăng dần'}</option>
-                    <option value="size_m2_false">{lang === 'en' ? 'Size: Large to Small' : 'Diện tích giảm dần'}</option>
-                    <option value="size_m2_true">{lang === 'en' ? 'Size: Small to Large' : 'Diện tích tăng dần'}</option>
-                  </select>
-                </div>
-              </div>
-
               <>
                   {/* KPI CARDS */}
-                  <section className="kpi-grid">
+                  <section className="kpi-grid overview-kpis">
                     <Kpi
                       icon={<Home size={18} />}
                       label={lang === 'en' ? 'Listings' : 'Tin đăng'}
@@ -1747,11 +1719,36 @@ export default function DashboardPage() {
 
                     {/* Paginated Listings Table */}
                     <div className="card activity-card">
-                      <CardHeader
-                        title={lang === 'en' ? 'Rental listings' : 'Danh sách tin đăng'}
-                        subtitle={lang === 'en' ? `Showing ${records.length} / ${totalCount.toLocaleString('en-US')} results` : `Hiển thị ${records.length} / ${totalCount.toLocaleString('vi-VN')} kết quả`}
-                        action=""
-                      />
+                      <div className="card-header">
+                        <div className="listings-heading">
+                          <h2>{t('table.title')}</h2>
+                          <div className="listings-toolbar">
+                            <p>{lang === 'en' ? `Showing ${records.length} / ${totalCount.toLocaleString('en-US')} results` : `Hiển thị ${records.length} / ${totalCount.toLocaleString('vi-VN')} kết quả`}</p>
+                            <label className="listings-sort">
+                              <span>{lang === 'en' ? 'Sort by:' : 'Sắp xếp:'}</span>
+                              <select
+                                className="filter-control"
+                                value={`${sortBy}_${ascending}`}
+                                onChange={(e) => {
+                                  const separator = e.target.value.lastIndexOf('_')
+                                  const col = e.target.value.slice(0, separator)
+                                  const asc = e.target.value.slice(separator + 1)
+                                  setSortBy(col)
+                                  setAscending(asc === 'true')
+                                  setPage(1)
+                                }}
+                              >
+                                <option value="posted_date_false">{lang === 'en' ? 'Newest first' : 'Mới nhất trước'}</option>
+                                <option value="posted_date_true">{lang === 'en' ? 'Oldest first' : 'Cũ nhất trước'}</option>
+                                <option value="price_vnd_false">{lang === 'en' ? 'Price: High to Low' : 'Giá giảm dần'}</option>
+                                <option value="price_vnd_true">{lang === 'en' ? 'Price: Low to High' : 'Giá tăng dần'}</option>
+                                <option value="size_m2_false">{lang === 'en' ? 'Size: Large to Small' : 'Diện tích giảm dần'}</option>
+                                <option value="size_m2_true">{lang === 'en' ? 'Size: Small to Large' : 'Diện tích tăng dần'}</option>
+                              </select>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
                       <div className="activity-table" aria-busy={filtering}>
                         <div className="table-head">
                           <span>{lang === 'en' ? 'AREA' : 'KHU VỰC'}</span>

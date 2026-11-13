@@ -44,7 +44,7 @@ export const translations = {
     },
 
     // Heading Actions
-    pageTitle: 'Thị trường thuê Đà Nẵng',
+    pageTitle: 'Bảng Điều Khiển Thị Trường Thuê Đà Nẵng',
     exportCsv: 'Xuất CSV',
     exporting: 'Đang xuất…',
     filterButton: 'Bộ lọc',
@@ -126,7 +126,7 @@ export const translations = {
 
     // Listings Table
     table: {
-      title: 'Danh sách tin đăng',
+      title: 'Danh sách tin đăng thực tế (gold.rental_room)',
       subtitle: 'Theo bộ lọc hiện tại.',
       listingCol: 'Tin đăng',
       locationCol: 'Khu vực & vị trí',
@@ -254,7 +254,7 @@ export const translations = {
     },
 
     // Heading Actions
-    pageTitle: 'Da Nang rental market',
+    pageTitle: 'Da Nang Rental Market Dashboard',
     exportCsv: 'Export CSV',
     exporting: 'Exporting…',
     filterButton: 'Filters',
@@ -336,7 +336,7 @@ export const translations = {
 
     // Listings Table
     table: {
-      title: 'Rental listings',
+      title: 'Actual Listings (gold.rental_room)',
       subtitle: 'Matching your filters.',
       listingCol: 'Listing',
       locationCol: 'Location & Ward',

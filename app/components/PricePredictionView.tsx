@@ -1123,11 +1123,11 @@ export default function PricePredictionView({ lang = 'vi' }: PricePredictionView
           <h2>
             {propertyType === 'apartment'
               ? isEn
-                ? 'Estimate apartment rent'
-                : 'Ước tính giá thuê căn hộ'
+                ? 'AI Apartment / Condo Valuation & SHAP Explainability Engine'
+                : 'Triển Khai Model Dự Đoán Giá Căn Hộ / Chung Cư & Giải Thích SHAP'
               : isEn
-                ? 'Estimate room rent'
-                : 'Ước tính giá thuê phòng trọ'}
+                ? 'AI Rental Room Valuation & SHAP Explainability Engine'
+                : 'Triển Khai Model Dự Đoán Giá Phòng Trọ & Giải Thích SHAP'}
           </h2>
         </div>
 

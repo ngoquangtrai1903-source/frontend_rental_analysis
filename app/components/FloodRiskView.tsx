@@ -38,7 +38,7 @@ export default function FloodRiskView({ filterQueryString = '', lang = 'vi' }: F
         </div>
         <div>
           <h2>
-            {isEn ? 'Flood risk' : 'Rủi ro ngập lụt'}
+            {isEn ? 'Flood Risk Monitoring & Real Estate Safety Audit' : 'Giám Sát Rủi Ro Ngập Lụt & An Toàn Bất Động Sản'}
           </h2>
           <p>
             {isEn

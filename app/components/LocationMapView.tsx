@@ -51,8 +51,8 @@ export default function LocationMapView({
         <div>
           <h2>
             {isEn
-              ? 'Rental map'
-              : 'Bản đồ cho thuê'}
+              ? 'Coordinate Distribution & Citywide Rental Map'
+              : 'Bản Đồ Phân Bố Toạ Độ & Tin Cho Thuê Toàn Thành Phố'}
           </h2>
         </div>
         <span className="analysis-status">

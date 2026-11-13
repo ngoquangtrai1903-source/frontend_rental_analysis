@@ -69,8 +69,8 @@ export default function AdvancedAnalyticsView({
         <div>
           <h2>
             {isEn
-              ? 'Market analysis'
-              : 'Phân tích thị trường'}
+              ? 'Advanced Analytics — Da Nang Rental Market'
+              : 'Phân Tích Nâng Cao — Thị Trường Cho Thuê Đà Nẵng'}
           </h2>
         </div>
       </div>
